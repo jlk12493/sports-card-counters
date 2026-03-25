@@ -466,6 +466,56 @@ input.fi{flex:1;min-width:160px;}
   </main>
 </div>
 
+<!-- EDIT MODAL -->
+<div class="modal-bg" id="edit-modal">
+  <div class="modal" style="max-width:620px;">
+    <div class="modal-title">
+      Edit Card
+      <button class="modal-close" onclick="closeModal('edit-modal')">✕</button>
+    </div>
+    <input type="hidden" id="edit-id">
+    <div class="fgrid" style="margin-bottom:14px;">
+      <div class="ff"><label>Card ID</label><input type="text" id="e-cid"></div>
+      <div class="ff"><label>Player</label><input type="text" id="e-player"></div>
+      <div class="ff"><label>Year</label><input type="number" id="e-year"></div>
+      <div class="ff"><label>Set / Brand</label><input type="text" id="e-set"></div>
+      <div class="ff"><label>Card / Parallel</label><input type="text" id="e-par"></div>
+      <div class="ff"><label>Card #</label><input type="text" id="e-cno"></div>
+      <div class="ff"><label>Sport</label><select id="e-sport"><option value="">Select...</option><option>Baseball</option><option>Football</option><option>Basketball</option><option>Hockey</option><option>Soccer</option></select></div>
+      <div class="ff"><label>Date Acquired</label><input type="date" id="e-date"></div>
+      <div class="ff"><label>Source</label><input type="text" id="e-src"></div>
+      <div class="ff"><label>Purchase Price $</label><input type="number" step="0.01" id="e-price"></div>
+      <div class="ff"><label>Ship / Tax $</label><input type="number" step="0.01" id="e-ship"></div>
+      <div class="ff"><label>Grading Cost $</label><input type="number" step="0.01" id="e-grade"></div>
+      <div class="ff"><label>Gem Rate (0–1)</label><input type="number" step="0.01" id="e-gem"></div>
+      <div class="ff"><label>Gross PSA 10 $</label><input type="number" step="0.01" id="e-p10"></div>
+      <div class="ff"><label>Gross PSA 9 $</label><input type="number" step="0.01" id="e-p9"></div>
+      <div class="ff"><label>Disposition</label><select id="e-disp"><option value="Grade">Grade</option><option value="Sell Raw">Sell Raw</option><option value="Hold">Hold</option></select></div>
+      <div class="ff"><label>Status</label><select id="e-stat" onchange="toggleSoldFields()"><option value="Raw">Raw</option><option value="Submitted">Submitted</option><option value="Graded">Graded</option><option value="Listed">Listed</option><option value="Sold">Sold</option></select></div>
+      <div class="ff"><label>Batch ID</label><input type="text" id="e-batch"></div>
+    </div>
+    <div id="sold-fields" style="display:none;background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:6px;padding:14px;margin-bottom:14px;">
+      <div style="font-size:10px;font-weight:700;color:var(--green);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">Sale Details</div>
+      <div class="fgrid" style="margin-bottom:0;">
+        <div class="ff"><label>Date Sold</label><input type="date" id="e-datesold"></div>
+        <div class="ff"><label>Sale Price $</label><input type="number" step="0.01" id="e-saleprice" oninput="calcSoldPreview()"></div>
+        <div class="ff"><label>Platform Fees $</label><input type="number" step="0.01" id="e-fees" oninput="calcSoldPreview()"></div>
+        <div class="ff"><label>Shipping Out $</label><input type="number" step="0.01" id="e-shipout" oninput="calcSoldPreview()"></div>
+      </div>
+      <div id="sold-preview" style="margin-top:12px;display:none;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;">NET PROCEEDS</div><div style="font-size:15px;font-weight:700;color:#fff;" id="sp-proc">—</div></div>
+          <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;">REALIZED PROFIT</div><div style="font-size:15px;font-weight:700;" id="sp-prof">—</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="factions">
+      <button class="btn-a" onclick="saveEdit()">Save Changes</button>
+      <button class="btn-c" onclick="closeModal('edit-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- SCAN MODAL -->
 <div class="modal-bg" id="scan-modal">
   <div class="modal">
@@ -673,7 +723,7 @@ function renderInv() {
       const ev=(r.gem_rate&&r.psa10)?calcEV(r):null;
       const evp=(ev!==null&&r.total_cost)?ev/r.total_cost:null;
       return `<tr>
-        <td><button class="btn-del" onclick="delCard('${r.id}')">✕</button></td>
+        <td style="display:flex;gap:4px;"><button class="btn-del" onclick="delCard('${r.id}')" title="Delete">✕</button><button style="background:transparent;border:none;color:#555;cursor:pointer;font-size:13px;padding:2px 5px;border-radius:3px;" onmouseover="this.style.color='#60A5FA'" onmouseout="this.style.color='#555'" onclick="openEdit('${r.id}')" title="Edit">✎</button></td>
         <td class="mo" style="font-size:10px;color:#555;">${r.card_id||'—'}</td>
         <td class="pl">${r.player||'—'}</td>
         <td class="mo">${r.year||'—'}</td>
@@ -1059,6 +1109,95 @@ async function genBulk() {
   const {error}=await sb.from('invite_codes').insert(codes);
   if (error) return toast('Error generating codes',true);
   loadAdmin(); toast('10 new codes generated!');
+}
+
+
+// ══════════ EDIT CARD ══════════
+function openEdit(id) {
+  const r = INV.find(c => c.id === id);
+  if (!r) return;
+  g('edit-id').value = id;
+  g('e-cid').value = r.card_id || '';
+  g('e-player').value = r.player || '';
+  g('e-year').value = r.year || '';
+  g('e-set').value = r.set_name || '';
+  g('e-par').value = r.parallel || '';
+  g('e-cno').value = r.card_no || '';
+  g('e-sport').value = r.sport || '';
+  g('e-date').value = r.date_acquired || '';
+  g('e-src').value = r.source || '';
+  g('e-price').value = r.price != null ? r.price : '';
+  g('e-ship').value = r.ship != null ? r.ship : '';
+  g('e-grade').value = r.grading != null ? r.grading : '';
+  g('e-gem').value = r.gem_rate != null ? r.gem_rate : '';
+  g('e-p10').value = r.psa10 != null ? r.psa10 : '';
+  g('e-p9').value = r.psa9 != null ? r.psa9 : '';
+  g('e-disp').value = r.disposition || 'Grade';
+  g('e-stat').value = r.status || 'Raw';
+  g('e-batch').value = r.batch_id || '';
+  g('e-datesold').value = r.date_sold || '';
+  g('e-saleprice').value = r.sale_price != null ? r.sale_price : '';
+  g('e-fees').value = r.fees != null ? r.fees : '';
+  g('e-shipout').value = r.ship_out != null ? r.ship_out : '';
+  toggleSoldFields();
+  calcSoldPreview();
+  g('edit-modal').classList.add('open');
+}
+
+function toggleSoldFields() {
+  const isSold = g('e-stat').value === 'Sold';
+  g('sold-fields').style.display = isSold ? 'block' : 'none';
+}
+
+function calcSoldPreview() {
+  const sp = parseFloat(g('e-saleprice').value) || 0;
+  const fees = parseFloat(g('e-fees').value) || 0;
+  const shipout = parseFloat(g('e-shipout').value) || 0;
+  const price = parseFloat(g('e-price').value) || 0;
+  const ship = parseFloat(g('e-ship').value) || 0;
+  if (!sp) { g('sold-preview').style.display = 'none'; return; }
+  const proc = sp - fees - shipout;
+  const prof = proc - price - ship;
+  g('sold-preview').style.display = 'block';
+  g('sp-proc').textContent = f$(proc);
+  g('sp-prof').textContent = f$(prof);
+  g('sp-prof').style.color = prof >= 0 ? 'var(--green)' : '#F87171';
+}
+
+async function saveEdit() {
+  const id = g('edit-id').value;
+  const price = parseFloat(g('e-price').value) || 0;
+  const ship = parseFloat(g('e-ship').value) || 0;
+  const grade = parseFloat(g('e-grade').value) || 0;
+  const pf = (id) => { const v = parseFloat(g(id).value); return isNaN(v) ? null : v; };
+  const ps = (id) => g(id).value.trim() || null;
+  const updates = {
+    card_id: ps('e-cid'), player: ps('e-player'),
+    year: parseInt(g('e-year').value) || null,
+    set_name: ps('e-set'), parallel: ps('e-par'), card_no: ps('e-cno'),
+    sport: ps('e-sport'), date_acquired: ps('e-date'), source: ps('e-src'),
+    price, ship, grading: grade,
+    total_cost: price + ship + grade,
+    gem_rate: pf('e-gem'), psa10: pf('e-p10'), psa9: pf('e-p9'),
+    disposition: g('e-disp').value, status: g('e-stat').value,
+    batch_id: ps('e-batch'),
+  };
+  if (g('e-stat').value === 'Sold') {
+    updates.date_sold = ps('e-datesold');
+    updates.sale_price = pf('e-saleprice');
+    updates.fees = pf('e-fees');
+    updates.ship_out = pf('e-shipout');
+    const proc = (updates.sale_price || 0) - (updates.fees || 0) - (updates.ship_out || 0);
+    updates.net_proceeds = proc;
+    updates.realized_profit = proc - price - ship;
+  }
+  const { data, error } = await sb.from('inventory').update(updates).eq('id', id).select().single();
+  if (error) return toast('Error saving: ' + error.message, true);
+  const idx = INV.findIndex(c => c.id === id);
+  if (idx !== -1) INV[idx] = data;
+  closeModal('edit-modal');
+  renderAll();
+  toast('Card updated!');
 }
 
 // ══════════ HELPERS ══════════
