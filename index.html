@@ -260,7 +260,7 @@ input.fi{flex:1;min-width:160px;}
       </div>
       <div id="tab-login">
         <div class="afield"><label>Email</label><input type="email" id="li-email" placeholder="your@email.com"></div>
-        <div class="afield"><label>Password</label><input type="password" id="li-pw" placeholder="••••••••"></div>
+        <div class="afield"><label>Password</label><input type="password" id="li-pw" placeholder="........"></div>
         <button class="btn-p" id="btn-li" onclick="doLogin()">Sign In</button>
         <div class="amsg" id="li-msg"></div>
       </div>
@@ -611,7 +611,7 @@ input.fi{flex:1;min-width:160px;}
 </div>
 
 <script>
-// ══════════ SUPABASE ══════════
+// - SUPABASE -
 const SURL = 'https://lmwqizcflhikvtoqehzj.supabase.co';
 const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.95XMeRWGeCcD_KxN40ciJi_QjB9GG4sVJexzBEhJ9NM';
 const ADMIN = 'jlk12493@gmail.com';
@@ -622,7 +622,7 @@ const PP = 25;
 let importRows = [];
 let scanMode = 'front';
 
-// ══════════ AUTH ══════════
+// - AUTH -
 function switchTab(t) {
   document.querySelectorAll('.auth-tab').forEach((el,i)=>el.classList.toggle('active',(i===0&&t==='login')||(i===1&&t==='register')));
   document.getElementById('tab-login').style.display = t==='login'?'':'none';
@@ -673,7 +673,7 @@ async function loadApp() {
     const nav = g('main-nav');
     if (!nav.querySelector('.atab')) {
       const btn = document.createElement('button');
-      btn.className='ntab atab'; btn.textContent='⚙ Admin';
+      btn.className='ntab atab'; btn.textContent='Admin Admin';
       btn.onclick=function(){goSec('admin',this);};
       nav.appendChild(btn);
     }
@@ -690,7 +690,7 @@ async function loadApp() {
   g('app-screen').style.display='block';
 }
 
-// ══════════ NAV ══════════
+// - NAV -
 function goSec(name,btn) {
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
@@ -699,14 +699,14 @@ function goSec(name,btn) {
   if (name==='admin') loadAdmin();
 }
 
-// ══════════ RENDER ALL ══════════
+// - RENDER ALL -
 function renderAll() {
   invF=[...INV.filter(r=>r.status!=='Sold')];
   blF=[...BL];
   renderDash(); renderInv(); renderBatches(); renderSold(); renderBL();
 }
 
-// ══════════ DASHBOARD ══════════
+// - DASHBOARD -
 function renderDash() {
   const sold=INV.filter(r=>r.status==='Sold');
   const onHand=INV.filter(r=>r.status!=='Sold');
@@ -718,8 +718,8 @@ function renderDash() {
   const avgEVP=graders.length?evVals.map((v,i)=>v/(graders[i].total_cost||1)).reduce((a,b)=>a+b,0)/graders.length:null;
   setText('k-profit',f$(profit),profit>=0?'g':'r');
   setText('k-inv',f$(invCost));
-  setText('k-ev',avgEV!==null?f$(avgEV):'—');
-  setText('k-evp',avgEVP!==null?((avgEVP*100).toFixed(1)+'%'):'—');
+  setText('k-ev',avgEV!==null?f$(avgEV):'--');
+  setText('k-evp',avgEVP!==null?((avgEVP*100).toFixed(1)+'%'):'--');
   setText('k-subs',INV.filter(r=>r.status==='Submitted').length);
   setText('k-total',INV.length);
   const stRows=['Raw','Submitted','Graded','Listed'].map(st=>{
@@ -732,12 +732,12 @@ function renderDash() {
   const prof=sold.reduce((s,r)=>s+(r.sale_price||0)-(r.price||0)-(r.ship||0)-(r.fees||0)-(r.ship_out||0),0);
   g('s-proc').textContent=f$(proc);
   g('s-prof').textContent=f$(prof);
-  g('s-avg').textContent=sold.length?f$(prof/sold.length):'—';
+  g('s-avg').textContent=sold.length?f$(prof/sold.length):'--';
   renderTopPerformers();
   renderProfitChart();
 }
 
-// ══════════ INVENTORY ══════════
+// - INVENTORY -
 function filterInv() {
   const q=g('inv-q').value.toLowerCase();
   const sp=g('inv-sport').value,st=g('inv-stat').value,dp=g('inv-disp').value;
@@ -759,28 +759,28 @@ function renderInv() {
       const ev=(r.gem_rate&&r.psa10)?calcEV(r):null;
       const evp=(ev!==null&&r.total_cost)?ev/r.total_cost:null;
       return `<tr>
-        <td style="display:flex;gap:4px;"><button class="btn-del" onclick="delCard('${r.id}')" title="Delete">✕</button><button style="background:transparent;border:none;color:#555;cursor:pointer;font-size:13px;padding:2px 5px;border-radius:3px;" onmouseover="this.style.color='#60A5FA'" onmouseout="this.style.color='#555'" onclick="openEdit('${r.id}')" title="Edit">✎</button></td>
-        <td class="mo" style="font-size:10px;color:#555;">${r.card_id||'—'}</td>
-        <td class="pl">${r.player||'—'}</td>
-        <td class="mo">${r.year||'—'}</td>
-        <td>${r.set_name||'—'}</td>
-        <td>${r.parallel||'—'}</td>
-        <td class="mo">${r.card_no||'—'}</td>
-        <td>${r.sport||'—'}</td>
-        <td>${r.source||'—'}</td>
-        <td class="mo">${r.price!=null?f$(r.price):'—'}</td>
-        <td class="mo">${r.ship!=null?f$(r.ship):'—'}</td>
-        <td class="mo">${r.grading!=null?f$(r.grading):'—'}</td>
-        <td class="mo" style="font-weight:700;">${r.total_cost!=null?f$(r.total_cost):'—'}</td>
-        <td class="mo">${r.gem_rate!=null?((r.gem_rate*100).toFixed(0)+'%'):'—'}</td>
-        <td class="mo">${r.psa10!=null?f$(r.psa10):'—'}</td>
-        <td class="mo">${r.psa9!=null?f$(r.psa9):'—'}</td>
-        <td class="mo ${ev!=null&&ev<0?'rd':ev!=null&&ev>0?'gn':''}">${ev!=null?f$(ev):'—'}</td>
-        <td>${evp!=null?evBar(evp):'—'}</td>
+        <td style="display:flex;gap:4px;"><button class="btn-del" onclick="delCard('${r.id}')" title="Delete">x</button><button style="background:transparent;border:none;color:#555;cursor:pointer;font-size:13px;padding:2px 5px;border-radius:3px;" onmouseover="this.style.color='#60A5FA'" onmouseout="this.style.color='#555'" onclick="openEdit('${r.id}')" title="Edit">Edit</button></td>
+        <td class="mo" style="font-size:10px;color:#555;">${r.card_id||'--'}</td>
+        <td class="pl">${r.player||'--'}</td>
+        <td class="mo">${r.year||'--'}</td>
+        <td>${r.set_name||'--'}</td>
+        <td>${r.parallel||'--'}</td>
+        <td class="mo">${r.card_no||'--'}</td>
+        <td>${r.sport||'--'}</td>
+        <td>${r.source||'--'}</td>
+        <td class="mo">${r.price!=null?f$(r.price):'--'}</td>
+        <td class="mo">${r.ship!=null?f$(r.ship):'--'}</td>
+        <td class="mo">${r.grading!=null?f$(r.grading):'--'}</td>
+        <td class="mo" style="font-weight:700;">${r.total_cost!=null?f$(r.total_cost):'--'}</td>
+        <td class="mo">${r.gem_rate!=null?((r.gem_rate*100).toFixed(0)+'%'):'--'}</td>
+        <td class="mo">${r.psa10!=null?f$(r.psa10):'--'}</td>
+        <td class="mo">${r.psa9!=null?f$(r.psa9):'--'}</td>
+        <td class="mo ${ev!=null&&ev<0?'rd':ev!=null&&ev>0?'gn':''}">${ev!=null?f$(ev):'--'}</td>
+        <td>${evp!=null?evBar(evp):'--'}</td>
         <td>${dBdg(r.disposition)}</td>
         <td>${sBdg(r.status)}</td>
-        <td class="mo" style="font-size:10px;color:#555;">${r.batch_id||'—'}</td>
-        <td class="note-cell" title="${r.notes||''}">${r.notes||'—'}</td>
+        <td class="mo" style="font-size:10px;color:#555;">${r.batch_id||'--'}</td>
+        <td class="note-cell" title="${r.notes||''}">${r.notes||'--'}</td>
       </tr>`;
     }).join('');
   }
@@ -817,7 +817,7 @@ async function delCard(id) {
   renderAll(); toast('Card deleted');
 }
 
-// ══════════ BATCHES ══════════
+// - BATCHES -
 async function addBatch() {
   const b={user_id:CU.id,batch_id:gv('sf-id'),submit_date:gv('sf-date'),grader:gv('sf-grader'),service:gv('sf-svc'),status:gv('sf-stat'),notes:gv('sf-notes')};
   if (!b.batch_id) return toast('Batch ID required',true);
@@ -838,16 +838,16 @@ function renderBatches() {
     return `<div class="bcard">
       <div class="bhdr">
         <div><div class="bid">Batch #${b.batch_id}</div><div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${b.grader||'PSA'} · ${b.service||''} · ${b.submit_date||'TBD'}</div></div>
-        <div style="display:flex;align-items:center;gap:8px;"><span class="bdg ${stMap[b.status]||'b-raw'}">${b.status||'—'}</span><button class="bulk-btn" onclick="bulkUpdateBatch('${b.batch_id}')">Bulk Update Cards</button><button class="btn-del" onclick="delBatch('${b.id}')">✕</button></div>
+        <div style="display:flex;align-items:center;gap:8px;"><span class="bdg ${stMap[b.status]||'b-raw'}">${b.status||'--'}</span><button class="bulk-btn" onclick="bulkUpdateBatch('${b.batch_id}')">Bulk Update Cards</button><button class="btn-del" onclick="delBatch('${b.id}')">x</button></div>
       </div>
       <div class="bmeta">
         <div><div class="bsl">Cards</div><div class="bsv">${cards.length}</div></div>
         <div><div class="bsl">Total Fees</div><div class="bsv">${f$(fees)}</div></div>
-        <div><div class="bsl">Grader</div><div class="bsv">${b.grader||'—'}</div></div>
-        <div><div class="bsl">Service</div><div class="bsv" style="font-size:11px;">${b.service||'—'}</div></div>
-        <div><div class="bsl">Notes</div><div class="bsv" style="font-size:11px;color:var(--text-muted);">${b.notes||'—'}</div></div>
+        <div><div class="bsl">Grader</div><div class="bsv">${b.grader||'--'}</div></div>
+        <div><div class="bsl">Service</div><div class="bsv" style="font-size:11px;">${b.service||'--'}</div></div>
+        <div><div class="bsl">Notes</div><div class="bsv" style="font-size:11px;color:var(--text-muted);">${b.notes||'--'}</div></div>
       </div>
-      ${cards.length?`<div class="twrap"><table class="dtbl"><thead><tr><th>Card ID</th><th>Player</th><th>Set</th><th>Parallel</th><th>Fee</th><th>Status</th></tr></thead><tbody>${cards.map(r=>`<tr><td class="mo" style="font-size:10px;color:#555;">${r.card_id||'—'}</td><td class="pl">${r.player||'—'}</td><td>${r.set_name||'—'}</td><td>${r.parallel||'—'}</td><td class="mo">${r.grading!=null?f$(r.grading):'—'}</td><td>${sBdg(r.status)}</td></tr>`).join('')}</tbody></table></div>`:'<div style="font-size:11px;color:var(--text-muted);padding:6px 0;">No cards linked to this batch ID</div>'}
+      ${cards.length?`<div class="twrap"><table class="dtbl"><thead><tr><th>Card ID</th><th>Player</th><th>Set</th><th>Parallel</th><th>Fee</th><th>Status</th></tr></thead><tbody>${cards.map(r=>`<tr><td class="mo" style="font-size:10px;color:#555;">${r.card_id||'--'}</td><td class="pl">${r.player||'--'}</td><td>${r.set_name||'--'}</td><td>${r.parallel||'--'}</td><td class="mo">${r.grading!=null?f$(r.grading):'--'}</td><td>${sBdg(r.status)}</td></tr>`).join('')}</tbody></table></div>`:'<div style="font-size:11px;color:var(--text-muted);padding:6px 0;">No cards linked to this batch ID</div>'}
     </div>`;
   }).join('');
 }
@@ -859,7 +859,7 @@ async function delBatch(id) {
   renderBatches(); toast('Batch deleted');
 }
 
-// ══════════ SOLD ══════════
+// - SOLD -
 function renderSold() {
   const sold=INV.filter(r=>r.status==='Sold');
   const tb=g('sold-tbody');
@@ -868,22 +868,22 @@ function renderSold() {
     const proc=(r.sale_price||0)-(r.fees||0)-(r.ship_out||0);
     const prof=proc-(r.price||0)-(r.ship||0);
     return `<tr>
-      <td class="mo" style="font-size:10px;color:#555;">${r.card_id||'—'}</td>
-      <td class="pl">${r.player||'—'}</td>
-      <td class="mo">${r.year||'—'}</td>
-      <td>${r.set_name||'—'}</td>
-      <td>${r.sport||'—'}</td>
+      <td class="mo" style="font-size:10px;color:#555;">${r.card_id||'--'}</td>
+      <td class="pl">${r.player||'--'}</td>
+      <td class="mo">${r.year||'--'}</td>
+      <td>${r.set_name||'--'}</td>
+      <td>${r.sport||'--'}</td>
       <td class="mo">${f$((r.price||0)+(r.ship||0)+(r.grading||0))}</td>
-      <td class="mo">${r.sale_price!=null?f$(r.sale_price):'—'}</td>
-      <td class="mo">${r.fees!=null?f$(r.fees):'—'}</td>
-      <td class="mo">${r.ship_out!=null?f$(r.ship_out):'—'}</td>
+      <td class="mo">${r.sale_price!=null?f$(r.sale_price):'--'}</td>
+      <td class="mo">${r.fees!=null?f$(r.fees):'--'}</td>
+      <td class="mo">${r.ship_out!=null?f$(r.ship_out):'--'}</td>
       <td class="mo" style="font-weight:700;">${f$(proc)}</td>
       <td class="mo ${prof>=0?'gn':'rd'}" style="font-weight:700;">${prof>=0?'+':''}${f$(prof)}</td>
     </tr>`;
   }).join('');
 }
 
-// ══════════ BUY LOG ══════════
+// - BUY LOG -
 function blCalc() {
   const gem=nf('bl-gem'),p10=nf('bl-p10'),p9=nf('bl-p9'),cost=nf('bl-cost');
   if (!gem||!p10||!cost){g('bl-preview').style.display='none';return;}
@@ -909,7 +909,7 @@ function filterBL() {
 }
 
 function blDec(r) {
-  if (!r.gem_rate||!r.psa10||!r.total_cost) return '—';
+  if (!r.gem_rate||!r.psa10||!r.total_cost) return '--';
   const n10=r.psa10*0.865,n9=(r.psa9||0)*0.865;
   const ev=r.gem_rate*n10+(1-r.gem_rate)*n9-r.total_cost;
   return (ev/r.total_cost)>=0.40?'BUY':'PASS';
@@ -924,26 +924,26 @@ function renderBL() {
     const ev=(n10&&r.gem_rate&&r.total_cost)?(r.gem_rate*n10+(1-r.gem_rate)*(n9||0)-r.total_cost):null;
     const evp=(ev!==null&&r.total_cost)?ev/r.total_cost:null;
     const mb=(n10&&r.gem_rate)?((r.gem_rate*n10+(1-r.gem_rate)*(n9||0))/1.40):null;
-    const dec=evp!==null?(evp>=0.40?'BUY':'PASS'):'—';
+    const dec=evp!==null?(evp>=0.40?'BUY':'PASS'):'--';
     return `<tr>
-      <td><button class="btn-del" onclick="delBL('${r.id}')">✕</button></td>
-      <td class="mo">${r.date_ran||'—'}</td>
-      <td class="pl">${r.player||'—'}</td>
-      <td class="mo">${r.year||'—'}</td>
-      <td>${r.set_name||'—'}</td>
-      <td class="mo">${r.card_no||'—'}</td>
-      <td>${r.source||'—'}</td>
-      <td class="mo">${r.gem_rate!=null?((r.gem_rate*100).toFixed(0)+'%'):'—'}</td>
-      <td class="mo">${r.psa10!=null?f$(r.psa10):'—'}</td>
-      <td class="mo">${r.psa9!=null?f$(r.psa9):'—'}</td>
-      <td class="mo">${n10!=null?f$(n10):'—'}</td>
-      <td class="mo">${n9!=null?f$(n9):'—'}</td>
-      <td class="mo" style="font-weight:700;">${r.total_cost!=null?f$(r.total_cost):'—'}</td>
-      <td class="mo ${ev!=null&&ev>0?'gn':ev!=null&&ev<0?'rd':''}">${ev!=null?f$(ev):'—'}</td>
-      <td>${evp!=null?evBar(evp):'—'}</td>
-      <td class="mo" style="color:var(--amber);">${mb!=null?f$(mb):'—'}</td>
+      <td><button class="btn-del" onclick="delBL('${r.id}')">x</button></td>
+      <td class="mo">${r.date_ran||'--'}</td>
+      <td class="pl">${r.player||'--'}</td>
+      <td class="mo">${r.year||'--'}</td>
+      <td>${r.set_name||'--'}</td>
+      <td class="mo">${r.card_no||'--'}</td>
+      <td>${r.source||'--'}</td>
+      <td class="mo">${r.gem_rate!=null?((r.gem_rate*100).toFixed(0)+'%'):'--'}</td>
+      <td class="mo">${r.psa10!=null?f$(r.psa10):'--'}</td>
+      <td class="mo">${r.psa9!=null?f$(r.psa9):'--'}</td>
+      <td class="mo">${n10!=null?f$(n10):'--'}</td>
+      <td class="mo">${n9!=null?f$(n9):'--'}</td>
+      <td class="mo" style="font-weight:700;">${r.total_cost!=null?f$(r.total_cost):'--'}</td>
+      <td class="mo ${ev!=null&&ev>0?'gn':ev!=null&&ev<0?'rd':''}">${ev!=null?f$(ev):'--'}</td>
+      <td>${evp!=null?evBar(evp):'--'}</td>
+      <td class="mo" style="color:var(--amber);">${mb!=null?f$(mb):'--'}</td>
       <td><span class="bdg ${dec==='BUY'?'b-buy':dec==='PASS'?'b-pass':'b-raw'}">${dec}</span></td>
-      <td style="font-size:11px;color:var(--text-muted);">${r.notes||'—'}</td>
+      <td style="font-size:11px;color:var(--text-muted);">${r.notes||'--'}</td>
     </tr>`;
   }).join('');
 }
@@ -963,7 +963,7 @@ async function delBL(id) {
   BL=BL.filter(r=>r.id!==id); blF=[...BL]; renderBL(); toast('Deleted');
 }
 
-// ══════════ SCANNER ══════════
+// - SCANNER -
 function openScan() {
   g('scan-modal').classList.add('open');
   g('scan-status').textContent='';
@@ -1020,7 +1020,7 @@ function parseCardText(text, mode) {
     else if (/pitcher|outfield|batting|MLB|baseball/i.test(text)) g('sc-sport').value='Baseball';
     else if (/NBA|basketball|forward|guard/i.test(text)) g('sc-sport').value='Basketball';
   } else {
-    // Back of card — look for card number
+    // Back of card -- look for card number
     const cardNoMatch=text.match(/#\s*(\w+\/?\w*)|(\d+)\s*\/\s*\d+|^(\d{1,4})$/m);
     if (cardNoMatch&&!g('sc-cno').value) g('sc-cno').value=(cardNoMatch[1]||cardNoMatch[2]||cardNoMatch[3]||'').replace('#','').trim();
     // Year on back
@@ -1042,7 +1042,7 @@ function useScanData() {
   toast('Card data filled in! Complete remaining fields.');
 }
 
-// ══════════ IMPORT ══════════
+// - IMPORT -
 function openImport() { g('import-modal').classList.add('open'); importRows=[]; g('import-preview').style.display='none'; g('btn-import-confirm').style.display='none'; }
 
 function handleImport(input) {
@@ -1118,7 +1118,7 @@ async function confirmImport() {
   toast(`Imported ${count} cards successfully!`);
 }
 
-// ══════════ ADMIN ══════════
+// - ADMIN -
 async function loadAdmin() {
   if (CU.email!==ADMIN) return;
   const [cr,ur]=await Promise.all([
@@ -1127,7 +1127,7 @@ async function loadAdmin() {
   ]);
   const codes=cr.data||[],users=ur.data||[];
   g('admin-codes').innerHTML=codes.map(c=>`<div class="code-row"><span class="code-val">${c.code}</span><span style="font-size:11px;color:${c.used?'var(--text-muted)':'var(--green)'};">${c.used?'✓ Used':'Available'}</span></div>`).join('')||'<div style="color:var(--text-muted);font-size:12px;">No codes yet</div>';
-  g('admin-users').innerHTML=users.map(u=>`<div class="user-row"><div style="font-size:12px;font-weight:600;color:#fff;">${u.email||'Unknown'}</div><div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Joined ${u.created_at?new Date(u.created_at).toLocaleDateString():'—'}</div></div>`).join('')||'<div style="color:var(--text-muted);font-size:12px;">No users yet</div>';
+  g('admin-users').innerHTML=users.map(u=>`<div class="user-row"><div style="font-size:12px;font-weight:600;color:#fff;">${u.email||'Unknown'}</div><div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Joined ${u.created_at?new Date(u.created_at).toLocaleDateString():'--'}</div></div>`).join('')||'<div style="color:var(--text-muted);font-size:12px;">No users yet</div>';
 }
 
 async function genCode() {
@@ -1150,7 +1150,7 @@ async function genBulk() {
 
 
 
-// ══════════ BULK UPDATE BATCH ══════════
+// - BULK UPDATE BATCH -
 async function bulkUpdateBatch(batchId) {
   const cards = INV.filter(r => r.batch_id === batchId);
   if (!cards.length) return toast('No inventory cards linked to this batch', true);
@@ -1166,7 +1166,7 @@ async function bulkUpdateBatch(batchId) {
   modal.className = 'modal-bg open';
   modal.id = 'bulk-modal';
   modal.innerHTML = `<div class="modal" style="max-width:400px;">
-    <div class="modal-title">Bulk Update Batch #${batchId}<button class="modal-close" onclick="document.getElementById('bulk-modal').remove()">✕</button></div>
+    <div class="modal-title">Bulk Update Batch #${batchId}<button class="modal-close" onclick="document.getElementById('bulk-modal').remove()">x</button></div>
     ${html}
     <div class="factions">
       <button class="btn-a" onclick="confirmBulkUpdate('${batchId}')">Update All Cards</button>
@@ -1188,7 +1188,7 @@ async function confirmBulkUpdate(batchId) {
   toast(`${cards.length} cards updated to ${newStatus}!`);
 }
 
-// ══════════ EV RECALCULATOR ══════════
+// - EV RECALCULATOR -
 function openEVRecalc() {
   const cards = INV.filter(r => r.status !== 'Sold' && r.disposition === 'Grade');
   if (!cards.length) return toast('No grade candidates in inventory', true);
@@ -1196,13 +1196,13 @@ function openEVRecalc() {
   modal.className = 'modal-bg open';
   modal.id = 'recalc-modal';
   modal.innerHTML = `<div class="modal" style="max-width:680px;">
-    <div class="modal-title">EV Recalculator<button class="modal-close" onclick="document.getElementById('recalc-modal').remove()">✕</button></div>
+    <div class="modal-title">EV Recalculator<button class="modal-close" onclick="document.getElementById('recalc-modal').remove()">x</button></div>
     <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">Update PSA 10/9 comps and gem rates for your grade candidates. Leave blank to keep existing values.</div>
     <div style="max-height:400px;overflow-y:auto;">
       <table class="dtbl" style="min-width:400px;">
         <thead><tr><th>Player</th><th>Set / Parallel</th><th>Gem Rate</th><th>New PSA 10 $</th><th>New PSA 9 $</th></tr></thead>
         <tbody>${cards.map(r=>`<tr>
-          <td class="pl">${r.player||'—'}</td>
+          <td class="pl">${r.player||'--'}</td>
           <td style="font-size:11px;">${r.set_name||''} ${r.parallel||''}</td>
           <td><input type="number" step="0.01" placeholder="${r.gem_rate!=null?(r.gem_rate*100).toFixed(0)+'%':''}" id="rc-gem-${r.id}" style="width:70px;background:var(--surface-2);border:1px solid var(--border);color:#fff;padding:4px 6px;border-radius:4px;font-size:12px;outline:none;"></td>
           <td><input type="number" step="0.01" placeholder="${r.psa10!=null?'$'+r.psa10:''}" id="rc-p10-${r.id}" style="width:80px;background:var(--surface-2);border:1px solid var(--border);color:#fff;padding:4px 6px;border-radius:4px;font-size:12px;outline:none;"></td>
@@ -1238,7 +1238,7 @@ async function saveEVRecalc() {
   toast(`Updated comps for ${updated} card${updated!==1?'s':''}!`);
 }
 
-// ══════════ EXPORT CSV ══════════
+// - EXPORT CSV -
 function exportCSV() {
   const cards = invF.length ? invF : INV.filter(r => r.status !== 'Sold');
   if (!cards.length) return toast('No cards to export', true);
@@ -1254,8 +1254,7 @@ function exportCSV() {
       ev!=null?ev.toFixed(2):'', evp, r.disposition||'', r.status||'', r.batch_id||'', r.notes||''
     ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(',');
   });
-  const csv = [headers.join(','), ...rows].join('
-');
+  const csv = [headers.join(','), ...rows].join('\n');
   const blob = new Blob([csv], {type:'text/csv'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1264,7 +1263,7 @@ function exportCSV() {
   toast('CSV exported!');
 }
 
-// ══════════ PROFIT CHART ══════════
+// - PROFIT CHART -
 let profitChart = null;
 function renderProfitChart() {
   const sold = INV.filter(r => r.status === 'Sold' && r.date_sold).sort((a,b) => new Date(a.date_sold)-new Date(b.date_sold));
@@ -1302,7 +1301,7 @@ function renderProfitChart() {
   });
 }
 
-// ══════════ TOP PERFORMERS ══════════
+// - TOP PERFORMERS -
 function renderTopPerformers() {
   const graders = INV.filter(r => r.status !== 'Sold' && r.disposition === 'Grade' && r.gem_rate && r.psa10 && r.total_cost);
   const sorted = graders.map(r => ({...r, ev: calcEV(r), evp: calcEV(r)/r.total_cost})).sort((a,b) => b.evp - a.evp).slice(0,5);
@@ -1311,14 +1310,14 @@ function renderTopPerformers() {
   if (!sorted.length) { el.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:10px 0;">No grade candidates with EV data yet</div>'; return; }
   el.innerHTML = sorted.map((r,i) => `<div class="perf-row">
     <div>
-      <div class="perf-name">${i+1}. ${r.player||'—'}</div>
+      <div class="perf-name">${i+1}. ${r.player||'--'}</div>
       <div class="perf-set">${r.year||''} ${r.set_name||''} ${r.parallel||''}</div>
     </div>
     <div class="perf-ev" style="color:${r.evp>=1?'var(--green)':r.evp>=0.4?'var(--amber)':'#F87171'};">${(r.evp*100).toFixed(0)}%</div>
   </div>`).join('');
 }
 
-// ══════════ EDIT CARD ══════════
+// - EDIT CARD -
 function openEdit(id) {
   const r = INV.find(c => c.id === id);
   if (!r) return;
@@ -1406,12 +1405,12 @@ async function saveEdit() {
   toast('Card updated!');
 }
 
-// ══════════ HELPERS ══════════
+// - HELPERS -
 function calcEV(r){const n10=r.psa10*0.865,n9=(r.psa9||0)*0.865;return r.gem_rate*n10+(1-r.gem_rate)*n9-(r.total_cost||0);}
-function f$(v){if(v==null||isNaN(v))return'—';return(v<0?'-$':'$')+Math.abs(v).toFixed(2);}
+function f$(v){if(v==null||isNaN(v))return'--';return(v<0?'-$':'$')+Math.abs(v).toFixed(2);}
 function evBar(p){const pct=p*100,w=Math.min(Math.max(pct,0),200)/2,c=pct>=100?'#22C55E':pct>=40?'#F59E0B':'#CC0000';return`<div class="evw"><div class="evb"><div class="evf" style="width:${w.toFixed(0)}%;background:${c};"></div></div><span style="font-size:10px;color:${c};font-family:'Courier New',monospace;">${pct.toFixed(0)}%</span></div>`;}
-function sBdg(s){const m={Raw:'b-raw',Submitted:'b-sub',Graded:'b-grd',Listed:'b-lst',Sold:'b-sld'};return`<span class="bdg ${m[s]||'b-raw'}">${s||'—'}</span>`;}
-function dBdg(d){if(!d)return'—';if(d==='Grade')return`<span class="bdg b-grade">Grade</span>`;if(d==='Sell Raw')return`<span class="bdg b-sld">Sell Raw</span>`;if(d==='Hold')return`<span class="bdg b-hold">Hold</span>`;return`<span class="bdg b-raw">${d}</span>`;}
+function sBdg(s){const m={Raw:'b-raw',Submitted:'b-sub',Graded:'b-grd',Listed:'b-lst',Sold:'b-sld'};return`<span class="bdg ${m[s]||'b-raw'}">${s||'--'}</span>`;}
+function dBdg(d){if(!d)return'--';if(d==='Grade')return`<span class="bdg b-grade">Grade</span>`;if(d==='Sell Raw')return`<span class="bdg b-sld">Sell Raw</span>`;if(d==='Hold')return`<span class="bdg b-hold">Hold</span>`;return`<span class="bdg b-raw">${d}</span>`;}
 function g(id){return document.getElementById(id);}
 function gv(id){return(g(id)||{}).value||'';}
 function ni(id){const v=parseInt(gv(id));return isNaN(v)?null:v;}
