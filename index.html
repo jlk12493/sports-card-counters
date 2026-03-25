@@ -426,7 +426,7 @@ input.fi{flex:1;min-width:160px;}
       </div>
       <div class="twrap">
         <table class="dtbl">
-          <thead><tr><th>Card ID</th><th>Player</th><th>Year</th><th>Set</th><th>Sport</th><th>Total Cost</th><th>Sale Price</th><th>Fees</th><th>Ship Out</th><th>Net Proceeds</th><th>Profit</th></tr></thead>
+          <thead><tr><th></th><th>Card ID</th><th>Player</th><th>Year</th><th>Set</th><th>Sport</th><th>Total Cost</th><th>Sale Price</th><th>Fees</th><th>Ship Out</th><th>Net Proceeds</th><th>Profit</th></tr></thead>
           <tbody id="sold-tbody"></tbody>
         </table>
       </div>
@@ -868,6 +868,9 @@ function renderSold() {
     const proc=(r.sale_price||0)-(r.fees||0)-(r.ship_out||0);
     const prof=proc-(r.price||0)-(r.ship||0);
     return `<tr>
+      <td style="display:flex;gap:4px;">
+        <button style="background:transparent;border:none;color:#555;cursor:pointer;font-size:13px;padding:2px 5px;border-radius:3px;" onmouseover="this.style.color='#60A5FA'" onmouseout="this.style.color='#555'" onclick="openEdit('${r.id}')" title="Edit">Edit</button>
+      </td>
       <td class="mo" style="font-size:10px;color:#555;">${r.card_id||'--'}</td>
       <td class="pl">${r.player||'--'}</td>
       <td class="mo">${r.year||'--'}</td>
