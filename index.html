@@ -970,31 +970,36 @@ function handleImport(input) {
       const rows=XLSX.utils.sheet_to_json(ws,{defval:null});
       // Map columns from your spreadsheet format
       importRows=rows.filter(r=>r['Player']||r['player']).map(r=>{
-        const price=parseFloat(r['Purchase Price']||r['price']||0)||0;
-        const ship=parseFloat(r['Inbound Ship / Tax']||r['ship']||0)||0;
-        const grade=parseFloat(r['Grading Cost']||r['grading']||0)||0;
+        const price=parseFloat(r['Purchase Price'])||0;
+        const ship=parseFloat(r['Inbound Ship / Tax'])||0;
+        const grade=parseFloat(r['Grading Cost'])||0;
+        const pf = (v)=>{ const n=parseFloat(v); return isNaN(n)?null:n; };
+        const pi = (v)=>{ const n=parseInt(v); return isNaN(n)?null:n; };
+        const ps = (v)=>{ if(!v||v==='NaN'||v==='null')return null; const s=String(v).trim(); return s.length>0?s:null; };
+        const pd = (v)=>{ if(!v||v==='NaN'||v==='Invalid Date')return null; try{ const d=new Date(v); if(isNaN(d.getTime()))return null; return d.toISOString().split('T')[0]; }catch(e){return null;} };
         return {
           user_id:CU.id,
-          card_id:r['Card ID']||r['card_id']||null,
-          player:r['Player']||r['player']||null,
-          year:parseInt(r['Year']||r['year'])||null,
-          set_name:r['Set / Brand']||r['set_name']||null,
-          parallel:r['Card / Parallel']||r['parallel']||null,
-          card_no:String(r['Card No.']||r['card_no']||''),
-          sport:r['Sport']||r['sport']||null,
-          date_acquired:r['Date Acquired']||r['date_acquired']||null,
-          source:r['Purchase Source']||r['source']||null,
+          card_id:ps(r['Card ID']),
+          player:ps(r['Player']),
+          year:pi(r['Year']),
+          set_name:ps(r['Set / Brand']),
+          parallel:ps(r['Card / Parallel']),
+          card_no:ps(r['Card No.']),
+          sport:ps(r['Sport']),
+          date_acquired:pd(r['Date Acquired']),
+          source:ps(r['Purchase Source']),
           price:price, ship:ship, grading:grade,
           total_cost:price+ship+grade,
-          gem_rate:parseFloat(r['Gem Rate']||r['gem_rate'])||null,
-          psa10:parseFloat(r['Gross PSA 10 Value']||r['psa10'])||null,
-          psa9:parseFloat(r['Gross PSA 9 Value']||r['psa9'])||null,
-          disposition:r['Disposition']||r['disposition']||'Grade',
-          status:r['Status']||r['status']||'Raw',
-          batch_id:r['Submission Batch ID']||r['batch_id']||null,
-          sale_price:parseFloat(r['Sale Price']||r['sale_price'])||null,
-          fees:parseFloat(r['Platform Fees']||r['fees'])||null,
-          ship_out:parseFloat(r['Shipping Out']||r['ship_out'])||null,
+          gem_rate:pf(r['Gem Rate']),
+          psa10:pf(r['Gross PSA 10 Value']),
+          psa9:pf(r['Gross PSA 9 Value']),
+          disposition:ps(r['Disposition'])||'Grade',
+          status:ps(r['Status'])||'Raw',
+          batch_id:ps(r['Submission Batch ID']),
+          sale_price:pf(r['Sale Price']),
+          fees:pf(r['Platform Fees']),
+          ship_out:pf(r['Shipping Out']),
+          notes:ps(r['Notes']),
         };
       });
       g('import-preview').style.display='block';
