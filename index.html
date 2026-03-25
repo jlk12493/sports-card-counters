@@ -2,240 +2,225 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Sports Card Counters | EV Portfolio Tool</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <style>
-:root {
-  --red: #CC0000;
-  --red-light: #FF3333;
-  --red-dark: #990000;
-  --black: #0A0A0A;
-  --near-black: #141414;
-  --surface: #1A1A1A;
-  --surface-2: #222222;
-  --surface-3: #2A2A2A;
-  --border: #333333;
-  --border-light: #444444;
-  --text: #FFFFFF;
-  --text-secondary: #BBBBBB;
-  --text-muted: #777777;
-  --green: #22C55E;
-  --amber: #F59E0B;
-  --blue: #3B82F6;
-  --radius: 8px;
+:root{
+  --red:#CC0000;--red-light:#FF3333;--black:#0A0A0A;--near-black:#141414;
+  --surface:#1A1A1A;--surface-2:#222;--surface-3:#2A2A2A;
+  --border:#333;--text:#FFF;--text-2:#BBB;--text-muted:#777;
+  --green:#22C55E;--amber:#F59E0B;--blue:#3B82F6;--r:8px;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--black);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;min-height:100vh;}
 
-/* ── AUTH SCREEN ── */
-#auth-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:var(--black);}
-.auth-wrap{width:100%;max-width:420px;}
-.auth-logo{text-align:center;margin-bottom:32px;}
-.auth-slab{display:inline-flex;flex-direction:column;align-items:center;background:#fff;border-radius:4px;padding:6px 10px;gap:3px;margin-bottom:12px;}
-.auth-slab .psa-band{background:var(--red);color:#fff;font-size:8px;font-weight:900;letter-spacing:1px;padding:2px 6px;width:100%;text-align:center;}
-.auth-slab .psa-grade{font-size:24px;font-weight:900;color:#000;line-height:1;}
-.auth-logo h1{font-size:22px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#fff;}
-.auth-logo p{font-size:11px;color:var(--red);letter-spacing:3px;text-transform:uppercase;font-weight:600;margin-top:4px;}
-.auth-card{background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--red);border-radius:var(--radius);padding:28px;}
-.auth-tabs{display:flex;gap:2px;margin-bottom:24px;background:var(--surface-2);border-radius:6px;padding:4px;}
-.auth-tab{flex:1;padding:8px;text-align:center;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);cursor:pointer;border-radius:4px;border:none;background:transparent;transition:all 0.15s;}
-.auth-tab.active{background:var(--red);color:#fff;}
-.auth-field{margin-bottom:16px;}
-.auth-field label{display:block;font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;}
-.auth-field input{width:100%;background:var(--surface-2);border:1px solid var(--border);color:#fff;padding:10px 12px;border-radius:6px;font-size:14px;outline:none;transition:border-color 0.15s;}
-.auth-field input:focus{border-color:var(--red);}
-.auth-field input::placeholder{color:var(--text-muted);}
-.btn-primary{width:100%;background:var(--red);color:#fff;border:none;padding:12px;border-radius:6px;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:background 0.15s;margin-top:4px;}
-.btn-primary:hover{background:var(--red-light);}
-.btn-primary:disabled{opacity:0.5;cursor:not-allowed;}
-.auth-msg{font-size:12px;text-align:center;margin-top:12px;padding:10px;border-radius:6px;}
-.auth-msg.error{background:rgba(204,0,0,0.15);color:#F87171;border:1px solid rgba(204,0,0,0.3);}
-.auth-msg.success{background:rgba(34,197,94,0.15);color:#4ADE80;border:1px solid rgba(34,197,94,0.3);}
-.auth-divider{text-align:center;font-size:11px;color:var(--text-muted);margin:12px 0;}
-
-/* ── MAIN APP ── */
+/* AUTH */
+#auth-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
 #app-screen{display:none;}
-.slab-header{background:var(--near-black);border-bottom:3px solid var(--red);position:sticky;top:0;z-index:100;}
-.slab-top{background:var(--red);height:3px;}
-.header-inner{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;gap:12px;}
-.brand{display:flex;align-items:center;gap:10px;}
-.mini-slab{width:30px;height:44px;background:#fff;border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2px;gap:1px;flex-shrink:0;}
-.mini-slab .mb{background:var(--red);color:#fff;font-size:5px;font-weight:900;width:100%;text-align:center;padding:1px 0;letter-spacing:0.5px;}
-.mini-slab .mg{font-size:13px;font-weight:900;color:#000;line-height:1;}
-.brand-text h1{font-size:15px;font-weight:800;color:#fff;letter-spacing:1.5px;text-transform:uppercase;}
-.brand-text p{font-size:9px;color:var(--red);letter-spacing:2px;text-transform:uppercase;font-weight:600;}
-.header-nav{display:flex;gap:2px;flex-wrap:wrap;}
-.nav-tab{padding:6px 12px;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--text-muted);background:transparent;border:none;cursor:pointer;border-radius:4px 4px 0 0;transition:all 0.15s;border-bottom:2px solid transparent;}
-.nav-tab:hover{color:#fff;background:var(--surface);}
-.nav-tab.active{color:var(--red);border-bottom-color:var(--red);background:var(--surface);}
-.nav-tab.admin-tab{color:#F59E0B;}
-.nav-tab.admin-tab.active{color:#F59E0B;border-bottom-color:#F59E0B;}
-.header-user{display:flex;align-items:center;gap:10px;flex-shrink:0;}
-.user-email{font-size:11px;color:var(--text-muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.btn-logout{background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:5px 10px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;letter-spacing:0.5px;transition:all 0.15s;}
-.btn-logout:hover{border-color:var(--red);color:var(--red);}
+.auth-wrap{width:100%;max-width:420px;}
+.auth-logo{text-align:center;margin-bottom:28px;}
+.auth-slab{display:inline-flex;flex-direction:column;align-items:center;background:#fff;border-radius:4px;padding:6px 10px;gap:2px;margin-bottom:10px;}
+.psa-band{background:var(--red);color:#fff;font-size:7px;font-weight:900;letter-spacing:1px;padding:2px 6px;width:100%;text-align:center;}
+.psa-grade{font-size:22px;font-weight:900;color:#000;line-height:1;}
+.auth-logo h1{font-size:20px;font-weight:800;letter-spacing:2px;text-transform:uppercase;}
+.auth-logo p{font-size:10px;color:var(--red);letter-spacing:3px;text-transform:uppercase;font-weight:600;margin-top:3px;}
+.auth-card{background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--red);border-radius:var(--r);padding:24px;}
+.auth-tabs{display:flex;gap:2px;margin-bottom:20px;background:var(--surface-2);border-radius:6px;padding:3px;}
+.auth-tab{flex:1;padding:7px;text-align:center;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);cursor:pointer;border-radius:4px;border:none;background:transparent;transition:all .15s;}
+.auth-tab.active{background:var(--red);color:#fff;}
+.afield{margin-bottom:14px;}
+.afield label{display:block;font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
+.afield input{width:100%;background:var(--surface-2);border:1px solid var(--border);color:#fff;padding:10px 12px;border-radius:6px;font-size:14px;outline:none;}
+.afield input:focus{border-color:var(--red);}
+.afield input::placeholder{color:var(--text-muted);}
+.btn-p{width:100%;background:var(--red);color:#fff;border:none;padding:11px;border-radius:6px;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;margin-top:4px;}
+.btn-p:hover{background:var(--red-light);}
+.btn-p:disabled{opacity:.5;cursor:not-allowed;}
+.amsg{font-size:12px;text-align:center;margin-top:10px;padding:9px;border-radius:6px;display:none;}
+.amsg.error{background:rgba(204,0,0,.15);color:#F87171;border:1px solid rgba(204,0,0,.3);}
+.amsg.success{background:rgba(34,197,94,.15);color:#4ADE80;border:1px solid rgba(34,197,94,.3);}
+.auth-note{text-align:center;font-size:11px;color:var(--text-muted);margin-top:10px;}
 
-/* ── MAIN CONTENT ── */
-.main{padding:20px;max-width:1600px;margin:0 auto;}
-.section{display:none;}
-.section.active{display:block;}
+/* HEADER */
+.hdr{background:var(--near-black);border-bottom:3px solid var(--red);position:sticky;top:0;z-index:100;}
+.hdr-top{background:var(--red);height:3px;}
+.hdr-inner{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;gap:10px;flex-wrap:wrap;}
+.brand{display:flex;align-items:center;gap:8px;}
+.mini-slab{width:26px;height:38px;background:#fff;border-radius:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2px;gap:1px;flex-shrink:0;}
+.mini-slab .mb{background:var(--red);color:#fff;font-size:4px;font-weight:900;width:100%;text-align:center;padding:1px 0;}
+.mini-slab .mg{font-size:11px;font-weight:900;color:#000;line-height:1;}
+.brand-text h1{font-size:13px;font-weight:800;color:#fff;letter-spacing:1.5px;text-transform:uppercase;}
+.brand-text p{font-size:8px;color:var(--red);letter-spacing:2px;text-transform:uppercase;font-weight:600;}
+.hnav{display:flex;gap:1px;flex-wrap:wrap;}
+.ntab{padding:5px 10px;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-muted);background:transparent;border:none;cursor:pointer;border-radius:3px 3px 0 0;border-bottom:2px solid transparent;transition:all .15s;}
+.ntab:hover{color:#fff;}
+.ntab.active{color:var(--red);border-bottom-color:var(--red);}
+.ntab.atab{color:var(--amber);}
+.ntab.atab.active{border-bottom-color:var(--amber);}
+.huser{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.uemail{font-size:10px;color:var(--text-muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.btn-out{background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:4px 8px;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;}
+.btn-out:hover{border-color:var(--red);color:var(--red);}
 
-/* ── KPI GRID ── */
-.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:20px;}
-.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;position:relative;overflow:hidden;}
-.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--red);}
-.kpi-label{font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;}
-.kpi-value{font-size:22px;font-weight:800;color:#fff;line-height:1;}
-.kpi-value.green{color:var(--green);}
-.kpi-value.red{color:var(--red);}
-.kpi-sub{font-size:11px;color:var(--text-muted);margin-top:4px;}
+/* LAYOUT */
+.main{padding:16px;max-width:1600px;margin:0 auto;}
+.sec{display:none;}.sec.active{display:block;}
 
-/* ── SECTION TITLE ── */
-.section-title{font-size:11px;font-weight:700;color:var(--text-secondary);letter-spacing:2px;text-transform:uppercase;display:flex;align-items:center;gap:8px;margin-bottom:14px;}
-.section-title::before{content:'';display:inline-block;width:3px;height:14px;background:var(--red);border-radius:2px;}
+/* KPI */
+.kgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:16px;}
+.kcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;position:relative;overflow:hidden;}
+.kcard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--red);}
+.klbl{font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
+.kval{font-size:20px;font-weight:800;color:#fff;line-height:1;}
+.kval.g{color:var(--green);}.kval.r{color:var(--red);}
+.ksub{font-size:10px;color:var(--text-muted);margin-top:3px;}
 
-/* ── PANELS ── */
-.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
-.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
-.panel-title{font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+/* PANELS */
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;}
+.ptitle{font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.stitle{font-size:10px;font-weight:700;color:var(--text-2);letter-spacing:2px;text-transform:uppercase;display:flex;align-items:center;gap:6px;margin-bottom:12px;}
+.stitle::before{content:'';display:inline-block;width:3px;height:12px;background:var(--red);border-radius:2px;}
 
-/* ── TABLES ── */
-.table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border);}
-.data-table{width:100%;border-collapse:collapse;min-width:800px;}
-.data-table thead{background:var(--near-black);}
-.data-table th{padding:9px 12px;font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;text-align:left;border-bottom:2px solid var(--red);white-space:nowrap;}
-.data-table td{padding:9px 12px;font-size:12px;color:var(--text-secondary);border-bottom:1px solid #222;white-space:nowrap;}
-.data-table tr:hover td{background:rgba(255,255,255,0.02);}
-.data-table tr:last-child td{border-bottom:none;}
-.data-table td.mono{font-family:'Courier New',monospace;}
-.data-table td.player{font-weight:600;color:#fff;}
-.data-table td.green{color:var(--green);}
-.data-table td.red-text{color:#F87171;}
-.data-table td.amber{color:var(--amber);}
+/* TABLES */
+.twrap{overflow-x:auto;border-radius:var(--r);border:1px solid var(--border);}
+.dtbl{width:100%;border-collapse:collapse;min-width:700px;}
+.dtbl thead{background:var(--near-black);}
+.dtbl th{padding:8px 10px;font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;text-align:left;border-bottom:2px solid var(--red);white-space:nowrap;}
+.dtbl td{padding:8px 10px;font-size:12px;color:var(--text-2);border-bottom:1px solid #1e1e1e;white-space:nowrap;}
+.dtbl tr:hover td{background:rgba(255,255,255,.02);}
+.dtbl tr:last-child td{border-bottom:none;}
+.dtbl td.mo{font-family:'Courier New',monospace;}
+.dtbl td.pl{font-weight:600;color:#fff;}
+.dtbl td.gn{color:var(--green);}
+.dtbl td.rd{color:#F87171;}
+.stbl{width:100%;border-collapse:collapse;}
+.stbl th{font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;padding:5px 8px;text-align:left;border-bottom:1px solid var(--border);}
+.stbl td{padding:7px 8px;font-size:12px;color:var(--text-2);border-bottom:1px solid #1e1e1e;}
+.stbl tr:last-child td{border-bottom:none;}
+.stbl td:not(:first-child){text-align:right;font-family:'Courier New',monospace;}
 
-/* ── STATUS TABLE ── */
-.status-table{width:100%;border-collapse:collapse;}
-.status-table th{font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;padding:6px 10px;text-align:left;border-bottom:1px solid var(--border);}
-.status-table td{padding:8px 10px;font-size:13px;color:var(--text-secondary);border-bottom:1px solid #1e1e1e;}
-.status-table tr:last-child td{border-bottom:none;}
-.status-table td:not(:first-child){text-align:right;font-family:'Courier New',monospace;}
+/* BADGES */
+.bdg{display:inline-block;padding:2px 7px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;}
+.b-raw{background:#2a2a2a;color:#888;border:1px solid #444;}
+.b-sub{background:rgba(59,130,246,.15);color:#60A5FA;border:1px solid rgba(59,130,246,.3);}
+.b-grd{background:rgba(34,197,94,.15);color:#4ADE80;border:1px solid rgba(34,197,94,.3);}
+.b-lst{background:rgba(245,158,11,.15);color:#FCD34D;border:1px solid rgba(245,158,11,.3);}
+.b-sld{background:rgba(204,0,0,.15);color:#F87171;border:1px solid rgba(204,0,0,.3);}
+.b-buy{background:rgba(34,197,94,.15);color:#4ADE80;border:1px solid rgba(34,197,94,.3);}
+.b-pass{background:rgba(204,0,0,.15);color:#F87171;border:1px solid rgba(204,0,0,.3);}
+.b-hold{background:rgba(245,158,11,.15);color:#FCD34D;border:1px solid rgba(245,158,11,.3);}
+.b-grade{background:rgba(59,130,246,.15);color:#60A5FA;border:1px solid rgba(59,130,246,.3);}
 
-/* ── BADGES ── */
-.badge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;}
-.badge-raw{background:#2a2a2a;color:#888;border:1px solid #444;}
-.badge-submitted{background:rgba(59,130,246,0.15);color:#60A5FA;border:1px solid rgba(59,130,246,0.3);}
-.badge-graded{background:rgba(34,197,94,0.15);color:#4ADE80;border:1px solid rgba(34,197,94,0.3);}
-.badge-listed{background:rgba(245,158,11,0.15);color:#FCD34D;border:1px solid rgba(245,158,11,0.3);}
-.badge-sold{background:rgba(204,0,0,0.15);color:#F87171;border:1px solid rgba(204,0,0,0.3);}
-.badge-grade{background:rgba(59,130,246,0.15);color:#60A5FA;border:1px solid rgba(59,130,246,0.3);}
-.badge-sellraw{background:rgba(204,0,0,0.15);color:#F87171;border:1px solid rgba(204,0,0,0.3);}
-.badge-hold{background:rgba(245,158,11,0.15);color:#FCD34D;border:1px solid rgba(245,158,11,0.3);}
-.badge-buy{background:rgba(34,197,94,0.15);color:#4ADE80;border:1px solid rgba(34,197,94,0.3);}
-.badge-pass{background:rgba(204,0,0,0.15);color:#F87171;border:1px solid rgba(204,0,0,0.3);}
-.badge-current{background:rgba(34,197,94,0.1);color:#4ADE80;border:1px solid rgba(34,197,94,0.2);}
-.badge-pending{background:rgba(245,158,11,0.15);color:#FCD34D;border:1px solid rgba(245,158,11,0.3);}
-.badge-received{background:rgba(34,197,94,0.15);color:#4ADE80;border:1px solid rgba(34,197,94,0.3);}
-
-/* ── FILTER BAR ── */
-.filter-bar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
-.fi{background:var(--surface);border:1px solid var(--border);color:#fff;padding:7px 12px;border-radius:6px;font-size:13px;outline:none;}
+/* FILTER BAR */
+.fbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;}
+.fi{background:var(--surface);border:1px solid var(--border);color:#fff;padding:6px 10px;border-radius:5px;font-size:12px;outline:none;}
 .fi:focus{border-color:var(--red);}
 .fi::placeholder{color:var(--text-muted);}
-input.fi{flex:1;min-width:180px;}
-select.fi{cursor:pointer;}
-.filter-count{font-size:11px;color:var(--text-muted);padding:7px 0;}
+input.fi{flex:1;min-width:160px;}
+.fcnt{font-size:10px;color:var(--text-muted);}
 
-/* ── EV BAR ── */
-.ev-wrap{display:flex;align-items:center;gap:6px;}
-.ev-bar{height:4px;border-radius:2px;background:var(--border);width:60px;overflow:hidden;}
-.ev-fill{height:100%;border-radius:2px;}
+/* EV BAR */
+.evw{display:flex;align-items:center;gap:5px;}
+.evb{height:4px;border-radius:2px;background:var(--border);width:55px;overflow:hidden;}
+.evf{height:100%;border-radius:2px;}
 
-/* ── ADD FORM ── */
-.add-form{background:var(--surface);border:1px solid var(--border);border-top:2px solid var(--red);border-radius:var(--radius);padding:20px;margin-bottom:20px;}
-.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:16px;}
-.form-field label{display:block;font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
-.form-field input,.form-field select{width:100%;background:var(--surface-2);border:1px solid var(--border);color:#fff;padding:8px 10px;border-radius:5px;font-size:13px;outline:none;}
-.form-field input:focus,.form-field select:focus{border-color:var(--red);}
-.form-field select option{background:var(--surface-2);}
-.form-actions{display:flex;gap:10px;align-items:center;}
-.btn-add{background:var(--red);color:#fff;border:none;padding:9px 20px;border-radius:6px;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:background 0.15s;}
-.btn-add:hover{background:var(--red-light);}
-.btn-cancel{background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:9px 16px;border-radius:6px;font-size:12px;cursor:pointer;}
-.btn-cancel:hover{border-color:var(--text-muted);color:#fff;}
-.btn-show-form{background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:7px 14px;border-radius:6px;font-size:11px;font-weight:700;letter-spacing:0.5px;cursor:pointer;transition:all 0.15s;}
-.btn-show-form:hover{border-color:var(--red);color:var(--red);}
-
-/* ── DELETE BTN ── */
-.btn-del{background:transparent;border:none;color:#444;cursor:pointer;font-size:14px;padding:2px 6px;border-radius:3px;transition:color 0.15s;}
+/* FORMS */
+.aform{background:var(--surface);border:1px solid var(--border);border-top:2px solid var(--red);border-radius:var(--r);padding:16px;margin-bottom:16px;}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:14px;}
+.ff label{display:block;font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+.ff input,.ff select{width:100%;background:var(--surface-2);border:1px solid var(--border);color:#fff;padding:7px 9px;border-radius:5px;font-size:12px;outline:none;}
+.ff input:focus,.ff select:focus{border-color:var(--red);}
+.ff select option{background:var(--surface-2);}
+.factions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.btn-a{background:var(--red);color:#fff;border:none;padding:8px 18px;border-radius:5px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;}
+.btn-a:hover{background:var(--red-light);}
+.btn-c{background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:8px 14px;border-radius:5px;font-size:11px;cursor:pointer;}
+.btn-c:hover{color:#fff;border-color:var(--text-muted);}
+.btn-s{background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:6px 12px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.5px;cursor:pointer;}
+.btn-s:hover{border-color:var(--red);color:var(--red);}
+.btn-del{background:transparent;border:none;color:#444;cursor:pointer;font-size:13px;padding:2px 5px;border-radius:3px;}
 .btn-del:hover{color:#F87171;}
 
-/* ── PAGINATION ── */
-.pagination{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:12px;}
-.page-btn{background:var(--surface);border:1px solid var(--border);color:var(--text-secondary);padding:5px 10px;border-radius:4px;font-size:12px;cursor:pointer;}
-.page-btn:hover{border-color:var(--red);color:#fff;}
-.page-btn.active{background:var(--red);border-color:var(--red);color:#fff;}
+/* PAGINATION */
+.pag{display:flex;align-items:center;justify-content:flex-end;gap:5px;margin-top:10px;}
+.pbtn{background:var(--surface);border:1px solid var(--border);color:var(--text-2);padding:4px 9px;border-radius:4px;font-size:11px;cursor:pointer;}
+.pbtn:hover{border-color:var(--red);}
+.pbtn.active{background:var(--red);border-color:var(--red);color:#fff;}
 
-/* ── ADMIN PANEL ── */
-.admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
-.code-list{display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto;}
-.code-row{display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;}
-.code-val{font-family:'Courier New',monospace;font-size:14px;font-weight:700;color:#fff;letter-spacing:1px;}
-.code-status{font-size:11px;}
-.user-list{display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto;}
-.user-row{background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;}
-.user-email-disp{font-size:13px;color:#fff;font-weight:600;}
-.user-date{font-size:11px;color:var(--text-muted);margin-top:2px;}
-.gen-code-wrap{display:flex;gap:8px;margin-bottom:16px;}
-.gen-code-input{flex:1;background:var(--surface-2);border:1px solid var(--border);color:#fff;padding:8px 12px;border-radius:6px;font-size:13px;outline:none;font-family:'Courier New',monospace;}
-.gen-code-input:focus{border-color:var(--red);}
-.btn-gen{background:var(--red);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:12px;font-weight:700;letter-spacing:1px;cursor:pointer;}
-.btn-gen:hover{background:var(--red-light);}
+/* EMPTY */
+.empty{text-align:center;padding:50px 20px;color:var(--text-muted);}
+.empty-icon{font-size:36px;margin-bottom:10px;opacity:.4;}
+.empty-title{font-size:14px;font-weight:600;color:var(--text-2);margin-bottom:4px;}
 
-/* ── DEF BOX ── */
-.def-box{background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--red);border-radius:6px;padding:14px 16px;font-size:12px;color:var(--text-muted);line-height:1.7;}
-
-/* ── BATCH CARDS ── */
-.batch-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px;}
-.batch-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);}
-.batch-id-text{font-size:16px;font-weight:800;color:#fff;}
-.batch-meta{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px;}
-.bstat-label{font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;}
-.bstat-val{font-size:15px;font-weight:700;color:#fff;font-family:'Courier New',monospace;}
-
-/* ── EMPTY STATE ── */
-.empty-state{text-align:center;padding:60px 20px;color:var(--text-muted);}
-.empty-icon{font-size:40px;margin-bottom:12px;opacity:0.4;}
-.empty-title{font-size:15px;font-weight:600;color:var(--text-secondary);margin-bottom:6px;}
-.empty-sub{font-size:13px;}
-
-/* ── TOAST ── */
-#toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);color:#fff;padding:12px 18px;border-radius:8px;font-size:13px;font-weight:600;z-index:9999;transform:translateY(100px);opacity:0;transition:all 0.3s;}
+/* TOAST */
+#toast{position:fixed;bottom:20px;right:20px;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);color:#fff;padding:10px 16px;border-radius:7px;font-size:12px;font-weight:600;z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s;}
 #toast.show{transform:translateY(0);opacity:1;}
-#toast.error{border-left-color:var(--red);}
+#toast.err{border-left-color:var(--red);}
 
-/* ── LOADING ── */
-#loading{position:fixed;inset:0;background:var(--black);display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:16px;}
-.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--red);border-radius:50%;animation:spin 0.8s linear infinite;}
-@keyframes spin{to{transform:rotate(360deg);}}
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--red);border-radius:var(--r);padding:20px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;}
+.modal-title{font-size:14px;font-weight:700;color:#fff;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;}
+.modal-close{background:transparent;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;line-height:1;}
+.modal-close:hover{color:#fff;}
 
-@media(max-width:1200px){.kpi-grid{grid-template-columns:repeat(3,1fr);}}
-@media(max-width:768px){.kpi-grid{grid-template-columns:repeat(2,1fr);}.dash-grid,.admin-grid{grid-template-columns:1fr;}.batch-meta{grid-template-columns:repeat(2,1fr);}}
+/* SCANNER */
+.scan-area{background:var(--surface-2);border:2px dashed var(--border);border-radius:var(--r);padding:20px;text-align:center;margin-bottom:14px;cursor:pointer;transition:border-color .2s;}
+.scan-area:hover{border-color:var(--red);}
+.scan-area input[type=file]{display:none;}
+#scan-preview{width:100%;max-height:200px;object-fit:contain;border-radius:6px;margin-bottom:10px;display:none;}
+.scan-status{font-size:12px;color:var(--text-muted);margin-bottom:12px;min-height:18px;}
+.scan-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.scan-field label{display:block;font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+.scan-field input{width:100%;background:var(--surface-3);border:1px solid var(--border);color:#fff;padding:7px 9px;border-radius:5px;font-size:12px;outline:none;}
+.scan-field input:focus{border-color:var(--red);}
+.scan-tabs{display:flex;gap:4px;margin-bottom:14px;}
+.scan-tab{flex:1;padding:7px;text-align:center;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-muted);cursor:pointer;border-radius:4px;border:1px solid var(--border);background:transparent;}
+.scan-tab.active{background:var(--red);color:#fff;border-color:var(--red);}
+
+/* IMPORT */
+.import-drop{background:var(--surface-2);border:2px dashed var(--border);border-radius:var(--r);padding:30px 20px;text-align:center;cursor:pointer;transition:border-color .2s;margin-bottom:14px;}
+.import-drop:hover,.import-drop.dragover{border-color:var(--red);}
+.import-drop input{display:none;}
+.import-preview{background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--text-2);display:none;}
+
+/* ADMIN */
+.agrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.code-row{display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:8px 12px;margin-bottom:6px;}
+.code-val{font-family:'Courier New',monospace;font-size:13px;font-weight:700;color:#fff;}
+.user-row{background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:8px 12px;margin-bottom:6px;}
+.ulist{max-height:380px;overflow-y:auto;}
+.gen-wrap{display:flex;gap:6px;margin-bottom:12px;}
+.gen-inp{flex:1;background:var(--surface-2);border:1px solid var(--border);color:#fff;padding:7px 10px;border-radius:5px;font-size:12px;outline:none;font-family:'Courier New',monospace;}
+.gen-inp:focus{border-color:var(--red);}
+.btn-gen{background:var(--red);color:#fff;border:none;padding:7px 14px;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;}
+
+/* DEF BOX */
+.defbox{background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--red);border-radius:5px;padding:12px 14px;font-size:11px;color:var(--text-muted);line-height:1.7;}
+
+/* BATCH CARD */
+.bcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:12px;}
+.bhdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.bid{font-size:15px;font-weight:800;color:#fff;}
+.bmeta{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px;}
+.bsl{font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;}
+.bsv{font-size:14px;font-weight:700;color:#fff;font-family:'Courier New',monospace;}
+
+@media(max-width:1100px){.kgrid{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:700px){.kgrid{grid-template-columns:repeat(2,1fr);}.dgrid,.agrid{grid-template-columns:1fr;}.bmeta{grid-template-columns:repeat(2,1fr);}}
 </style>
 </head>
 <body>
 
-<!-- LOADING -->
-<div id="loading" style="display:none;">
-  <div class="spinner"></div>
-  <div style="font-size:12px;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;">Loading...</div>
-</div>
-
-<!-- TOAST -->
 <div id="toast"></div>
 
-<!-- ══════════════════ AUTH SCREEN ══════════════════ -->
-<div id="auth-screen" style="display:flex;">
+<!-- ═══ AUTH ═══ -->
+<div id="auth-screen">
   <div class="auth-wrap">
     <div class="auth-logo">
       <div class="auth-slab">
@@ -248,291 +233,232 @@ select.fi{cursor:pointer;}
     </div>
     <div class="auth-card">
       <div class="auth-tabs">
-        <button class="auth-tab active" onclick="switchAuthTab('login')">Sign In</button>
-        <button class="auth-tab" onclick="switchAuthTab('register')">Register</button>
+        <button class="auth-tab active" onclick="switchTab('login')">Sign In</button>
+        <button class="auth-tab" onclick="switchTab('register')">Register</button>
       </div>
-
-      <!-- LOGIN -->
       <div id="tab-login">
-        <div class="auth-field">
-          <label>Email</label>
-          <input type="email" id="login-email" placeholder="your@email.com" onkeydown="if(event.key==='Enter')doLogin()">
-        </div>
-        <div class="auth-field">
-          <label>Password</label>
-          <input type="password" id="login-pw" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
-        </div>
-        <button class="btn-primary" onclick="doLogin()" id="btn-login">Sign In</button>
-        <div id="login-msg"></div>
+        <div class="afield"><label>Email</label><input type="email" id="li-email" placeholder="your@email.com"></div>
+        <div class="afield"><label>Password</label><input type="password" id="li-pw" placeholder="••••••••"></div>
+        <button class="btn-p" id="btn-li" onclick="doLogin()">Sign In</button>
+        <div class="amsg" id="li-msg"></div>
       </div>
-
-      <!-- REGISTER -->
       <div id="tab-register" style="display:none;">
-        <div class="auth-field">
-          <label>Email</label>
-          <input type="email" id="reg-email" placeholder="your@email.com">
-        </div>
-        <div class="auth-field">
-          <label>Password</label>
-          <input type="password" id="reg-pw" placeholder="Min 6 characters">
-        </div>
-        <div class="auth-field">
-          <label>Invite Code</label>
-          <input type="text" id="reg-code" placeholder="SCC-2024-001" style="font-family:'Courier New',monospace;letter-spacing:1px;">
-        </div>
-        <button class="btn-primary" onclick="doRegister()" id="btn-register">Create Account</button>
-        <div id="register-msg"></div>
-        <div class="auth-divider">Premium Discord members only · Get your code from the server</div>
+        <div class="afield"><label>Email</label><input type="email" id="re-email" placeholder="your@email.com"></div>
+        <div class="afield"><label>Password</label><input type="password" id="re-pw" placeholder="Min 6 characters"></div>
+        <div class="afield"><label>Invite Code</label><input type="text" id="re-code" placeholder="SCC-2024-001" style="font-family:'Courier New',monospace;letter-spacing:1px;text-transform:uppercase;"></div>
+        <button class="btn-p" id="btn-re" onclick="doRegister()">Create Account</button>
+        <div class="amsg" id="re-msg"></div>
+        <div class="auth-note">Premium Discord members only</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════ MAIN APP ══════════════════ -->
+<!-- ═══ APP ═══ -->
 <div id="app-screen">
-  <header class="slab-header">
-    <div class="slab-top"></div>
-    <div class="header-inner">
+  <header class="hdr">
+    <div class="hdr-top"></div>
+    <div class="hdr-inner">
       <div class="brand">
-        <div class="mini-slab">
-          <div class="mb">PSA</div>
-          <div class="mg">10</div>
-          <div class="mb">GEM</div>
-        </div>
-        <div class="brand-text">
-          <h1>Sports Card Counters</h1>
-          <p>EV Portfolio Tool</p>
-        </div>
+        <div class="mini-slab"><div class="mb">PSA</div><div class="mg">10</div><div class="mb">GEM</div></div>
+        <div class="brand-text"><h1>Sports Card Counters</h1><p>EV Portfolio Tool</p></div>
       </div>
-      <nav class="header-nav" id="main-nav">
-        <button class="nav-tab active" onclick="showSection('dashboard',this)">Dashboard</button>
-        <button class="nav-tab" onclick="showSection('inventory',this)">Inventory</button>
-        <button class="nav-tab" onclick="showSection('submissions',this)">Submissions</button>
-        <button class="nav-tab" onclick="showSection('sold',this)">Sold</button>
-        <button class="nav-tab" onclick="showSection('buylog',this)">EV Buy Log</button>
+      <nav class="hnav" id="main-nav">
+        <button class="ntab active" onclick="goSec('dashboard',this)">Dashboard</button>
+        <button class="ntab" onclick="goSec('inventory',this)">Inventory</button>
+        <button class="ntab" onclick="goSec('submissions',this)">Submissions</button>
+        <button class="ntab" onclick="goSec('sold',this)">Sold</button>
+        <button class="ntab" onclick="goSec('buylog',this)">EV Buy Log</button>
       </nav>
-      <div class="header-user">
-        <span class="user-email" id="user-email-display"></span>
-        <button class="btn-logout" onclick="doLogout()">Sign Out</button>
+      <div class="huser">
+        <span class="uemail" id="u-email"></span>
+        <button class="btn-out" onclick="doLogout()">Sign Out</button>
       </div>
     </div>
   </header>
 
   <main class="main">
 
-    <!-- ── DASHBOARD ── -->
-    <div class="section active" id="section-dashboard">
-      <div class="kpi-grid" id="dash-kpis">
-        <div class="kpi-card"><div class="kpi-label">Realized Profit</div><div class="kpi-value green" id="kpi-profit">$0.00</div><div class="kpi-sub">All-time net</div></div>
-        <div class="kpi-card"><div class="kpi-label">Inventory (Acq Cost)</div><div class="kpi-value" id="kpi-inv">$0.00</div><div class="kpi-sub">On-hand basis</div></div>
-        <div class="kpi-card"><div class="kpi-label">Avg EV$ (Grade)</div><div class="kpi-value" id="kpi-ev-dollar">—</div><div class="kpi-sub">Per grading candidate</div></div>
-        <div class="kpi-card"><div class="kpi-label">Avg EV% (Grade)</div><div class="kpi-value" id="kpi-ev-pct">—</div><div class="kpi-sub">Expected return</div></div>
-        <div class="kpi-card"><div class="kpi-label">Active Submissions</div><div class="kpi-value" id="kpi-subs">0</div><div class="kpi-sub">At grader</div></div>
-        <div class="kpi-card"><div class="kpi-label">Total Cards</div><div class="kpi-value" id="kpi-total">0</div><div class="kpi-sub">In portfolio</div></div>
+    <!-- DASHBOARD -->
+    <div class="sec active" id="sec-dashboard">
+      <div class="kgrid">
+        <div class="kcard"><div class="klbl">Realized Profit</div><div class="kval g" id="k-profit">$0.00</div><div class="ksub">All-time net</div></div>
+        <div class="kcard"><div class="klbl">Inventory Cost</div><div class="kval" id="k-inv">$0.00</div><div class="ksub">On-hand basis</div></div>
+        <div class="kcard"><div class="klbl">Avg EV$</div><div class="kval" id="k-ev">—</div><div class="ksub">Grade candidates</div></div>
+        <div class="kcard"><div class="klbl">Avg EV%</div><div class="kval" id="k-evp">—</div><div class="ksub">Expected return</div></div>
+        <div class="kcard"><div class="klbl">Active Subs</div><div class="kval" id="k-subs">0</div><div class="ksub">At grader</div></div>
+        <div class="kcard"><div class="klbl">Total Cards</div><div class="kval" id="k-total">0</div><div class="ksub">In portfolio</div></div>
       </div>
-      <div class="dash-grid">
+      <div class="dgrid">
         <div class="panel">
-          <div class="panel-title">Inventory Status Summary</div>
-          <table class="status-table">
-            <thead><tr><th>Status</th><th>Cards</th><th>Acq Cost</th></tr></thead>
-            <tbody id="dash-status-tbody"></tbody>
-          </table>
+          <div class="ptitle">Inventory Status Summary</div>
+          <table class="stbl"><thead><tr><th>Status</th><th>Cards</th><th>Acq Cost</th></tr></thead><tbody id="d-status"></tbody></table>
         </div>
         <div class="panel">
-          <div class="panel-title">Definitions</div>
-          <div class="def-box">
-            <p>EV$ = estimated current value minus total cost basis.</p>
+          <div class="ptitle">Definitions</div>
+          <div class="defbox">
+            <p>EV$ = estimated value minus total cost basis.</p>
             <p>EV% = EV$ divided by total cost basis.</p>
-            <p>Average EV metrics only include cards with Disposition = Grade.</p>
-            <p>Inventory on Hand uses purchase price + shipping only. Grading cost stays in Total Cost Basis.</p>
-            <p>Use Disposition (Grade / Sell Raw / Hold) to keep raw exits from distorting grading metrics.</p>
+            <p>Avg EV metrics only include cards with Disposition = Grade.</p>
+            <p>Inventory cost uses purchase price + shipping only. Grading cost is in Total Cost Basis but excluded from on-hand inventory value.</p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ── INVENTORY ── -->
-    <div class="section" id="section-inventory">
-      <div id="inv-add-form" style="display:none;">
-        <div class="add-form">
-          <div class="section-title" style="margin-bottom:16px;">Add Card to Inventory</div>
-          <div class="form-grid">
-            <div class="form-field"><label>Card ID</label><input type="text" id="f-card-id" placeholder="SO-24-TN264-BASE-001"></div>
-            <div class="form-field"><label>Player</label><input type="text" id="f-player" placeholder="Shohei Ohtani"></div>
-            <div class="form-field"><label>Year</label><input type="number" id="f-year" placeholder="2024"></div>
-            <div class="form-field"><label>Set / Brand</label><input type="text" id="f-set" placeholder="Topps Now"></div>
-            <div class="form-field"><label>Card / Parallel</label><input type="text" id="f-parallel" placeholder="Base"></div>
-            <div class="form-field"><label>Card #</label><input type="text" id="f-cardno" placeholder="264"></div>
-            <div class="form-field"><label>Sport</label>
-              <select id="f-sport"><option value="">Select...</option><option>Baseball</option><option>Football</option><option>Basketball</option><option>Hockey</option><option>Soccer</option></select>
-            </div>
-            <div class="form-field"><label>Date Acquired</label><input type="date" id="f-date"></div>
-            <div class="form-field"><label>Purchase Source</label><input type="text" id="f-source" placeholder="eBay"></div>
-            <div class="form-field"><label>Purchase Price $</label><input type="number" step="0.01" id="f-price" placeholder="19.99"></div>
-            <div class="form-field"><label>Ship / Tax $</label><input type="number" step="0.01" id="f-ship" placeholder="2.50"></div>
-            <div class="form-field"><label>Grading Cost $</label><input type="number" step="0.01" id="f-grade-cost" placeholder="27.25"></div>
-            <div class="form-field"><label>Gem Rate</label><input type="number" step="0.01" id="f-gem" placeholder="0.75"></div>
-            <div class="form-field"><label>Gross PSA 10 $</label><input type="number" step="0.01" id="f-psa10" placeholder="150.00"></div>
-            <div class="form-field"><label>Gross PSA 9 $</label><input type="number" step="0.01" id="f-psa9" placeholder="50.00"></div>
-            <div class="form-field"><label>Disposition</label>
-              <select id="f-disp"><option value="Grade">Grade</option><option value="Sell Raw">Sell Raw</option><option value="Hold">Hold</option></select>
-            </div>
-            <div class="form-field"><label>Status</label>
-              <select id="f-status"><option value="Raw">Raw</option><option value="Submitted">Submitted</option><option value="Graded">Graded</option><option value="Listed">Listed</option></select>
-            </div>
-            <div class="form-field"><label>Submission Batch ID</label><input type="text" id="f-batch" placeholder="14442636"></div>
+    <!-- INVENTORY -->
+    <div class="sec" id="sec-inventory">
+      <!-- SCAN MODAL TRIGGER + IMPORT -->
+      <div class="fbar" style="margin-bottom:10px;">
+        <button class="btn-s" onclick="openScan()">📷 Scan Card</button>
+        <button class="btn-s" onclick="openImport()">📂 Import Spreadsheet</button>
+      </div>
+      <div id="inv-form" style="display:none;">
+        <div class="aform">
+          <div class="stitle" style="margin-bottom:14px;">Add Card</div>
+          <div class="fgrid">
+            <div class="ff"><label>Card ID</label><input type="text" id="f-cid" placeholder="SO-24-TN264-BASE-001"></div>
+            <div class="ff"><label>Player</label><input type="text" id="f-player" placeholder="Shohei Ohtani"></div>
+            <div class="ff"><label>Year</label><input type="number" id="f-year" placeholder="2024"></div>
+            <div class="ff"><label>Set / Brand</label><input type="text" id="f-set" placeholder="Topps Now"></div>
+            <div class="ff"><label>Card / Parallel</label><input type="text" id="f-par" placeholder="Base"></div>
+            <div class="ff"><label>Card #</label><input type="text" id="f-cno" placeholder="264"></div>
+            <div class="ff"><label>Sport</label><select id="f-sport"><option value="">Select...</option><option>Baseball</option><option>Football</option><option>Basketball</option><option>Hockey</option><option>Soccer</option></select></div>
+            <div class="ff"><label>Date Acquired</label><input type="date" id="f-date"></div>
+            <div class="ff"><label>Source</label><input type="text" id="f-src" placeholder="eBay"></div>
+            <div class="ff"><label>Purchase Price $</label><input type="number" step="0.01" id="f-price" placeholder="19.99"></div>
+            <div class="ff"><label>Ship / Tax $</label><input type="number" step="0.01" id="f-ship" placeholder="2.50"></div>
+            <div class="ff"><label>Grading Cost $</label><input type="number" step="0.01" id="f-grade" placeholder="27.25"></div>
+            <div class="ff"><label>Gem Rate (0–1)</label><input type="number" step="0.01" id="f-gem" placeholder="0.75"></div>
+            <div class="ff"><label>Gross PSA 10 $</label><input type="number" step="0.01" id="f-p10" placeholder="150.00"></div>
+            <div class="ff"><label>Gross PSA 9 $</label><input type="number" step="0.01" id="f-p9" placeholder="50.00"></div>
+            <div class="ff"><label>Disposition</label><select id="f-disp"><option value="Grade">Grade</option><option value="Sell Raw">Sell Raw</option><option value="Hold">Hold</option></select></div>
+            <div class="ff"><label>Status</label><select id="f-stat"><option value="Raw">Raw</option><option value="Submitted">Submitted</option><option value="Graded">Graded</option><option value="Listed">Listed</option></select></div>
+            <div class="ff"><label>Batch ID</label><input type="text" id="f-batch" placeholder="14442636"></div>
           </div>
-          <div class="form-actions">
-            <button class="btn-add" onclick="addCard()">Add Card</button>
-            <button class="btn-cancel" onclick="toggleAddForm(false)">Cancel</button>
-            <span id="add-card-msg" style="font-size:12px;color:var(--text-muted);"></span>
+          <div class="factions">
+            <button class="btn-a" onclick="addCard()">Save Card</button>
+            <button class="btn-c" onclick="toggleForm('inv-form',false)">Cancel</button>
           </div>
         </div>
       </div>
-      <div class="filter-bar">
-        <button class="btn-show-form" onclick="toggleAddForm(true)" id="btn-show-add">+ Add Card</button>
-        <input class="fi" type="text" id="inv-search" placeholder="Search player, set, card ID..." oninput="filterInventory()">
-        <select class="fi" id="inv-sport" onchange="filterInventory()">
-          <option value="">All Sports</option><option>Baseball</option><option>Football</option><option>Basketball</option>
-        </select>
-        <select class="fi" id="inv-status" onchange="filterInventory()">
-          <option value="">All Statuses</option><option>Raw</option><option>Submitted</option><option>Graded</option><option>Listed</option>
-        </select>
-        <select class="fi" id="inv-disp" onchange="filterInventory()">
-          <option value="">All Dispositions</option><option>Grade</option><option>Sell Raw</option><option>Hold</option>
-        </select>
-        <span class="filter-count" id="inv-count"></span>
+      <div class="fbar">
+        <button class="btn-s" onclick="toggleForm('inv-form',true)" id="btn-add-inv">+ Add Card</button>
+        <input class="fi" type="text" id="inv-q" placeholder="Search player, set, card ID..." oninput="filterInv()">
+        <select class="fi" id="inv-sport" onchange="filterInv()"><option value="">All Sports</option><option>Baseball</option><option>Football</option><option>Basketball</option></select>
+        <select class="fi" id="inv-stat" onchange="filterInv()"><option value="">All Statuses</option><option>Raw</option><option>Submitted</option><option>Graded</option><option>Listed</option></select>
+        <select class="fi" id="inv-disp" onchange="filterInv()"><option value="">All Dispositions</option><option>Grade</option><option>Sell Raw</option><option>Hold</option></select>
+        <span class="fcnt" id="inv-cnt"></span>
       </div>
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead><tr>
-            <th></th><th>Card ID</th><th>Player</th><th>Year</th><th>Set</th><th>Parallel</th><th>#</th><th>Sport</th>
-            <th>Source</th><th>Purchase</th><th>Ship</th><th>Grade Fee</th><th>Total Cost</th>
-            <th>Gem %</th><th>PSA 10</th><th>PSA 9</th><th>EV$</th><th>EV%</th><th>Disposition</th><th>Status</th><th>Batch</th>
-          </tr></thead>
+      <div class="twrap">
+        <table class="dtbl">
+          <thead><tr><th></th><th>Card ID</th><th>Player</th><th>Year</th><th>Set</th><th>Parallel</th><th>#</th><th>Sport</th><th>Source</th><th>Purchase</th><th>Ship</th><th>Grade Fee</th><th>Total Cost</th><th>Gem %</th><th>PSA 10</th><th>PSA 9</th><th>EV$</th><th>EV%</th><th>Disposition</th><th>Status</th><th>Batch</th></tr></thead>
           <tbody id="inv-tbody"></tbody>
         </table>
       </div>
-      <div class="pagination" id="inv-pag"></div>
+      <div class="pag" id="inv-pag"></div>
     </div>
 
-    <!-- ── SUBMISSIONS ── -->
-    <div class="section" id="section-submissions">
-      <div class="filter-bar">
-        <button class="btn-show-form" onclick="toggleSubForm(true)" id="btn-show-sub">+ Add Batch</button>
-      </div>
-      <div id="sub-add-form" style="display:none;">
-        <div class="add-form">
-          <div class="section-title" style="margin-bottom:16px;">New Submission Batch</div>
-          <div class="form-grid">
-            <div class="form-field"><label>Batch ID</label><input type="text" id="sf-batch-id" placeholder="14442636"></div>
-            <div class="form-field"><label>Submit Date</label><input type="date" id="sf-date"></div>
-            <div class="form-field"><label>Grader</label>
-              <select id="sf-grader"><option>PSA</option><option>BGS</option><option>SGC</option><option>CGC</option></select>
-            </div>
-            <div class="form-field"><label>Service Level</label><input type="text" id="sf-service" placeholder="Value Bulk"></div>
-            <div class="form-field"><label>Batch Status</label>
-              <select id="sf-status"><option>Sent</option><option>Received</option><option>Graded</option><option>Returned</option><option>Sold</option></select>
-            </div>
-            <div class="form-field"><label>Notes</label><input type="text" id="sf-notes" placeholder="Optional notes"></div>
+    <!-- SUBMISSIONS -->
+    <div class="sec" id="sec-submissions">
+      <div id="sub-form" style="display:none;">
+        <div class="aform">
+          <div class="stitle" style="margin-bottom:14px;">New Batch</div>
+          <div class="fgrid">
+            <div class="ff"><label>Batch ID</label><input type="text" id="sf-id" placeholder="14442636"></div>
+            <div class="ff"><label>Submit Date</label><input type="date" id="sf-date"></div>
+            <div class="ff"><label>Grader</label><select id="sf-grader"><option>PSA</option><option>BGS</option><option>SGC</option><option>CGC</option></select></div>
+            <div class="ff"><label>Service Level</label><input type="text" id="sf-svc" placeholder="Value Bulk"></div>
+            <div class="ff"><label>Status</label><select id="sf-stat"><option>Sent</option><option>Received</option><option>Graded</option><option>Returned</option><option>Sold</option></select></div>
+            <div class="ff"><label>Notes</label><input type="text" id="sf-notes" placeholder="Optional"></div>
           </div>
-          <div class="form-actions">
-            <button class="btn-add" onclick="addBatch()">Add Batch</button>
-            <button class="btn-cancel" onclick="toggleSubForm(false)">Cancel</button>
+          <div class="factions">
+            <button class="btn-a" onclick="addBatch()">Save Batch</button>
+            <button class="btn-c" onclick="toggleForm('sub-form',false)">Cancel</button>
           </div>
         </div>
       </div>
-      <div id="batches-container"></div>
+      <div class="fbar"><button class="btn-s" onclick="toggleForm('sub-form',true)">+ Add Batch</button></div>
+      <div id="batches-wrap"></div>
     </div>
 
-    <!-- ── SOLD ── -->
-    <div class="section" id="section-sold">
-      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px;">
-        <div class="kpi-card"><div class="kpi-label">Cards Sold</div><div class="kpi-value" id="sold-count">0</div></div>
-        <div class="kpi-card"><div class="kpi-label">Total Proceeds</div><div class="kpi-value" id="sold-proceeds">$0.00</div></div>
-        <div class="kpi-card"><div class="kpi-label">Realized Profit</div><div class="kpi-value green" id="sold-profit">$0.00</div></div>
-        <div class="kpi-card"><div class="kpi-label">Avg Profit/Card</div><div class="kpi-value green" id="sold-avg">—</div></div>
+    <!-- SOLD -->
+    <div class="sec" id="sec-sold">
+      <div class="kgrid" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px;">
+        <div class="kcard"><div class="klbl">Cards Sold</div><div class="kval" id="s-cnt">0</div></div>
+        <div class="kcard"><div class="klbl">Total Proceeds</div><div class="kval" id="s-proc">$0.00</div></div>
+        <div class="kcard"><div class="klbl">Realized Profit</div><div class="kval g" id="s-prof">$0.00</div></div>
+        <div class="kcard"><div class="klbl">Avg Profit/Card</div><div class="kval g" id="s-avg">—</div></div>
       </div>
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead><tr>
-            <th>Card ID</th><th>Player</th><th>Year</th><th>Set</th><th>Sport</th>
-            <th>Total Cost</th><th>Sale Price</th><th>Fees</th><th>Ship Out</th><th>Net Proceeds</th><th>Profit</th>
-          </tr></thead>
+      <div class="twrap">
+        <table class="dtbl">
+          <thead><tr><th>Card ID</th><th>Player</th><th>Year</th><th>Set</th><th>Sport</th><th>Total Cost</th><th>Sale Price</th><th>Fees</th><th>Ship Out</th><th>Net Proceeds</th><th>Profit</th></tr></thead>
           <tbody id="sold-tbody"></tbody>
         </table>
       </div>
     </div>
 
-    <!-- ── EV BUY LOG ── -->
-    <div class="section" id="section-buylog">
-      <div id="bl-add-form" style="display:none;">
-        <div class="add-form">
-          <div class="section-title" style="margin-bottom:16px;">Log EV Evaluation</div>
-          <div class="form-grid">
-            <div class="form-field"><label>Player</label><input type="text" id="bl-player" placeholder="Shohei Ohtani"></div>
-            <div class="form-field"><label>Year</label><input type="number" id="bl-year" placeholder="2024"></div>
-            <div class="form-field"><label>Set</label><input type="text" id="bl-set" placeholder="Topps Chrome"></div>
-            <div class="form-field"><label>Card #</label><input type="text" id="bl-cardno" placeholder="1"></div>
-            <div class="form-field"><label>Source</label><input type="text" id="bl-source" placeholder="eBay"></div>
-            <div class="form-field"><label>Gem Rate (0–1)</label><input type="number" step="0.01" id="bl-gem" placeholder="0.75"></div>
-            <div class="form-field"><label>Gross PSA 10 $</label><input type="number" step="0.01" id="bl-psa10" placeholder="200.00"></div>
-            <div class="form-field"><label>Gross PSA 9 $</label><input type="number" step="0.01" id="bl-psa9" placeholder="50.00"></div>
-            <div class="form-field"><label>Total Cost $</label><input type="number" step="0.01" id="bl-cost" placeholder="55.00"></div>
-            <div class="form-field"><label>Notes</label><input type="text" id="bl-notes" placeholder="Optional notes"></div>
+    <!-- EV BUY LOG -->
+    <div class="sec" id="sec-buylog">
+      <div id="bl-form" style="display:none;">
+        <div class="aform">
+          <div class="stitle" style="margin-bottom:14px;">Log EV Evaluation</div>
+          <div class="fgrid">
+            <div class="ff"><label>Player</label><input type="text" id="bl-player" placeholder="Shohei Ohtani"></div>
+            <div class="ff"><label>Year</label><input type="number" id="bl-year" placeholder="2024"></div>
+            <div class="ff"><label>Set</label><input type="text" id="bl-set" placeholder="Topps Chrome"></div>
+            <div class="ff"><label>Card #</label><input type="text" id="bl-cno" placeholder="1"></div>
+            <div class="ff"><label>Source</label><input type="text" id="bl-src" placeholder="eBay"></div>
+            <div class="ff"><label>Gem Rate (0–1)</label><input type="number" step="0.01" id="bl-gem" oninput="blCalc()" placeholder="0.75"></div>
+            <div class="ff"><label>Gross PSA 10 $</label><input type="number" step="0.01" id="bl-p10" oninput="blCalc()" placeholder="200.00"></div>
+            <div class="ff"><label>Gross PSA 9 $</label><input type="number" step="0.01" id="bl-p9" oninput="blCalc()" placeholder="50.00"></div>
+            <div class="ff"><label>Total Cost $</label><input type="number" step="0.01" id="bl-cost" oninput="blCalc()" placeholder="55.00"></div>
+            <div class="ff"><label>Notes</label><input type="text" id="bl-notes" placeholder="Optional"></div>
           </div>
-          <div id="bl-calc-preview" style="display:none;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:14px;margin-bottom:14px;">
-            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
-              <div><div style="font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-bottom:4px;">NET PSA 10</div><div style="font-size:16px;font-weight:700;color:#fff;" id="calc-net10">—</div></div>
-              <div><div style="font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-bottom:4px;">EV$</div><div style="font-size:16px;font-weight:700;" id="calc-ev">—</div></div>
-              <div><div style="font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-bottom:4px;">EV%</div><div style="font-size:16px;font-weight:700;" id="calc-evp">—</div></div>
-              <div><div style="font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-bottom:4px;">DECISION</div><div style="font-size:16px;font-weight:700;" id="calc-dec">—</div></div>
+          <div id="bl-preview" style="display:none;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:12px;">
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
+              <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;">NET PSA 10</div><div style="font-size:15px;font-weight:700;color:#fff;" id="c-n10">—</div></div>
+              <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;">EV$</div><div style="font-size:15px;font-weight:700;" id="c-ev">—</div></div>
+              <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;">EV%</div><div style="font-size:15px;font-weight:700;" id="c-evp">—</div></div>
+              <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;">DECISION</div><div style="font-size:15px;font-weight:700;" id="c-dec">—</div></div>
             </div>
           </div>
-          <div class="form-actions">
-            <button class="btn-add" onclick="addBuyLog()">Save Entry</button>
-            <button class="btn-cancel" onclick="toggleBlForm(false)">Cancel</button>
+          <div class="factions">
+            <button class="btn-a" onclick="addBL()">Save Entry</button>
+            <button class="btn-c" onclick="toggleForm('bl-form',false)">Cancel</button>
           </div>
         </div>
       </div>
-      <div class="filter-bar">
-        <button class="btn-show-form" onclick="toggleBlForm(true)">+ Log Evaluation</button>
-        <input class="fi" type="text" id="bl-search" placeholder="Search player, set..." oninput="filterBuyLog()">
-        <select class="fi" id="bl-decision-filter" onchange="filterBuyLog()">
-          <option value="">All Decisions</option><option>BUY</option><option>PASS</option>
-        </select>
-        <span class="filter-count" id="bl-count"></span>
+      <div class="fbar">
+        <button class="btn-s" onclick="toggleForm('bl-form',true)">+ Log Evaluation</button>
+        <input class="fi" type="text" id="bl-q" placeholder="Search player, set..." oninput="filterBL()">
+        <select class="fi" id="bl-df" onchange="filterBL()"><option value="">All Decisions</option><option>BUY</option><option>PASS</option></select>
+        <span class="fcnt" id="bl-cnt"></span>
       </div>
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead><tr>
-            <th></th><th>Date</th><th>Player</th><th>Year</th><th>Set</th><th>#</th><th>Source</th>
-            <th>Gem %</th><th>PSA 10</th><th>PSA 9</th><th>Net 10</th><th>Net 9</th>
-            <th>Cost</th><th>EV$</th><th>EV%</th><th>Max Buy @40%</th><th>Decision</th><th>Notes</th>
-          </tr></thead>
+      <div class="twrap">
+        <table class="dtbl">
+          <thead><tr><th></th><th>Date</th><th>Player</th><th>Year</th><th>Set</th><th>#</th><th>Source</th><th>Gem %</th><th>PSA 10</th><th>PSA 9</th><th>Net 10</th><th>Net 9</th><th>Cost</th><th>EV$</th><th>EV%</th><th>Max Buy @40%</th><th>Decision</th><th>Notes</th></tr></thead>
           <tbody id="bl-tbody"></tbody>
         </table>
       </div>
     </div>
 
-    <!-- ── ADMIN ── -->
-    <div class="section" id="section-admin">
-      <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:6px;padding:10px 14px;margin-bottom:20px;font-size:12px;color:#FCD34D;">
-        ⚙ Admin Panel — Only visible to jlk12493@gmail.com
-      </div>
-      <div class="admin-grid">
+    <!-- ADMIN -->
+    <div class="sec" id="sec-admin">
+      <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:5px;padding:8px 12px;margin-bottom:16px;font-size:11px;color:#FCD34D;">⚙ Admin Panel — Only visible to you</div>
+      <div class="agrid">
         <div class="panel">
-          <div class="panel-title">Invite Codes</div>
-          <div class="gen-code-wrap">
-            <input class="gen-code-input" type="text" id="new-code-input" placeholder="SCC-2024-011">
-            <button class="btn-gen" onclick="generateCode()">Add Code</button>
-            <button class="btn-gen" style="background:var(--surface-3);color:var(--text-muted);border:1px solid var(--border);" onclick="generateBulk()">+10 Bulk</button>
+          <div class="ptitle">Invite Codes</div>
+          <div class="gen-wrap">
+            <input class="gen-inp" type="text" id="new-code" placeholder="SCC-CUSTOM-001">
+            <button class="btn-gen" onclick="genCode()">Add</button>
+            <button class="btn-gen" style="background:var(--surface-3);color:var(--text-muted);border:1px solid var(--border);" onclick="genBulk()">+10 Bulk</button>
           </div>
-          <div class="code-list" id="admin-codes"></div>
+          <div class="ulist" id="admin-codes"></div>
         </div>
         <div class="panel">
-          <div class="panel-title">Registered Users</div>
-          <div class="user-list" id="admin-users"></div>
+          <div class="ptitle">Registered Users</div>
+          <div class="ulist" id="admin-users"></div>
         </div>
       </div>
     </div>
@@ -540,615 +466,614 @@ select.fi{cursor:pointer;}
   </main>
 </div>
 
+<!-- SCAN MODAL -->
+<div class="modal-bg" id="scan-modal">
+  <div class="modal">
+    <div class="modal-title">
+      📷 Scan Card
+      <button class="modal-close" onclick="closeModal('scan-modal')">✕</button>
+    </div>
+    <div class="scan-tabs">
+      <button class="scan-tab active" onclick="setScanTab('front',this)">Front of Card</button>
+      <button class="scan-tab" onclick="setScanTab('back',this)">Back of Card</button>
+    </div>
+    <div class="scan-area" onclick="document.getElementById('scan-file').click()">
+      <input type="file" id="scan-file" accept="image/*" capture="environment" onchange="handleScan(this)">
+      <img id="scan-preview">
+      <div style="font-size:13px;color:var(--text-muted);" id="scan-tap-text">Tap to take photo or upload image</div>
+    </div>
+    <div class="scan-status" id="scan-status"></div>
+    <div class="scan-fields">
+      <div class="scan-field"><label>Player Name</label><input type="text" id="sc-player" placeholder="Auto-filled"></div>
+      <div class="scan-field"><label>Year</label><input type="number" id="sc-year" placeholder="Auto-filled"></div>
+      <div class="scan-field"><label>Set / Brand</label><input type="text" id="sc-set" placeholder="Auto-filled"></div>
+      <div class="scan-field"><label>Card #</label><input type="text" id="sc-cno" placeholder="Auto-filled"></div>
+      <div class="scan-field"><label>Parallel</label><input type="text" id="sc-par" placeholder="Auto-filled"></div>
+      <div class="scan-field"><label>Sport</label>
+        <select id="sc-sport" style="width:100%;background:var(--surface-3);border:1px solid var(--border);color:#fff;padding:7px 9px;border-radius:5px;font-size:12px;outline:none;">
+          <option value="">Select...</option><option>Baseball</option><option>Football</option><option>Basketball</option><option>Hockey</option><option>Soccer</option>
+        </select>
+      </div>
+    </div>
+    <div class="factions">
+      <button class="btn-a" onclick="useScanData()">Use This Data</button>
+      <button class="btn-c" onclick="closeModal('scan-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal-bg" id="import-modal">
+  <div class="modal">
+    <div class="modal-title">
+      📂 Import Spreadsheet
+      <button class="modal-close" onclick="closeModal('import-modal')">✕</button>
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;line-height:1.6;">
+      Upload your existing Sports Card Counters Excel spreadsheet. All cards from the Inventory tab will be imported into your portfolio.
+    </div>
+    <div class="import-drop" id="import-drop" onclick="document.getElementById('import-file').click()">
+      <input type="file" id="import-file" accept=".xlsx,.xls,.csv" onchange="handleImport(this)">
+      <div style="font-size:24px;margin-bottom:8px;">📊</div>
+      <div style="font-size:13px;color:var(--text-muted);">Tap to select your .xlsx file</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Supports .xlsx, .xls, .csv</div>
+    </div>
+    <div class="import-preview" id="import-preview"></div>
+    <div class="factions">
+      <button class="btn-a" id="btn-import-confirm" onclick="confirmImport()" style="display:none;">Import Cards</button>
+      <button class="btn-c" onclick="closeModal('import-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script>
-// ══════════════════════════════════════════
-// SUPABASE INIT
-// ══════════════════════════════════════════
-const SUPABASE_URL = 'https://lmwqizcflhikvtoqehzj.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.95XMeRWGeCcD_KxN40ciJi_QjB9GG4sVJexzBEhJ9NM';
-const ADMIN_EMAIL = 'jlk12493@gmail.com';
-const { createClient } = supabase;
-const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+// ══════════ SUPABASE ══════════
+const SURL = 'https://lmwqizcflhikvtoqehzj.supabase.co';
+const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.95XMeRWGeCcD_KxN40ciJi_QjB9GG4sVJexzBEhJ9NM';
+const ADMIN = 'jlk12493@gmail.com';
+const sb = supabase.createClient(SURL, SKEY, {auth:{persistSession:false,autoRefreshToken:false}});
 
-let currentUser = null;
-let inventoryData = [];
-let batchesData = [];
-let buyLogData = [];
-let invFiltered = [];
-let blFiltered = [];
-let invPage = 1;
-const PER_PAGE = 25;
+let CU = null, INV = [], BATCHES = [], BL = [], invF = [], blF = [], invPg = 1;
+const PP = 25;
+let importRows = [];
+let scanMode = 'front';
 
-// ══════════════════════════════════════════
-// INIT
-// ══════════════════════════════════════════
-async function init() {
-  sb.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_IN' && session) {
-      currentUser = session.user;
-      hide('auth-screen');
-      await launchApp();
-    } else if (event === 'SIGNED_OUT' || event === 'INITIAL_SESSION' && !session) {
-      currentUser = null;
-      inventoryData = []; batchesData = []; buyLogData = [];
-      hide('app-screen');
-      show('auth-screen');
-    }
-  });
-}
-
-async function launchApp() {
-  try {
-    hide('auth-screen');
-    document.getElementById('user-email-display').textContent = currentUser.email;
-    if (currentUser.email === ADMIN_EMAIL) {
-      const nav = document.getElementById('main-nav');
-      const existing = nav.querySelector('.admin-tab');
-      if (existing) existing.remove();
-      const adminBtn = document.createElement('button');
-      adminBtn.className = 'nav-tab admin-tab';
-      adminBtn.textContent = 'Admin';
-      adminBtn.onclick = function(){ showSection('admin', this); };
-      nav.appendChild(adminBtn);
-    }
-    await loadAllData();
-    renderAll();
-  } catch(e) {
-    console.error('Launch error:', e);
-  } finally {
-    hide('loading');
-    show('app-screen');
-  }
-}
-
-async function loadAllData() {
-  const uid = currentUser.id;
-  const [invRes, batRes, blRes] = await Promise.all([
-    sb.from('inventory').select('*').eq('user_id', uid).order('created_at', {ascending:false}),
-    sb.from('batches').select('*').eq('user_id', uid).order('created_at', {ascending:false}),
-    sb.from('ev_log').select('*').eq('user_id', uid).order('created_at', {ascending:false})
-  ]);
-  inventoryData = invRes.data || [];
-  batchesData = batRes.data || [];
-  buyLogData = blRes.data || [];
-}
-
-// ══════════════════════════════════════════
-// AUTH
-// ══════════════════════════════════════════
-function switchAuthTab(tab) {
-  document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='register')));
-  show('tab-'+tab);
-  hide('tab-'+(tab==='login'?'register':'login'));
+// ══════════ AUTH ══════════
+function switchTab(t) {
+  document.querySelectorAll('.auth-tab').forEach((el,i)=>el.classList.toggle('active',(i===0&&t==='login')||(i===1&&t==='register')));
+  document.getElementById('tab-login').style.display = t==='login'?'':'none';
+  document.getElementById('tab-register').style.display = t==='register'?'':'none';
 }
 
 async function doLogin() {
-  const email = val('login-email'), pw = val('login-pw');
-  if (!email || !pw) return showMsg('login-msg','Please fill in all fields','error');
-  setBtn('btn-login', 'Signing in...', true);
-  const { error } = await sb.auth.signInWithPassword({ email, password: pw });
-  setBtn('btn-login', 'Sign In', false);
-  if (error) showMsg('login-msg', error.message, 'error');
+  const email = g('li-email').value.trim();
+  const pw = g('li-pw').value;
+  if (!email||!pw) return msg('li-msg','Please fill in all fields','error');
+  g('btn-li').disabled=true; g('btn-li').textContent='Signing in...';
+  const {data,error} = await sb.auth.signInWithPassword({email,password:pw});
+  g('btn-li').disabled=false; g('btn-li').textContent='Sign In';
+  if (error) return msg('li-msg',error.message,'error');
+  CU = data.user;
+  await loadApp();
 }
 
 async function doRegister() {
-  const email = val('reg-email'), pw = val('reg-pw'), code = val('reg-code').trim().toUpperCase();
-  if (!email || !pw || !code) return showMsg('register-msg','Please fill in all fields','error');
-  if (pw.length < 6) return showMsg('register-msg','Password must be at least 6 characters','error');
-  setBtn('btn-register','Checking code...',true);
-  const { data: codeRow, error: codeErr } = await sb.from('invite_codes').select('*').eq('code', code).eq('used', false).single();
-  if (codeErr || !codeRow) {
-    setBtn('btn-register','Create Account',false);
-    return showMsg('register-msg','Invalid or already-used invite code','error');
-  }
-  showMsg('register-msg','Creating account...','');
-  const { data: authData, error: authErr } = await sb.auth.signUp({ email, password: pw });
-  if (authErr) {
-    setBtn('btn-register','Create Account',false);
-    return showMsg('register-msg', authErr.message, 'error');
-  }
-  const uid = authData.user.id;
-  await sb.from('profiles').upsert({ id: uid, email });
-  await sb.from('invite_codes').update({ used: true, used_by: uid }).eq('code', code);
-  setBtn('btn-register','Create Account',false);
-  showMsg('register-msg','Account created! Check your email to confirm, then sign in.','success');
+  const email = g('re-email').value.trim();
+  const pw = g('re-pw').value;
+  const code = g('re-code').value.trim().toUpperCase();
+  if (!email||!pw||!code) return msg('re-msg','Please fill in all fields','error');
+  if (pw.length<6) return msg('re-msg','Password must be at least 6 characters','error');
+  g('btn-re').disabled=true; g('btn-re').textContent='Checking code...';
+  const {data:cr,error:ce} = await sb.from('invite_codes').select('*').eq('code',code).eq('used',false).single();
+  if (ce||!cr) { g('btn-re').disabled=false; g('btn-re').textContent='Create Account'; return msg('re-msg','Invalid or already-used invite code','error'); }
+  g('btn-re').textContent='Creating account...';
+  const {data:ad,error:ae} = await sb.auth.signUp({email,password:pw});
+  if (ae) { g('btn-re').disabled=false; g('btn-re').textContent='Create Account'; return msg('re-msg',ae.message,'error'); }
+  await sb.from('profiles').upsert({id:ad.user.id,email});
+  await sb.from('invite_codes').update({used:true,used_by:ad.user.id}).eq('code',code);
+  g('btn-re').disabled=false; g('btn-re').textContent='Create Account';
+  msg('re-msg','Account created! You can now sign in.','success');
 }
 
 async function doLogout() {
-  show('loading');
   await sb.auth.signOut();
+  CU=null; INV=[]; BATCHES=[]; BL=[];
+  g('app-screen').style.display='none';
+  g('auth-screen').style.display='flex';
 }
 
-// ══════════════════════════════════════════
-// NAVIGATION
-// ══════════════════════════════════════════
-function showSection(name, btn) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('section-'+name).classList.add('active');
+async function loadApp() {
+  g('auth-screen').style.display='none';
+  g('u-email').textContent = CU.email;
+  if (CU.email===ADMIN) {
+    const nav = g('main-nav');
+    if (!nav.querySelector('.atab')) {
+      const btn = document.createElement('button');
+      btn.className='ntab atab'; btn.textContent='⚙ Admin';
+      btn.onclick=function(){goSec('admin',this);};
+      nav.appendChild(btn);
+    }
+  }
+  const uid = CU.id;
+  const [ir,br,lr] = await Promise.all([
+    sb.from('inventory').select('*').eq('user_id',uid).order('created_at',{ascending:false}),
+    sb.from('batches').select('*').eq('user_id',uid).order('created_at',{ascending:false}),
+    sb.from('ev_log').select('*').eq('user_id',uid).order('created_at',{ascending:false})
+  ]);
+  INV=ir.data||[]; BATCHES=br.data||[]; BL=lr.data||[];
+  invF=[...INV]; blF=[...BL];
+  renderAll();
+  g('app-screen').style.display='block';
+}
+
+// ══════════ NAV ══════════
+function goSec(name,btn) {
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
+  g('sec-'+name).classList.add('active');
   if (btn) btn.classList.add('active');
-  if (name === 'admin') loadAdminPanel();
+  if (name==='admin') loadAdmin();
 }
 
-// ══════════════════════════════════════════
-// RENDER ALL
-// ══════════════════════════════════════════
+// ══════════ RENDER ALL ══════════
 function renderAll() {
-  invFiltered = [...inventoryData];
-  blFiltered = [...buyLogData];
-  renderDashboard();
-  renderInventory();
-  renderBatches();
-  renderSold();
-  renderBuyLog();
+  invF=[...INV.filter(r=>r.status!=='Sold')];
+  blF=[...BL];
+  renderDash(); renderInv(); renderBatches(); renderSold(); renderBL();
 }
 
-// ══════════════════════════════════════════
-// DASHBOARD
-// ══════════════════════════════════════════
-function renderDashboard() {
-  const sold = inventoryData.filter(r => r.status === 'Sold');
-  const onHand = inventoryData.filter(r => r.status !== 'Sold');
-  const profit = sold.reduce((s,r) => s + (r.sale_price||0) - (r.price||0) - (r.ship||0) - (r.fees||0) - (r.ship_out||0), 0);
-  const invCost = onHand.reduce((s,r) => s + (r.price||0) + (r.ship||0), 0);
-  const graders = onHand.filter(r => r.disposition === 'Grade');
-  const withEV = graders.filter(r => r.gem_rate && r.psa10);
-  const evVals = withEV.map(r => calcEV(r));
-  const avgEV = evVals.length ? evVals.reduce((a,b)=>a+b,0)/evVals.length : null;
-  const avgEVPct = withEV.length ? evVals.map((v,i)=>calcEVPct(withEV[i],v)).reduce((a,b)=>a+b,0)/withEV.length : null;
-  const activeSubs = inventoryData.filter(r => r.status === 'Submitted').length;
-
-  setText('kpi-profit', fmt$(profit), profit >= 0 ? 'green' : 'red');
-  setText('kpi-inv', fmt$(invCost));
-  setText('kpi-ev-dollar', avgEV !== null ? fmt$(avgEV) : '—');
-  setText('kpi-ev-pct', avgEVPct !== null ? (avgEVPct*100).toFixed(1)+'%' : '—');
-  setText('kpi-subs', activeSubs);
-  setText('kpi-total', inventoryData.length);
-
-  const statuses = ['Raw','Submitted','Graded','Listed'];
-  const tbody = document.getElementById('dash-status-tbody');
-  tbody.innerHTML = statuses.map(st => {
-    const cards = onHand.filter(r => r.status === st);
-    const cost = cards.reduce((s,r)=>s+(r.price||0)+(r.ship||0),0);
-    return `<tr>
-      <td><span class="badge badge-${st.toLowerCase()}">${st}</span></td>
-      <td>${cards.length}</td>
-      <td>${fmt$(cost)}</td>
-    </tr>`;
-  }).join('') + `<tr style="font-weight:700;color:#fff;">
-    <td>Total On Hand</td><td>${onHand.length}</td><td>${fmt$(invCost)}</td>
-  </tr>`;
-
-  const soldKpis = inventoryData.filter(r => r.status === 'Sold');
-  const soldProceeds = soldKpis.reduce((s,r)=>s+(r.sale_price||0)-(r.fees||0)-(r.ship_out||0),0);
-  const soldProfitTotal = soldKpis.reduce((s,r)=>s+(r.sale_price||0)-(r.price||0)-(r.ship||0)-(r.fees||0)-(r.ship_out||0),0);
-  document.getElementById('sold-count').textContent = soldKpis.length;
-  document.getElementById('sold-proceeds').textContent = fmt$(soldProceeds);
-  document.getElementById('sold-profit').textContent = fmt$(soldProfitTotal);
-  document.getElementById('sold-avg').textContent = soldKpis.length ? fmt$(soldProfitTotal/soldKpis.length) : '—';
+// ══════════ DASHBOARD ══════════
+function renderDash() {
+  const sold=INV.filter(r=>r.status==='Sold');
+  const onHand=INV.filter(r=>r.status!=='Sold');
+  const profit=sold.reduce((s,r)=>s+(r.sale_price||0)-(r.price||0)-(r.ship||0)-(r.fees||0)-(r.ship_out||0),0);
+  const invCost=onHand.reduce((s,r)=>s+(r.price||0)+(r.ship||0),0);
+  const graders=onHand.filter(r=>r.disposition==='Grade'&&r.gem_rate&&r.psa10);
+  const evVals=graders.map(r=>calcEV(r));
+  const avgEV=evVals.length?evVals.reduce((a,b)=>a+b,0)/evVals.length:null;
+  const avgEVP=graders.length?evVals.map((v,i)=>v/(graders[i].total_cost||1)).reduce((a,b)=>a+b,0)/graders.length:null;
+  setText('k-profit',f$(profit),profit>=0?'g':'r');
+  setText('k-inv',f$(invCost));
+  setText('k-ev',avgEV!==null?f$(avgEV):'—');
+  setText('k-evp',avgEVP!==null?((avgEVP*100).toFixed(1)+'%'):'—');
+  setText('k-subs',INV.filter(r=>r.status==='Submitted').length);
+  setText('k-total',INV.length);
+  const stRows=['Raw','Submitted','Graded','Listed'].map(st=>{
+    const c=onHand.filter(r=>r.status===st);
+    return `<tr><td><span class="bdg b-${st.toLowerCase().replace(' ','-')}">${st}</span></td><td>${c.length}</td><td>${f$(c.reduce((s,r)=>s+(r.price||0)+(r.ship||0),0))}</td></tr>`;
+  }).join('')+`<tr style="font-weight:700;color:#fff;"><td>Total On Hand</td><td>${onHand.length}</td><td>${f$(invCost)}</td></tr>`;
+  g('d-status').innerHTML=stRows;
+  g('s-cnt').textContent=sold.length;
+  const proc=sold.reduce((s,r)=>s+(r.sale_price||0)-(r.fees||0)-(r.ship_out||0),0);
+  const prof=sold.reduce((s,r)=>s+(r.sale_price||0)-(r.price||0)-(r.ship||0)-(r.fees||0)-(r.ship_out||0),0);
+  g('s-proc').textContent=f$(proc);
+  g('s-prof').textContent=f$(prof);
+  g('s-avg').textContent=sold.length?f$(prof/sold.length):'—';
 }
 
-// ══════════════════════════════════════════
-// INVENTORY
-// ══════════════════════════════════════════
-function filterInventory() {
-  const q = val('inv-search').toLowerCase();
-  const sport = val('inv-sport'), status = val('inv-status'), disp = val('inv-disp');
-  invFiltered = inventoryData.filter(r => r.status !== 'Sold').filter(r => {
-    const mq = !q || (r.card_id||'').toLowerCase().includes(q)||(r.player||'').toLowerCase().includes(q)||(r.set_name||'').toLowerCase().includes(q)||(r.parallel||'').toLowerCase().includes(q);
-    return mq && (!sport||r.sport===sport) && (!status||r.status===status) && (!disp||r.disposition===disp);
+// ══════════ INVENTORY ══════════
+function filterInv() {
+  const q=g('inv-q').value.toLowerCase();
+  const sp=g('inv-sport').value,st=g('inv-stat').value,dp=g('inv-disp').value;
+  invF=INV.filter(r=>r.status!=='Sold').filter(r=>{
+    const mq=!q||(r.card_id||'').toLowerCase().includes(q)||(r.player||'').toLowerCase().includes(q)||(r.set_name||'').toLowerCase().includes(q)||(r.parallel||'').toLowerCase().includes(q);
+    return mq&&(!sp||r.sport===sp)&&(!st||r.status===st)&&(!dp||r.disposition===dp);
   });
-  invPage = 1;
-  renderInventory();
+  invPg=1; renderInv();
 }
 
-function renderInventory() {
-  const total = invFiltered.length;
-  const pages = Math.ceil(total/PER_PAGE);
-  const slice = invFiltered.slice((invPage-1)*PER_PAGE, invPage*PER_PAGE);
-  document.getElementById('inv-count').textContent = `${total} cards`;
-  const tbody = document.getElementById('inv-tbody');
-  if (!total) { tbody.innerHTML = `<tr><td colspan="21"><div class="empty-state"><div class="empty-icon">📦</div><div class="empty-title">No cards yet</div><div class="empty-sub">Click + Add Card to get started</div></div></td></tr>`; }
+function renderInv() {
+  const tot=invF.length, pgs=Math.ceil(tot/PP);
+  const sl=invF.slice((invPg-1)*PP,invPg*PP);
+  g('inv-cnt').textContent=tot+' cards';
+  const tb=g('inv-tbody');
+  if (!tot) { tb.innerHTML=`<tr><td colspan="21"><div class="empty"><div class="empty-icon">📦</div><div class="empty-title">No cards yet</div><div style="font-size:12px;">Click + Add Card or Import Spreadsheet</div></div></td></tr>`; }
   else {
-    tbody.innerHTML = slice.map(r => {
-      const ev = (r.gem_rate && r.psa10) ? calcEV(r) : null;
-      const evp = ev !== null ? calcEVPct(r, ev) : null;
-      const netPsa10 = r.psa10 ? (r.psa10 * 0.865).toFixed(2) : null;
+    tb.innerHTML=sl.map(r=>{
+      const ev=(r.gem_rate&&r.psa10)?calcEV(r):null;
+      const evp=(ev!==null&&r.total_cost)?ev/r.total_cost:null;
       return `<tr>
-        <td><button class="btn-del" onclick="deleteCard('${r.id}')" title="Delete">✕</button></td>
-        <td class="mono" style="font-size:10px;color:#666;">${r.card_id||'—'}</td>
-        <td class="player">${r.player||'—'}</td>
-        <td class="mono">${r.year||'—'}</td>
+        <td><button class="btn-del" onclick="delCard('${r.id}')">✕</button></td>
+        <td class="mo" style="font-size:10px;color:#555;">${r.card_id||'—'}</td>
+        <td class="pl">${r.player||'—'}</td>
+        <td class="mo">${r.year||'—'}</td>
         <td>${r.set_name||'—'}</td>
         <td>${r.parallel||'—'}</td>
-        <td class="mono">${r.card_no||'—'}</td>
+        <td class="mo">${r.card_no||'—'}</td>
         <td>${r.sport||'—'}</td>
         <td>${r.source||'—'}</td>
-        <td class="mono">${r.price!=null?fmt$(r.price):'—'}</td>
-        <td class="mono">${r.ship!=null?fmt$(r.ship):'—'}</td>
-        <td class="mono">${r.grading!=null?fmt$(r.grading):'—'}</td>
-        <td class="mono" style="font-weight:700;">${fmt$(r.total_cost)}</td>
-        <td class="mono">${r.gem_rate!=null?((r.gem_rate*100).toFixed(0)+'%'):'—'}</td>
-        <td class="mono">${r.psa10!=null?fmt$(r.psa10):'—'}</td>
-        <td class="mono">${r.psa9!=null?fmt$(r.psa9):'—'}</td>
-        <td class="mono ${ev!=null&&ev<0?'red-text':ev!=null&&ev>0?'green':''}">${ev!=null?fmt$(ev):'—'}</td>
+        <td class="mo">${r.price!=null?f$(r.price):'—'}</td>
+        <td class="mo">${r.ship!=null?f$(r.ship):'—'}</td>
+        <td class="mo">${r.grading!=null?f$(r.grading):'—'}</td>
+        <td class="mo" style="font-weight:700;">${r.total_cost!=null?f$(r.total_cost):'—'}</td>
+        <td class="mo">${r.gem_rate!=null?((r.gem_rate*100).toFixed(0)+'%'):'—'}</td>
+        <td class="mo">${r.psa10!=null?f$(r.psa10):'—'}</td>
+        <td class="mo">${r.psa9!=null?f$(r.psa9):'—'}</td>
+        <td class="mo ${ev!=null&&ev<0?'rd':ev!=null&&ev>0?'gn':''}">${ev!=null?f$(ev):'—'}</td>
         <td>${evp!=null?evBar(evp):'—'}</td>
-        <td>${dispBadge(r.disposition)}</td>
-        <td>${statusBadge(r.status)}</td>
-        <td class="mono" style="font-size:10px;color:#555;">${r.batch_id||'—'}</td>
+        <td>${dBdg(r.disposition)}</td>
+        <td>${sBdg(r.status)}</td>
+        <td class="mo" style="font-size:10px;color:#555;">${r.batch_id||'—'}</td>
       </tr>`;
     }).join('');
   }
-  const pag = document.getElementById('inv-pag');
-  pag.innerHTML = `<span style="font-size:12px;color:var(--text-muted);">${total} cards</span>` +
-    Array.from({length:pages},(_,i)=>`<button class="page-btn ${i+1===invPage?'active':''}" onclick="goInvPage(${i+1})">${i+1}</button>`).join('');
+  g('inv-pag').innerHTML=`<span style="font-size:11px;color:var(--text-muted);">${tot} cards</span>`+
+    Array.from({length:pgs},(_,i)=>`<button class="pbtn ${i+1===invPg?'active':''}" onclick="invPage(${i+1})">${i+1}</button>`).join('');
 }
 
-function goInvPage(n) { invPage = n; renderInventory(); }
+function invPage(n){invPg=n;renderInv();}
 
 async function addCard() {
-  const card = {
-    user_id: currentUser.id,
-    card_id: val('f-card-id'), player: val('f-player'), year: intVal('f-year'),
-    set_name: val('f-set'), parallel: val('f-parallel'), card_no: val('f-cardno'),
-    sport: val('f-sport'), date_acquired: val('f-date'), source: val('f-source'),
-    price: floatVal('f-price'), ship: floatVal('f-ship'), grading: floatVal('f-grade-cost'),
-    gem_rate: floatVal('f-gem'), psa10: floatVal('f-psa10'), psa9: floatVal('f-psa9'),
-    disposition: val('f-disp'), status: val('f-status'), batch_id: val('f-batch')
+  const c={
+    user_id:CU.id,
+    card_id:gv('f-cid'),player:gv('f-player'),year:ni('f-year'),
+    set_name:gv('f-set'),parallel:gv('f-par'),card_no:gv('f-cno'),
+    sport:gv('f-sport'),date_acquired:gv('f-date'),source:gv('f-src'),
+    price:nf('f-price'),ship:nf('f-ship'),grading:nf('f-grade'),
+    gem_rate:nf('f-gem'),psa10:nf('f-p10'),psa9:nf('f-p9'),
+    disposition:gv('f-disp'),status:gv('f-stat'),batch_id:gv('f-batch')
   };
-  card.total_cost = (card.price||0) + (card.ship||0) + (card.grading||0);
-  if (!card.player) return showToast('Player name is required', true);
-  const { data, error } = await sb.from('inventory').insert(card).select().single();
-  if (error) return showToast('Error saving card: ' + error.message, true);
-  inventoryData.unshift(data);
-  toggleAddForm(false);
-  renderAll();
-  showToast('Card added successfully!');
+  c.total_cost=(c.price||0)+(c.ship||0)+(c.grading||0);
+  if (!c.player) return toast('Player name required',true);
+  const {data,error}=await sb.from('inventory').insert(c).select().single();
+  if (error) return toast('Error: '+error.message,true);
+  INV.unshift(data);
+  toggleForm('inv-form',false);
+  clearForm(['f-cid','f-player','f-year','f-set','f-par','f-cno','f-date','f-src','f-price','f-ship','f-grade','f-gem','f-p10','f-p9','f-batch']);
+  renderAll(); toast('Card added!');
 }
 
-async function deleteCard(id) {
+async function delCard(id) {
   if (!confirm('Delete this card?')) return;
-  await sb.from('inventory').delete().eq('id', id);
-  inventoryData = inventoryData.filter(r => r.id !== id);
-  renderAll();
-  showToast('Card deleted');
+  await sb.from('inventory').delete().eq('id',id);
+  INV=INV.filter(r=>r.id!==id);
+  renderAll(); toast('Card deleted');
 }
 
-function toggleAddForm(show) {
-  document.getElementById('inv-add-form').style.display = show ? 'block' : 'none';
-  document.getElementById('btn-show-add').style.display = show ? 'none' : '';
-}
-
-// ══════════════════════════════════════════
-// BATCHES / SUBMISSIONS
-// ══════════════════════════════════════════
+// ══════════ BATCHES ══════════
 async function addBatch() {
-  const batch = {
-    user_id: currentUser.id,
-    batch_id: val('sf-batch-id'), submit_date: val('sf-date'),
-    grader: val('sf-grader'), service: val('sf-service'),
-    status: val('sf-status'), notes: val('sf-notes')
-  };
-  if (!batch.batch_id) return showToast('Batch ID is required', true);
-  const { data, error } = await sb.from('batches').insert(batch).select().single();
-  if (error) return showToast('Error: ' + error.message, true);
-  batchesData.unshift(data);
-  toggleSubForm(false);
-  renderBatches();
-  showToast('Batch added!');
+  const b={user_id:CU.id,batch_id:gv('sf-id'),submit_date:gv('sf-date'),grader:gv('sf-grader'),service:gv('sf-svc'),status:gv('sf-stat'),notes:gv('sf-notes')};
+  if (!b.batch_id) return toast('Batch ID required',true);
+  const {data,error}=await sb.from('batches').insert(b).select().single();
+  if (error) return toast('Error: '+error.message,true);
+  BATCHES.unshift(data);
+  toggleForm('sub-form',false);
+  renderBatches(); toast('Batch added!');
 }
 
 function renderBatches() {
-  const container = document.getElementById('batches-container');
-  if (!batchesData.length) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📬</div><div class="empty-title">No batches yet</div><div class="empty-sub">Click + Add Batch to create a submission</div></div>`;
-    return;
-  }
-  container.innerHTML = batchesData.map(b => {
-    const cards = inventoryData.filter(r => r.batch_id === b.batch_id);
-    const totalFees = cards.reduce((s,r)=>s+(r.grading||0),0);
-    const stMap = {'Sent':'badge-submitted','Received':'badge-received','Graded':'badge-graded','Returned':'badge-raw','Sold':'badge-sold'};
-    return `<div class="batch-card">
-      <div class="batch-header">
-        <div>
-          <div class="batch-id-text">Batch #${b.batch_id}</div>
-          <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${b.grader||'PSA'} · ${b.service||''} · ${b.submit_date||'TBD'}</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;">
-          <span class="badge ${stMap[b.status]||'badge-raw'}">${b.status||'—'}</span>
-          <button class="btn-del" onclick="deleteBatch('${b.id}')" title="Delete batch">✕</button>
-        </div>
+  const wrap=g('batches-wrap');
+  if (!BATCHES.length){wrap.innerHTML=`<div class="empty"><div class="empty-icon">📬</div><div class="empty-title">No batches yet</div><div style="font-size:12px;">Click + Add Batch</div></div>`;return;}
+  const stMap={Sent:'b-sub',Received:'b-grd',Graded:'b-grd',Returned:'b-raw',Sold:'b-sld'};
+  wrap.innerHTML=BATCHES.map(b=>{
+    const cards=INV.filter(r=>r.batch_id===b.batch_id);
+    const fees=cards.reduce((s,r)=>s+(r.grading||0),0);
+    return `<div class="bcard">
+      <div class="bhdr">
+        <div><div class="bid">Batch #${b.batch_id}</div><div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${b.grader||'PSA'} · ${b.service||''} · ${b.submit_date||'TBD'}</div></div>
+        <div style="display:flex;align-items:center;gap:8px;"><span class="bdg ${stMap[b.status]||'b-raw'}">${b.status||'—'}</span><button class="btn-del" onclick="delBatch('${b.id}')">✕</button></div>
       </div>
-      <div class="batch-meta">
-        <div class="batch-stat"><div class="bstat-label">Cards</div><div class="bstat-val">${cards.length}</div></div>
-        <div class="batch-stat"><div class="bstat-label">Total Fees</div><div class="bstat-val">${fmt$(totalFees)}</div></div>
-        <div class="batch-stat"><div class="bstat-label">Grader</div><div class="bstat-val">${b.grader||'—'}</div></div>
-        <div class="batch-stat"><div class="bstat-label">Service</div><div class="bstat-val" style="font-size:11px;">${b.service||'—'}</div></div>
-        <div class="batch-stat"><div class="bstat-label">Notes</div><div class="bstat-val" style="font-size:11px;color:var(--text-muted);">${b.notes||'—'}</div></div>
+      <div class="bmeta">
+        <div><div class="bsl">Cards</div><div class="bsv">${cards.length}</div></div>
+        <div><div class="bsl">Total Fees</div><div class="bsv">${f$(fees)}</div></div>
+        <div><div class="bsl">Grader</div><div class="bsv">${b.grader||'—'}</div></div>
+        <div><div class="bsl">Service</div><div class="bsv" style="font-size:11px;">${b.service||'—'}</div></div>
+        <div><div class="bsl">Notes</div><div class="bsv" style="font-size:11px;color:var(--text-muted);">${b.notes||'—'}</div></div>
       </div>
-      ${cards.length ? `<div class="table-wrap"><table class="data-table">
-        <thead><tr><th>Card ID</th><th>Player</th><th>Set</th><th>Parallel</th><th>Fee</th><th>Status</th></tr></thead>
-        <tbody>${cards.map(r=>`<tr>
-          <td class="mono" style="font-size:10px;color:#666;">${r.card_id||'—'}</td>
-          <td class="player">${r.player||'—'}</td>
-          <td>${r.set_name||'—'}</td>
-          <td>${r.parallel||'—'}</td>
-          <td class="mono">${r.grading!=null?fmt$(r.grading):'—'}</td>
-          <td>${statusBadge(r.status)}</td>
-        </tr>`).join('')}</tbody>
-      </table></div>` : '<div style="font-size:12px;color:var(--text-muted);padding:8px 0;">No inventory cards linked to this batch ID</div>'}
+      ${cards.length?`<div class="twrap"><table class="dtbl"><thead><tr><th>Card ID</th><th>Player</th><th>Set</th><th>Parallel</th><th>Fee</th><th>Status</th></tr></thead><tbody>${cards.map(r=>`<tr><td class="mo" style="font-size:10px;color:#555;">${r.card_id||'—'}</td><td class="pl">${r.player||'—'}</td><td>${r.set_name||'—'}</td><td>${r.parallel||'—'}</td><td class="mo">${r.grading!=null?f$(r.grading):'—'}</td><td>${sBdg(r.status)}</td></tr>`).join('')}</tbody></table></div>`:'<div style="font-size:11px;color:var(--text-muted);padding:6px 0;">No cards linked to this batch ID</div>'}
     </div>`;
   }).join('');
 }
 
-async function deleteBatch(id) {
-  if (!confirm('Delete this batch?')) return;
-  await sb.from('batches').delete().eq('id', id);
-  batchesData = batchesData.filter(b => b.id !== id);
-  renderBatches();
-  showToast('Batch deleted');
+async function delBatch(id) {
+  if (!confirm('Delete batch?')) return;
+  await sb.from('batches').delete().eq('id',id);
+  BATCHES=BATCHES.filter(b=>b.id!==id);
+  renderBatches(); toast('Batch deleted');
 }
 
-function toggleSubForm(show) {
-  document.getElementById('sub-add-form').style.display = show ? 'block' : 'none';
-  document.getElementById('btn-show-sub').style.display = show ? 'none' : '';
-}
-
-// ══════════════════════════════════════════
-// SOLD
-// ══════════════════════════════════════════
+// ══════════ SOLD ══════════
 function renderSold() {
-  const sold = inventoryData.filter(r => r.status === 'Sold');
-  const tbody = document.getElementById('sold-tbody');
-  if (!sold.length) {
-    tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state"><div class="empty-icon">💰</div><div class="empty-title">No sold cards yet</div><div class="empty-sub">Mark cards as Sold in Inventory to track your P&L</div></div></td></tr>`;
-    return;
-  }
-  tbody.innerHTML = sold.map(r => {
-    const proceeds = (r.sale_price||0) - (r.fees||0) - (r.ship_out||0);
-    const profit = proceeds - (r.price||0) - (r.ship||0);
+  const sold=INV.filter(r=>r.status==='Sold');
+  const tb=g('sold-tbody');
+  if (!sold.length){tb.innerHTML=`<tr><td colspan="11"><div class="empty"><div class="empty-icon">💰</div><div class="empty-title">No sold cards yet</div><div style="font-size:12px;">Mark cards as Sold in Inventory to track P&L</div></div></td></tr>`;return;}
+  tb.innerHTML=sold.map(r=>{
+    const proc=(r.sale_price||0)-(r.fees||0)-(r.ship_out||0);
+    const prof=proc-(r.price||0)-(r.ship||0);
     return `<tr>
-      <td class="mono" style="font-size:10px;color:#666;">${r.card_id||'—'}</td>
-      <td class="player">${r.player||'—'}</td>
-      <td class="mono">${r.year||'—'}</td>
+      <td class="mo" style="font-size:10px;color:#555;">${r.card_id||'—'}</td>
+      <td class="pl">${r.player||'—'}</td>
+      <td class="mo">${r.year||'—'}</td>
       <td>${r.set_name||'—'}</td>
       <td>${r.sport||'—'}</td>
-      <td class="mono">${fmt$((r.price||0)+(r.ship||0)+(r.grading||0))}</td>
-      <td class="mono">${r.sale_price!=null?fmt$(r.sale_price):'—'}</td>
-      <td class="mono">${r.fees!=null?fmt$(r.fees):'—'}</td>
-      <td class="mono">${r.ship_out!=null?fmt$(r.ship_out):'—'}</td>
-      <td class="mono" style="font-weight:700;">${fmt$(proceeds)}</td>
-      <td class="mono ${profit>=0?'green':'red-text'}" style="font-weight:700;">${profit>=0?'+':''}${fmt$(profit)}</td>
+      <td class="mo">${f$((r.price||0)+(r.ship||0)+(r.grading||0))}</td>
+      <td class="mo">${r.sale_price!=null?f$(r.sale_price):'—'}</td>
+      <td class="mo">${r.fees!=null?f$(r.fees):'—'}</td>
+      <td class="mo">${r.ship_out!=null?f$(r.ship_out):'—'}</td>
+      <td class="mo" style="font-weight:700;">${f$(proc)}</td>
+      <td class="mo ${prof>=0?'gn':'rd'}" style="font-weight:700;">${prof>=0?'+':''}${f$(prof)}</td>
     </tr>`;
   }).join('');
-  const totalProceeds = sold.reduce((s,r)=>s+(r.sale_price||0)-(r.fees||0)-(r.ship_out||0),0);
-  const totalProfit = sold.reduce((s,r)=>s+(r.sale_price||0)-(r.price||0)-(r.ship||0)-(r.fees||0)-(r.ship_out||0),0);
-  document.getElementById('sold-count').textContent = sold.length;
-  document.getElementById('sold-proceeds').textContent = fmt$(totalProceeds);
-  document.getElementById('sold-profit').textContent = fmt$(totalProfit);
-  document.getElementById('sold-avg').textContent = sold.length ? fmt$(totalProfit/sold.length) : '—';
 }
 
-// ══════════════════════════════════════════
-// EV BUY LOG
-// ══════════════════════════════════════════
-function filterBuyLog() {
-  const q = val('bl-search').toLowerCase();
-  const dec = val('bl-decision-filter');
-  blFiltered = buyLogData.filter(r => {
-    const mq = !q || (r.player||'').toLowerCase().includes(q) || (r.set_name||'').toLowerCase().includes(q);
-    const md = !dec || blDecision(r) === dec;
-    return mq && md;
+// ══════════ BUY LOG ══════════
+function blCalc() {
+  const gem=nf('bl-gem'),p10=nf('bl-p10'),p9=nf('bl-p9'),cost=nf('bl-cost');
+  if (!gem||!p10||!cost){g('bl-preview').style.display='none';return;}
+  const n10=p10*0.865,n9=(p9||0)*0.865;
+  const ev=gem*n10+(1-gem)*n9-cost;
+  const evp=ev/cost;
+  const dec=evp>=0.40?'BUY':'PASS';
+  g('bl-preview').style.display='block';
+  g('c-n10').textContent=f$(n10);
+  g('c-ev').textContent=f$(ev); g('c-ev').style.color=ev>=0?'var(--green)':'#F87171';
+  g('c-evp').textContent=(evp*100).toFixed(1)+'%'; g('c-evp').style.color=evp>=0.40?'var(--green)':'#F87171';
+  g('c-dec').textContent=dec; g('c-dec').style.color=dec==='BUY'?'var(--green)':'#F87171';
+}
+
+function filterBL() {
+  const q=g('bl-q').value.toLowerCase(),dec=g('bl-df').value;
+  blF=BL.filter(r=>{
+    const mq=!q||(r.player||'').toLowerCase().includes(q)||(r.set_name||'').toLowerCase().includes(q);
+    const dec2=blDec(r);
+    return mq&&(!dec||dec2===dec);
   });
-  renderBuyLog();
+  renderBL();
 }
 
-function blDecision(r) {
-  if (!r.gem_rate || !r.psa10 || !r.total_cost) return '—';
-  const net10 = r.psa10 * 0.865;
-  const net9 = (r.psa9||0) * 0.865;
-  const ev = (r.gem_rate * net10) + ((1-r.gem_rate) * net9) - r.total_cost;
-  const evp = ev / r.total_cost;
-  return evp >= 0.40 ? 'BUY' : 'PASS';
+function blDec(r) {
+  if (!r.gem_rate||!r.psa10||!r.total_cost) return '—';
+  const n10=r.psa10*0.865,n9=(r.psa9||0)*0.865;
+  const ev=r.gem_rate*n10+(1-r.gem_rate)*n9-r.total_cost;
+  return (ev/r.total_cost)>=0.40?'BUY':'PASS';
 }
 
-function renderBuyLog() {
-  document.getElementById('bl-count').textContent = `${blFiltered.length} entries`;
-  const tbody = document.getElementById('bl-tbody');
-  if (!blFiltered.length) {
-    tbody.innerHTML = `<tr><td colspan="18"><div class="empty-state"><div class="empty-icon">📊</div><div class="empty-title">No evaluations logged</div><div class="empty-sub">Click + Log Evaluation to start tracking buys</div></div></td></tr>`;
-    return;
-  }
-  tbody.innerHTML = blFiltered.map(r => {
-    const net10 = r.psa10 ? (r.psa10 * 0.865) : null;
-    const net9 = r.psa9 ? (r.psa9 * 0.865) : null;
-    const ev = (net10 && r.gem_rate && r.total_cost) ? (r.gem_rate*net10 + (1-r.gem_rate)*(net9||0) - r.total_cost) : null;
-    const evp = (ev !== null && r.total_cost) ? ev/r.total_cost : null;
-    const maxBuy = (net10 && r.gem_rate) ? ((r.gem_rate*net10 + (1-r.gem_rate)*(net9||0)) / 1.40) : null;
-    const dec = evp !== null ? (evp >= 0.40 ? 'BUY' : 'PASS') : '—';
+function renderBL() {
+  g('bl-cnt').textContent=blF.length+' entries';
+  const tb=g('bl-tbody');
+  if (!blF.length){tb.innerHTML=`<tr><td colspan="18"><div class="empty"><div class="empty-icon">📊</div><div class="empty-title">No evaluations yet</div><div style="font-size:12px;">Click + Log Evaluation</div></div></td></tr>`;return;}
+  tb.innerHTML=blF.map(r=>{
+    const n10=r.psa10?r.psa10*0.865:null,n9=r.psa9?r.psa9*0.865:null;
+    const ev=(n10&&r.gem_rate&&r.total_cost)?(r.gem_rate*n10+(1-r.gem_rate)*(n9||0)-r.total_cost):null;
+    const evp=(ev!==null&&r.total_cost)?ev/r.total_cost:null;
+    const mb=(n10&&r.gem_rate)?((r.gem_rate*n10+(1-r.gem_rate)*(n9||0))/1.40):null;
+    const dec=evp!==null?(evp>=0.40?'BUY':'PASS'):'—';
     return `<tr>
-      <td><button class="btn-del" onclick="deleteBL('${r.id}')" title="Delete">✕</button></td>
-      <td class="mono">${r.date_ran||'—'}</td>
-      <td class="player">${r.player||'—'}</td>
-      <td class="mono">${r.year||'—'}</td>
+      <td><button class="btn-del" onclick="delBL('${r.id}')">✕</button></td>
+      <td class="mo">${r.date_ran||'—'}</td>
+      <td class="pl">${r.player||'—'}</td>
+      <td class="mo">${r.year||'—'}</td>
       <td>${r.set_name||'—'}</td>
-      <td class="mono">${r.card_no||'—'}</td>
+      <td class="mo">${r.card_no||'—'}</td>
       <td>${r.source||'—'}</td>
-      <td class="mono">${r.gem_rate!=null?((r.gem_rate*100).toFixed(0)+'%'):'—'}</td>
-      <td class="mono">${r.psa10!=null?fmt$(r.psa10):'—'}</td>
-      <td class="mono">${r.psa9!=null?fmt$(r.psa9):'—'}</td>
-      <td class="mono">${net10!=null?fmt$(net10):'—'}</td>
-      <td class="mono">${net9!=null?fmt$(net9):'—'}</td>
-      <td class="mono" style="font-weight:700;">${r.total_cost!=null?fmt$(r.total_cost):'—'}</td>
-      <td class="mono ${ev!=null&&ev>0?'green':ev!=null&&ev<0?'red-text':''}">${ev!=null?fmt$(ev):'—'}</td>
+      <td class="mo">${r.gem_rate!=null?((r.gem_rate*100).toFixed(0)+'%'):'—'}</td>
+      <td class="mo">${r.psa10!=null?f$(r.psa10):'—'}</td>
+      <td class="mo">${r.psa9!=null?f$(r.psa9):'—'}</td>
+      <td class="mo">${n10!=null?f$(n10):'—'}</td>
+      <td class="mo">${n9!=null?f$(n9):'—'}</td>
+      <td class="mo" style="font-weight:700;">${r.total_cost!=null?f$(r.total_cost):'—'}</td>
+      <td class="mo ${ev!=null&&ev>0?'gn':ev!=null&&ev<0?'rd':''}">${ev!=null?f$(ev):'—'}</td>
       <td>${evp!=null?evBar(evp):'—'}</td>
-      <td class="mono amber">${maxBuy!=null?fmt$(maxBuy):'—'}</td>
-      <td><span class="badge ${dec==='BUY'?'badge-buy':dec==='PASS'?'badge-pass':'badge-raw'}">${dec}</span></td>
+      <td class="mo" style="color:var(--amber);">${mb!=null?f$(mb):'—'}</td>
+      <td><span class="bdg ${dec==='BUY'?'b-buy':dec==='PASS'?'b-pass':'b-raw'}">${dec}</span></td>
       <td style="font-size:11px;color:var(--text-muted);">${r.notes||'—'}</td>
     </tr>`;
   }).join('');
 }
 
-function toggleBlForm(show) {
-  document.getElementById('bl-add-form').style.display = show ? 'block' : 'none';
-  if (show) {
-    ['bl-psa10','bl-psa9','bl-gem','bl-cost'].forEach(id => {
-      document.getElementById(id).addEventListener('input', updateBLCalc);
-    });
+async function addBL() {
+  const e={user_id:CU.id,date_ran:new Date().toISOString().split('T')[0],player:gv('bl-player'),year:ni('bl-year'),set_name:gv('bl-set'),card_no:gv('bl-cno'),source:gv('bl-src'),gem_rate:nf('bl-gem'),psa10:nf('bl-p10'),psa9:nf('bl-p9'),total_cost:nf('bl-cost'),notes:gv('bl-notes')};
+  if (!e.player) return toast('Player name required',true);
+  const {data,error}=await sb.from('ev_log').insert(e).select().single();
+  if (error) return toast('Error: '+error.message,true);
+  BL.unshift(data); blF=[...BL];
+  toggleForm('bl-form',false); renderBL(); toast('Entry logged!');
+}
+
+async function delBL(id) {
+  if (!confirm('Delete entry?')) return;
+  await sb.from('ev_log').delete().eq('id',id);
+  BL=BL.filter(r=>r.id!==id); blF=[...BL]; renderBL(); toast('Deleted');
+}
+
+// ══════════ SCANNER ══════════
+function openScan() {
+  g('scan-modal').classList.add('open');
+  g('scan-status').textContent='';
+  g('scan-preview').style.display='none';
+  g('scan-tap-text').style.display='';
+  ['sc-player','sc-year','sc-set','sc-cno','sc-par'].forEach(id=>g(id).value='');
+  g('sc-sport').value='';
+}
+
+function setScanTab(mode,btn) {
+  scanMode=mode;
+  document.querySelectorAll('.scan-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  g('scan-status').textContent='';
+  g('scan-preview').style.display='none';
+  g('scan-tap-text').style.display='';
+  g('scan-file').value='';
+}
+
+async function handleScan(input) {
+  const file=input.files[0]; if (!file) return;
+  const url=URL.createObjectURL(file);
+  g('scan-preview').src=url;
+  g('scan-preview').style.display='block';
+  g('scan-tap-text').style.display='none';
+  g('scan-status').textContent='Reading card text...';
+  try {
+    const result=await Tesseract.recognize(file,'eng',{logger:m=>{if(m.status==='recognizing text')g('scan-status').textContent='Reading... '+Math.round(m.progress*100)+'%';}});
+    const text=result.data.text;
+    g('scan-status').textContent='Done! Review and edit the fields below.';
+    parseCardText(text,scanMode);
+  } catch(e) {
+    g('scan-status').textContent='Could not read text. Please fill in manually.';
   }
 }
 
-function updateBLCalc() {
-  const gem = floatVal('bl-gem'), psa10 = floatVal('bl-psa10'), psa9 = floatVal('bl-psa9'), cost = floatVal('bl-cost');
-  if (!gem || !psa10 || !cost) return;
-  const net10 = psa10 * 0.865;
-  const net9 = (psa9||0) * 0.865;
-  const ev = gem*net10 + (1-gem)*net9 - cost;
-  const evp = ev/cost;
-  const dec = evp >= 0.40 ? 'BUY' : 'PASS';
-  document.getElementById('bl-calc-preview').style.display = 'block';
-  document.getElementById('calc-net10').textContent = fmt$(net10);
-  document.getElementById('calc-ev').textContent = fmt$(ev);
-  document.getElementById('calc-ev').style.color = ev >= 0 ? 'var(--green)' : '#F87171';
-  document.getElementById('calc-evp').textContent = (evp*100).toFixed(1)+'%';
-  document.getElementById('calc-evp').style.color = evp >= 0.40 ? 'var(--green)' : '#F87171';
-  document.getElementById('calc-dec').textContent = dec;
-  document.getElementById('calc-dec').style.color = dec === 'BUY' ? 'var(--green)' : '#F87171';
+function parseCardText(text, mode) {
+  const lines=text.split('\n').map(l=>l.trim()).filter(l=>l.length>1);
+  if (mode==='front') {
+    // Try to find year (4-digit number)
+    const yearMatch=text.match(/\b(19|20)\d{2}\b/);
+    if (yearMatch&&!g('sc-year').value) g('sc-year').value=yearMatch[0];
+    // Common set names
+    const sets=['Topps Chrome','Topps Now','Topps Update','Bowman Chrome','Bowman','Prizm','Select','Mosaic','Optic','Phoenix','Finest','Heritage','Stadium Club','Donruss','Score','Leaf'];
+    for (const s of sets) { if (text.toLowerCase().includes(s.toLowerCase())&&!g('sc-set').value){g('sc-set').value=s;break;} }
+    // Try first long line as player name
+    const nameLine=lines.find(l=>l.length>4&&l.length<40&&!/\d{4}/.test(l)&&!/topps|bowman|panini|upper|fleer/i.test(l));
+    if (nameLine&&!g('sc-player').value) g('sc-player').value=nameLine;
+    // Parallels
+    const pars=['Refractor','Chrome','Holo','Silver','Gold','Red','Blue','Green','Orange','Purple','Prizm','Base'];
+    for (const p of pars) { if (text.toLowerCase().includes(p.toLowerCase())&&!g('sc-par').value){g('sc-par').value=p;break;} }
+    // Sport hints
+    if (/quarterback|receiver|running back|touchdown|NFL|football/i.test(text)) g('sc-sport').value='Football';
+    else if (/pitcher|outfield|batting|MLB|baseball/i.test(text)) g('sc-sport').value='Baseball';
+    else if (/NBA|basketball|forward|guard/i.test(text)) g('sc-sport').value='Basketball';
+  } else {
+    // Back of card — look for card number
+    const cardNoMatch=text.match(/#\s*(\w+\/?\w*)|(\d+)\s*\/\s*\d+|^(\d{1,4})$/m);
+    if (cardNoMatch&&!g('sc-cno').value) g('sc-cno').value=(cardNoMatch[1]||cardNoMatch[2]||cardNoMatch[3]||'').replace('#','').trim();
+    // Year on back
+    const yearMatch=text.match(/\b(19|20)\d{2}\b/);
+    if (yearMatch&&!g('sc-year').value) g('sc-year').value=yearMatch[0];
+  }
 }
 
-async function addBuyLog() {
-  const entry = {
-    user_id: currentUser.id,
-    date_ran: new Date().toISOString().split('T')[0],
-    player: val('bl-player'), year: intVal('bl-year'),
-    set_name: val('bl-set'), card_no: val('bl-cardno'),
-    source: val('bl-source'), gem_rate: floatVal('bl-gem'),
-    psa10: floatVal('bl-psa10'), psa9: floatVal('bl-psa9'),
-    total_cost: floatVal('bl-cost'), notes: val('bl-notes')
+function useScanData() {
+  g('f-player').value=g('sc-player').value||g('f-player').value;
+  g('f-year').value=g('sc-year').value||g('f-year').value;
+  g('f-set').value=g('sc-set').value||g('f-set').value;
+  g('f-cno').value=g('sc-cno').value||g('f-cno').value;
+  g('f-par').value=g('sc-par').value||g('f-par').value;
+  if (g('sc-sport').value) g('f-sport').value=g('sc-sport').value;
+  closeModal('scan-modal');
+  toggleForm('inv-form',true);
+  goSec('inventory',document.querySelector('.ntab:nth-child(2)'));
+  toast('Card data filled in! Complete remaining fields.');
+}
+
+// ══════════ IMPORT ══════════
+function openImport() { g('import-modal').classList.add('open'); importRows=[]; g('import-preview').style.display='none'; g('btn-import-confirm').style.display='none'; }
+
+function handleImport(input) {
+  const file=input.files[0]; if (!file) return;
+  const reader=new FileReader();
+  reader.onload=function(e) {
+    try {
+      const wb=XLSX.read(e.target.result,{type:'binary'});
+      // Try to find Inventory sheet
+      const sheetName=wb.SheetNames.find(n=>n.toLowerCase().includes('inventor'))||wb.SheetNames[0];
+      const ws=wb.Sheets[sheetName];
+      const rows=XLSX.utils.sheet_to_json(ws,{defval:null});
+      // Map columns from your spreadsheet format
+      importRows=rows.filter(r=>r['Player']||r['player']).map(r=>{
+        const price=parseFloat(r['Purchase Price']||r['price']||0)||0;
+        const ship=parseFloat(r['Inbound Ship / Tax']||r['ship']||0)||0;
+        const grade=parseFloat(r['Grading Cost']||r['grading']||0)||0;
+        return {
+          user_id:CU.id,
+          card_id:r['Card ID']||r['card_id']||null,
+          player:r['Player']||r['player']||null,
+          year:parseInt(r['Year']||r['year'])||null,
+          set_name:r['Set / Brand']||r['set_name']||null,
+          parallel:r['Card / Parallel']||r['parallel']||null,
+          card_no:String(r['Card No.']||r['card_no']||''),
+          sport:r['Sport']||r['sport']||null,
+          date_acquired:r['Date Acquired']||r['date_acquired']||null,
+          source:r['Purchase Source']||r['source']||null,
+          price:price, ship:ship, grading:grade,
+          total_cost:price+ship+grade,
+          gem_rate:parseFloat(r['Gem Rate']||r['gem_rate'])||null,
+          psa10:parseFloat(r['Gross PSA 10 Value']||r['psa10'])||null,
+          psa9:parseFloat(r['Gross PSA 9 Value']||r['psa9'])||null,
+          disposition:r['Disposition']||r['disposition']||'Grade',
+          status:r['Status']||r['status']||'Raw',
+          batch_id:r['Submission Batch ID']||r['batch_id']||null,
+          sale_price:parseFloat(r['Sale Price']||r['sale_price'])||null,
+          fees:parseFloat(r['Platform Fees']||r['fees'])||null,
+          ship_out:parseFloat(r['Shipping Out']||r['ship_out'])||null,
+        };
+      });
+      g('import-preview').style.display='block';
+      g('import-preview').innerHTML=`<strong style="color:#fff;">${importRows.length} cards found</strong> in sheet "${sheetName}"<br><span style="color:var(--text-muted);">First card: ${importRows[0]?.player||'Unknown'} ${importRows[0]?.year||''} ${importRows[0]?.set_name||''}</span>`;
+      g('btn-import-confirm').style.display='';
+    } catch(err) {
+      g('import-preview').style.display='block';
+      g('import-preview').innerHTML=`<span style="color:#F87171;">Error reading file: ${err.message}</span>`;
+    }
   };
-  if (!entry.player) return showToast('Player name required', true);
-  const { data, error } = await sb.from('ev_log').insert(entry).select().single();
-  if (error) return showToast('Error: ' + error.message, true);
-  buyLogData.unshift(data);
-  blFiltered = [...buyLogData];
-  toggleBlForm(false);
-  renderBuyLog();
-  showToast('Evaluation logged!');
+  reader.readAsBinaryString(file);
 }
 
-async function deleteBL(id) {
-  if (!confirm('Delete this entry?')) return;
-  await sb.from('ev_log').delete().eq('id', id);
-  buyLogData = buyLogData.filter(r => r.id !== id);
-  blFiltered = [...buyLogData];
-  renderBuyLog();
-  showToast('Entry deleted');
+async function confirmImport() {
+  if (!importRows.length) return;
+  g('btn-import-confirm').disabled=true; g('btn-import-confirm').textContent='Importing...';
+  // Insert in chunks of 50
+  const chunks=[];
+  for (let i=0;i<importRows.length;i+=50) chunks.push(importRows.slice(i,i+50));
+  let count=0;
+  for (const chunk of chunks) {
+    const {data,error}=await sb.from('inventory').insert(chunk).select();
+    if (error){toast('Import error: '+error.message,true);break;}
+    if (data){INV=[...INV,...data];count+=data.length;}
+  }
+  closeModal('import-modal');
+  renderAll();
+  g('btn-import-confirm').disabled=false; g('btn-import-confirm').textContent='Import Cards';
+  toast(`Imported ${count} cards successfully!`);
 }
 
-// ══════════════════════════════════════════
-// ADMIN
-// ══════════════════════════════════════════
-async function loadAdminPanel() {
-  if (currentUser.email !== ADMIN_EMAIL) return;
-  const [codesRes, usersRes] = await Promise.all([
-    sb.from('invite_codes').select('*').order('created_at', {ascending:false}),
-    sb.from('profiles').select('*').order('created_at', {ascending:false})
+// ══════════ ADMIN ══════════
+async function loadAdmin() {
+  if (CU.email!==ADMIN) return;
+  const [cr,ur]=await Promise.all([
+    sb.from('invite_codes').select('*').order('created_at',{ascending:false}),
+    sb.from('profiles').select('*').order('created_at',{ascending:false})
   ]);
-  const codes = codesRes.data || [];
-  const users = usersRes.data || [];
-  document.getElementById('admin-codes').innerHTML = codes.map(c => `
-    <div class="code-row">
-      <span class="code-val">${c.code}</span>
-      <span class="code-status ${c.used?'':'badge badge-buy'}" style="${c.used?'color:var(--text-muted);font-size:11px;':''}">
-        ${c.used ? '✓ Used' : 'Available'}
-      </span>
-    </div>`).join('') || '<div style="color:var(--text-muted);font-size:13px;">No codes yet</div>';
-  document.getElementById('admin-users').innerHTML = users.map(u => `
-    <div class="user-row">
-      <div class="user-email-disp">${u.email||'Unknown'}</div>
-      <div class="user-date">Joined ${u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}</div>
-    </div>`).join('') || '<div style="color:var(--text-muted);font-size:13px;">No users yet</div>';
+  const codes=cr.data||[],users=ur.data||[];
+  g('admin-codes').innerHTML=codes.map(c=>`<div class="code-row"><span class="code-val">${c.code}</span><span style="font-size:11px;color:${c.used?'var(--text-muted)':'var(--green)'};">${c.used?'✓ Used':'Available'}</span></div>`).join('')||'<div style="color:var(--text-muted);font-size:12px;">No codes yet</div>';
+  g('admin-users').innerHTML=users.map(u=>`<div class="user-row"><div style="font-size:12px;font-weight:600;color:#fff;">${u.email||'Unknown'}</div><div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Joined ${u.created_at?new Date(u.created_at).toLocaleDateString():'—'}</div></div>`).join('')||'<div style="color:var(--text-muted);font-size:12px;">No users yet</div>';
 }
 
-async function generateCode() {
-  const code = document.getElementById('new-code-input').value.trim().toUpperCase();
-  if (!code) return showToast('Enter a code first', true);
-  const { error } = await sb.from('invite_codes').insert({ code });
-  if (error) return showToast('Error: ' + (error.message.includes('unique') ? 'Code already exists' : error.message), true);
-  document.getElementById('new-code-input').value = '';
-  loadAdminPanel();
-  showToast('Code added: ' + code);
+async function genCode() {
+  const code=g('new-code').value.trim().toUpperCase();
+  if (!code) return toast('Enter a code first',true);
+  const {error}=await sb.from('invite_codes').insert({code});
+  if (error) return toast(error.message.includes('unique')?'Code already exists':error.message,true);
+  g('new-code').value=''; loadAdmin(); toast('Code added: '+code);
 }
 
-async function generateBulk() {
-  const { data: existing } = await sb.from('invite_codes').select('code').ilike('code', 'SCC-%');
-  const nums = (existing||[]).map(r => parseInt((r.code.match(/\d+$/)||[0])[0])).filter(n=>!isNaN(n));
-  const next = nums.length ? Math.max(...nums) + 1 : 1;
-  const codes = Array.from({length:10},(_,i)=>({ code:`SCC-${String(next+i).padStart(4,'0')}` }));
-  const { error } = await sb.from('invite_codes').insert(codes);
-  if (error) return showToast('Error generating codes', true);
-  loadAdminPanel();
-  showToast('10 new codes generated!');
+async function genBulk() {
+  const {data:ex}=await sb.from('invite_codes').select('code').ilike('code','SCC-%');
+  const nums=(ex||[]).map(r=>parseInt((r.code.match(/\d+$/)||[0])[0])).filter(n=>!isNaN(n));
+  const next=nums.length?Math.max(...nums)+1:1;
+  const codes=Array.from({length:10},(_,i)=>({code:`SCC-${String(next+i).padStart(4,'0')}`}));
+  const {error}=await sb.from('invite_codes').insert(codes);
+  if (error) return toast('Error generating codes',true);
+  loadAdmin(); toast('10 new codes generated!');
 }
 
-// ══════════════════════════════════════════
-// HELPERS
-// ══════════════════════════════════════════
-function calcEV(r) {
-  const net10 = r.psa10 * 0.865;
-  const net9 = (r.psa9||0) * 0.865;
-  return (r.gem_rate * net10) + ((1-r.gem_rate) * net9) - (r.total_cost||0);
-}
-function calcEVPct(r, ev) { return r.total_cost ? ev / r.total_cost : 0; }
-function fmt$(v) { if(v==null||isNaN(v))return'—'; return (v<0?'-$':'$')+Math.abs(v).toFixed(2); }
-function evBar(pct) {
-  const p = pct*100;
-  const w = Math.min(Math.max(p,0),200)/2;
-  const c = p>=100?'#22C55E':p>=40?'#F59E0B':'#CC0000';
-  return `<div class="ev-wrap"><div class="ev-bar"><div class="ev-fill" style="width:${w.toFixed(0)}%;background:${c};"></div></div><span style="font-size:11px;color:${c};font-family:'Courier New',monospace;">${p.toFixed(0)}%</span></div>`;
-}
-function statusBadge(s) {
-  const m={Raw:'badge-raw',Submitted:'badge-submitted',Graded:'badge-graded',Listed:'badge-listed',Sold:'badge-sold'};
-  return `<span class="badge ${m[s]||'badge-raw'}">${s||'—'}</span>`;
-}
-function dispBadge(d) {
-  if(!d)return'—';
-  if(d==='Grade')return`<span class="badge badge-grade">Grade</span>`;
-  if(d==='Sell Raw')return`<span class="badge badge-sellraw">Sell Raw</span>`;
-  if(d==='Hold')return`<span class="badge badge-hold">Hold</span>`;
-  return`<span class="badge badge-raw">${d}</span>`;
-}
-function val(id){ return (document.getElementById(id)||{}).value||''; }
-function intVal(id){ const v=parseInt(val(id)); return isNaN(v)?null:v; }
-function floatVal(id){ const v=parseFloat(val(id)); return isNaN(v)?null:v; }
-function show(id){ const el=document.getElementById(id); if(el)el.style.display=''; }
-function hide(id){ const el=document.getElementById(id); if(el)el.style.display='none'; }
-function setText(id,text,cls) {
-  const el=document.getElementById(id); if(!el)return;
-  el.textContent=text;
-  if(cls){el.className='kpi-value '+cls;}
-}
-function showMsg(id,msg,type) {
-  const el=document.getElementById(id); if(!el)return;
-  el.textContent=msg; el.className='auth-msg '+(type||'');
-  el.style.display=msg?'block':'none';
-}
-function setBtn(id,text,disabled) {
-  const el=document.getElementById(id); if(!el)return;
-  el.textContent=text; el.disabled=!!disabled;
-}
-let toastTimer;
-function showToast(msg,isError=false) {
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.className='show'+(isError?' error':'');
-  clearTimeout(toastTimer);
-  toastTimer=setTimeout(()=>t.className='',3000);
-}
-
-// ══════════════════════════════════════════
-// START
-// ══════════════════════════════════════════
-init();
+// ══════════ HELPERS ══════════
+function calcEV(r){const n10=r.psa10*0.865,n9=(r.psa9||0)*0.865;return r.gem_rate*n10+(1-r.gem_rate)*n9-(r.total_cost||0);}
+function f$(v){if(v==null||isNaN(v))return'—';return(v<0?'-$':'$')+Math.abs(v).toFixed(2);}
+function evBar(p){const pct=p*100,w=Math.min(Math.max(pct,0),200)/2,c=pct>=100?'#22C55E':pct>=40?'#F59E0B':'#CC0000';return`<div class="evw"><div class="evb"><div class="evf" style="width:${w.toFixed(0)}%;background:${c};"></div></div><span style="font-size:10px;color:${c};font-family:'Courier New',monospace;">${pct.toFixed(0)}%</span></div>`;}
+function sBdg(s){const m={Raw:'b-raw',Submitted:'b-sub',Graded:'b-grd',Listed:'b-lst',Sold:'b-sld'};return`<span class="bdg ${m[s]||'b-raw'}">${s||'—'}</span>`;}
+function dBdg(d){if(!d)return'—';if(d==='Grade')return`<span class="bdg b-grade">Grade</span>`;if(d==='Sell Raw')return`<span class="bdg b-sld">Sell Raw</span>`;if(d==='Hold')return`<span class="bdg b-hold">Hold</span>`;return`<span class="bdg b-raw">${d}</span>`;}
+function g(id){return document.getElementById(id);}
+function gv(id){return(g(id)||{}).value||'';}
+function ni(id){const v=parseInt(gv(id));return isNaN(v)?null:v;}
+function nf(id){const v=parseFloat(gv(id));return isNaN(v)?null:v;}
+function setText(id,text,cls){const el=g(id);if(!el)return;el.textContent=text;if(cls)el.className='kval '+cls;}
+function msg(id,text,type){const el=g(id);if(!el)return;el.textContent=text;el.className='amsg '+(type||'');el.style.display=text?'block':'none';}
+function toggleForm(id,show){const el=g(id);if(el)el.style.display=show?'block':'none';}
+function clearForm(ids){ids.forEach(id=>{const el=g(id);if(el)el.value='';});}
+function openModal(id){g(id).classList.add('open');}
+function closeModal(id){g(id).classList.remove('open');}
+let toastT;
+function toast(txt,err=false){const t=g('toast');t.textContent=txt;t.className='show'+(err?' err':'');clearTimeout(toastT);toastT=setTimeout(()=>t.className='',3000);}
 </script>
 </body>
 </html>
