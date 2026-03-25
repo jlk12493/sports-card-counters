@@ -7,7 +7,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 :root{
   --red:#CC0000;--red-light:#FF3333;--black:#0A0A0A;--near-black:#141414;
@@ -214,27 +213,6 @@ input.fi{flex:1;min-width:160px;}
 
 @media(max-width:1100px){.kgrid{grid-template-columns:repeat(3,1fr);}}
 @media(max-width:700px){.kgrid{grid-template-columns:repeat(2,1fr);}.dgrid,.agrid{grid-template-columns:1fr;}.bmeta{grid-template-columns:repeat(2,1fr);}}
-
-/* NOTES TOOLTIP */
-.note-cell{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-muted);font-size:11px;cursor:help;}
-
-/* BULK UPDATE */
-.bulk-btn{background:rgba(34,197,94,.15);color:#4ADE80;border:1px solid rgba(34,197,94,.3);padding:4px 10px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.5px;cursor:pointer;}
-.bulk-btn:hover{background:rgba(34,197,94,.25);}
-
-/* CHART */
-.chart-wrap{position:relative;height:200px;margin-top:10px;}
-
-/* TOP PERFORMERS */
-.perf-row{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid #1e1e1e;}
-.perf-row:last-child{border-bottom:none;}
-.perf-name{font-size:12px;font-weight:600;color:#fff;}
-.perf-set{font-size:10px;color:var(--text-muted);}
-.perf-ev{font-size:13px;font-weight:700;}
-
-/* EXPORT BTN */
-.btn-export{background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:6px 12px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.5px;cursor:pointer;}
-.btn-export:hover{border-color:var(--green);color:var(--green);}
 </style>
 </head>
 <body>
@@ -317,16 +295,6 @@ input.fi{flex:1;min-width:160px;}
           <table class="stbl"><thead><tr><th>Status</th><th>Cards</th><th>Acq Cost</th></tr></thead><tbody id="d-status"></tbody></table>
         </div>
         <div class="panel">
-          <div class="ptitle">Top EV% Cards (Grade Candidates)</div>
-          <div id="d-top-performers"><div style="font-size:12px;color:var(--text-muted);padding:10px 0;">No grade candidates yet</div></div>
-        </div>
-      </div>
-      <div class="dgrid">
-        <div class="panel">
-          <div class="ptitle">Realized Profit Over Time</div>
-          <div class="chart-wrap"><canvas id="profit-chart"></canvas></div>
-        </div>
-        <div class="panel">
           <div class="ptitle">Definitions</div>
           <div class="defbox">
             <p>EV$ = estimated value minus total cost basis.</p>
@@ -376,8 +344,6 @@ input.fi{flex:1;min-width:160px;}
       </div>
       <div class="fbar">
         <button class="btn-s" onclick="toggleForm('inv-form',true)" id="btn-add-inv">+ Add Card</button>
-        <button class="btn-export" onclick="exportCSV()">⬇ Export CSV</button>
-        <button class="btn-export" style="color:var(--amber);border-color:var(--amber);" onclick="openEVRecalc()">↻ Update Comps</button>
         <input class="fi" type="text" id="inv-q" placeholder="Search player, set, card ID..." oninput="filterInv()">
         <select class="fi" id="inv-sport" onchange="filterInv()"><option value="">All Sports</option><option>Baseball</option><option>Football</option><option>Basketball</option></select>
         <select class="fi" id="inv-stat" onchange="filterInv()"><option value="">All Statuses</option><option>Raw</option><option>Submitted</option><option>Graded</option><option>Listed</option></select>
@@ -386,7 +352,7 @@ input.fi{flex:1;min-width:160px;}
       </div>
       <div class="twrap">
         <table class="dtbl">
-          <thead><tr><th></th><th>Card ID</th><th>Player</th><th>Year</th><th>Set</th><th>Parallel</th><th>#</th><th>Sport</th><th>Source</th><th>Purchase</th><th>Ship</th><th>Grade Fee</th><th>Total Cost</th><th>Gem %</th><th>PSA 10</th><th>PSA 9</th><th>EV$</th><th>EV%</th><th>Disposition</th><th>Status</th><th>Batch</th><th>Notes</th></tr></thead>
+          <thead><tr><th></th><th>Card ID</th><th>Player</th><th>Year</th><th>Set</th><th>Parallel</th><th>#</th><th>Sport</th><th>Source</th><th>Purchase</th><th>Ship</th><th>Grade Fee</th><th>Total Cost</th><th>Gem %</th><th>PSA 10</th><th>PSA 9</th><th>EV$</th><th>EV%</th><th>Disposition</th><th>Status</th><th>Batch</th></tr></thead>
           <tbody id="inv-tbody"></tbody>
         </table>
       </div>
@@ -733,8 +699,6 @@ function renderDash() {
   g('s-proc').textContent=f$(proc);
   g('s-prof').textContent=f$(prof);
   g('s-avg').textContent=sold.length?f$(prof/sold.length):'—';
-  renderTopPerformers();
-  renderProfitChart();
 }
 
 // ══════════ INVENTORY ══════════
@@ -780,7 +744,6 @@ function renderInv() {
         <td>${dBdg(r.disposition)}</td>
         <td>${sBdg(r.status)}</td>
         <td class="mo" style="font-size:10px;color:#555;">${r.batch_id||'—'}</td>
-        <td class="note-cell" title="${r.notes||''}">${r.notes||'—'}</td>
       </tr>`;
     }).join('');
   }
@@ -838,7 +801,7 @@ function renderBatches() {
     return `<div class="bcard">
       <div class="bhdr">
         <div><div class="bid">Batch #${b.batch_id}</div><div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${b.grader||'PSA'} · ${b.service||''} · ${b.submit_date||'TBD'}</div></div>
-        <div style="display:flex;align-items:center;gap:8px;"><span class="bdg ${stMap[b.status]||'b-raw'}">${b.status||'—'}</span><button class="bulk-btn" onclick="bulkUpdateBatch('${b.batch_id}')">Bulk Update Cards</button><button class="btn-del" onclick="delBatch('${b.id}')">✕</button></div>
+        <div style="display:flex;align-items:center;gap:8px;"><span class="bdg ${stMap[b.status]||'b-raw'}">${b.status||'—'}</span><button class="btn-del" onclick="delBatch('${b.id}')">✕</button></div>
       </div>
       <div class="bmeta">
         <div><div class="bsl">Cards</div><div class="bsv">${cards.length}</div></div>
@@ -1148,174 +1111,6 @@ async function genBulk() {
   loadAdmin(); toast('10 new codes generated!');
 }
 
-
-
-// ══════════ BULK UPDATE BATCH ══════════
-async function bulkUpdateBatch(batchId) {
-  const cards = INV.filter(r => r.batch_id === batchId);
-  if (!cards.length) return toast('No inventory cards linked to this batch', true);
-  const statuses = ['Raw','Submitted','Graded','Listed','Sold'];
-  const current = cards[0].status || 'Submitted';
-  const html = `<div style="padding:4px 0;">
-    <div style="font-size:13px;color:var(--text-2);margin-bottom:14px;">Update all <strong style="color:#fff;">${cards.length} cards</strong> in batch <strong style="color:#fff;">#${batchId}</strong> to:</div>
-    <select id="bulk-stat" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:#fff;padding:9px 12px;border-radius:6px;font-size:14px;outline:none;margin-bottom:4px;">
-      ${statuses.map(s=>`<option value="${s}" ${s===current?'selected':''}>${s}</option>`).join('')}
-    </select>
-  </div>`;
-  const modal = document.createElement('div');
-  modal.className = 'modal-bg open';
-  modal.id = 'bulk-modal';
-  modal.innerHTML = `<div class="modal" style="max-width:400px;">
-    <div class="modal-title">Bulk Update Batch #${batchId}<button class="modal-close" onclick="document.getElementById('bulk-modal').remove()">✕</button></div>
-    ${html}
-    <div class="factions">
-      <button class="btn-a" onclick="confirmBulkUpdate('${batchId}')">Update All Cards</button>
-      <button class="btn-c" onclick="document.getElementById('bulk-modal').remove()">Cancel</button>
-    </div>
-  </div>`;
-  document.body.appendChild(modal);
-}
-
-async function confirmBulkUpdate(batchId) {
-  const newStatus = document.getElementById('bulk-stat').value;
-  const cards = INV.filter(r => r.batch_id === batchId);
-  const ids = cards.map(r => r.id);
-  const {error} = await sb.from('inventory').update({status: newStatus}).in('id', ids);
-  if (error) return toast('Error: ' + error.message, true);
-  INV = INV.map(r => ids.includes(r.id) ? {...r, status: newStatus} : r);
-  document.getElementById('bulk-modal').remove();
-  renderAll();
-  toast(`${cards.length} cards updated to ${newStatus}!`);
-}
-
-// ══════════ EV RECALCULATOR ══════════
-function openEVRecalc() {
-  const cards = INV.filter(r => r.status !== 'Sold' && r.disposition === 'Grade');
-  if (!cards.length) return toast('No grade candidates in inventory', true);
-  const modal = document.createElement('div');
-  modal.className = 'modal-bg open';
-  modal.id = 'recalc-modal';
-  modal.innerHTML = `<div class="modal" style="max-width:680px;">
-    <div class="modal-title">EV Recalculator<button class="modal-close" onclick="document.getElementById('recalc-modal').remove()">✕</button></div>
-    <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">Update PSA 10/9 comps and gem rates for your grade candidates. Leave blank to keep existing values.</div>
-    <div style="max-height:400px;overflow-y:auto;">
-      <table class="dtbl" style="min-width:400px;">
-        <thead><tr><th>Player</th><th>Set / Parallel</th><th>Gem Rate</th><th>New PSA 10 $</th><th>New PSA 9 $</th></tr></thead>
-        <tbody>${cards.map(r=>`<tr>
-          <td class="pl">${r.player||'—'}</td>
-          <td style="font-size:11px;">${r.set_name||''} ${r.parallel||''}</td>
-          <td><input type="number" step="0.01" placeholder="${r.gem_rate!=null?(r.gem_rate*100).toFixed(0)+'%':''}" id="rc-gem-${r.id}" style="width:70px;background:var(--surface-2);border:1px solid var(--border);color:#fff;padding:4px 6px;border-radius:4px;font-size:12px;outline:none;"></td>
-          <td><input type="number" step="0.01" placeholder="${r.psa10!=null?'$'+r.psa10:''}" id="rc-p10-${r.id}" style="width:80px;background:var(--surface-2);border:1px solid var(--border);color:#fff;padding:4px 6px;border-radius:4px;font-size:12px;outline:none;"></td>
-          <td><input type="number" step="0.01" placeholder="${r.psa9!=null?'$'+r.psa9:''}" id="rc-p9-${r.id}" style="width:80px;background:var(--surface-2);border:1px solid var(--border);color:#fff;padding:4px 6px;border-radius:4px;font-size:12px;outline:none;"></td>
-        </tr>`).join('')}</tbody>
-      </table>
-    </div>
-    <div class="factions" style="margin-top:14px;">
-      <button class="btn-a" onclick="saveEVRecalc(${JSON.stringify(cards.map(r=>r.id))})">Save Updates</button>
-      <button class="btn-c" onclick="document.getElementById('recalc-modal').remove()">Cancel</button>
-    </div>
-  </div>`;
-  document.body.appendChild(modal);
-}
-
-async function saveEVRecalc(ids) {
-  let updated = 0;
-  for (const id of ids) {
-    const gem = parseFloat(document.getElementById('rc-gem-'+id)?.value);
-    const p10 = parseFloat(document.getElementById('rc-p10-'+id)?.value);
-    const p9 = parseFloat(document.getElementById('rc-p9-'+id)?.value);
-    const updates = {};
-    if (!isNaN(gem)) updates.gem_rate = gem;
-    if (!isNaN(p10)) updates.psa10 = p10;
-    if (!isNaN(p9)) updates.psa9 = p9;
-    if (Object.keys(updates).length === 0) continue;
-    const {data, error} = await sb.from('inventory').update(updates).eq('id', id).select().single();
-    if (!error && data) { const idx = INV.findIndex(r => r.id === id); if (idx !== -1) INV[idx] = {...INV[idx], ...updates}; updated++; }
-  }
-  document.getElementById('recalc-modal').remove();
-  renderAll();
-  toast(`Updated comps for ${updated} card${updated!==1?'s':''}!`);
-}
-
-// ══════════ EXPORT CSV ══════════
-function exportCSV() {
-  const cards = invF.length ? invF : INV.filter(r => r.status !== 'Sold');
-  if (!cards.length) return toast('No cards to export', true);
-  const headers = ['Card ID','Player','Year','Set','Parallel','Card #','Sport','Date Acquired','Source','Purchase Price','Ship/Tax','Grading Cost','Total Cost','Gem Rate','PSA 10','PSA 9','EV$','EV%','Disposition','Status','Batch ID','Notes'];
-  const rows = cards.map(r => {
-    const ev = (r.gem_rate && r.psa10) ? calcEV(r) : null;
-    const evp = (ev !== null && r.total_cost) ? (ev/r.total_cost*100).toFixed(1)+'%' : '';
-    return [
-      r.card_id||'', r.player||'', r.year||'', r.set_name||'', r.parallel||'', r.card_no||'',
-      r.sport||'', r.date_acquired||'', r.source||'',
-      r.price!=null?r.price:'', r.ship!=null?r.ship:'', r.grading!=null?r.grading:'', r.total_cost!=null?r.total_cost:'',
-      r.gem_rate!=null?r.gem_rate:'', r.psa10!=null?r.psa10:'', r.psa9!=null?r.psa9:'',
-      ev!=null?ev.toFixed(2):'', evp, r.disposition||'', r.status||'', r.batch_id||'', r.notes||''
-    ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(',');
-  });
-  const csv = [headers.join(','), ...rows].join('
-');
-  const blob = new Blob([csv], {type:'text/csv'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'scc-inventory-'+new Date().toISOString().split('T')[0]+'.csv';
-  a.click(); URL.revokeObjectURL(url);
-  toast('CSV exported!');
-}
-
-// ══════════ PROFIT CHART ══════════
-let profitChart = null;
-function renderProfitChart() {
-  const sold = INV.filter(r => r.status === 'Sold' && r.date_sold).sort((a,b) => new Date(a.date_sold)-new Date(b.date_sold));
-  const canvas = document.getElementById('profit-chart');
-  if (!canvas) return;
-  if (!sold.length) { canvas.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:200px;color:var(--text-muted);font-size:12px;">No sold cards yet</div>'; return; }
-  const labels = sold.map(r => r.date_sold);
-  let running = 0;
-  const data = sold.map(r => { running += (r.realized_profit || 0); return parseFloat(running.toFixed(2)); });
-  if (profitChart) profitChart.destroy();
-  profitChart = new Chart(canvas, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Cumulative Profit',
-        data,
-        borderColor: '#22C55E',
-        backgroundColor: 'rgba(34,197,94,0.1)',
-        borderWidth: 2,
-        pointRadius: 4,
-        pointBackgroundColor: '#22C55E',
-        fill: true,
-        tension: 0.3
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { ticks: { color: '#777', font: {size:10} }, grid: { color: '#222' } },
-        y: { ticks: { color: '#777', font: {size:10}, callback: v => '$'+v }, grid: { color: '#222' } }
-      }
-    }
-  });
-}
-
-// ══════════ TOP PERFORMERS ══════════
-function renderTopPerformers() {
-  const graders = INV.filter(r => r.status !== 'Sold' && r.disposition === 'Grade' && r.gem_rate && r.psa10 && r.total_cost);
-  const sorted = graders.map(r => ({...r, ev: calcEV(r), evp: calcEV(r)/r.total_cost})).sort((a,b) => b.evp - a.evp).slice(0,5);
-  const el = document.getElementById('d-top-performers');
-  if (!el) return;
-  if (!sorted.length) { el.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:10px 0;">No grade candidates with EV data yet</div>'; return; }
-  el.innerHTML = sorted.map((r,i) => `<div class="perf-row">
-    <div>
-      <div class="perf-name">${i+1}. ${r.player||'—'}</div>
-      <div class="perf-set">${r.year||''} ${r.set_name||''} ${r.parallel||''}</div>
-    </div>
-    <div class="perf-ev" style="color:${r.evp>=1?'var(--green)':r.evp>=0.4?'var(--amber)':'#F87171'};">${(r.evp*100).toFixed(0)}%</div>
-  </div>`).join('');
-}
 
 // ══════════ EDIT CARD ══════════
 function openEdit(id) {
