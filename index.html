@@ -1211,14 +1211,15 @@ function openEVRecalc() {
       </table>
     </div>
     <div class="factions" style="margin-top:14px;">
-      <button class="btn-a" onclick="saveEVRecalc(${JSON.stringify(cards.map(r=>r.id))})">Save Updates</button>
+      <button class="btn-a" id="recalc-save-btn" onclick="saveEVRecalc()">Save Updates</button>
       <button class="btn-c" onclick="document.getElementById('recalc-modal').remove()">Cancel</button>
     </div>
   </div>`;
   document.body.appendChild(modal);
 }
 
-async function saveEVRecalc(ids) {
+async function saveEVRecalc() {
+  const ids = INV.filter(r => r.status !== 'Sold' && r.disposition === 'Grade').map(r => r.id);
   let updated = 0;
   for (const id of ids) {
     const gem = parseFloat(document.getElementById('rc-gem-'+id)?.value);
