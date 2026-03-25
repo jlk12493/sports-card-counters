@@ -563,12 +563,13 @@ const PER_PAGE = 25;
 // INIT
 // ══════════════════════════════════════════
 async function init() {
+  hide('loading');
   const { data: { session } } = await sb.auth.getSession();
   if (session) {
     currentUser = session.user;
     await launchApp();
   } else {
-    hide('loading'); show('auth-screen');
+    show('auth-screen');
   }
   sb.auth.onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN' && session) {
