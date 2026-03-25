@@ -583,19 +583,27 @@ async function init() {
 }
 
 async function launchApp() {
-  hide('auth-screen');
-  document.getElementById('user-email-display').textContent = currentUser.email;
-  if (currentUser.email === ADMIN_EMAIL) {
-    const nav = document.getElementById('main-nav');
-    const adminBtn = document.createElement('button');
-    adminBtn.className = 'nav-tab admin-tab';
-    adminBtn.textContent = '⚙ Admin';
-    adminBtn.onclick = function(){ showSection('admin', this); };
-    nav.appendChild(adminBtn);
+  try {
+    hide('auth-screen');
+    document.getElementById('user-email-display').textContent = currentUser.email;
+    if (currentUser.email === ADMIN_EMAIL) {
+      const nav = document.getElementById('main-nav');
+      const existing = nav.querySelector('.admin-tab');
+      if (existing) existing.remove();
+      const adminBtn = document.createElement('button');
+      adminBtn.className = 'nav-tab admin-tab';
+      adminBtn.textContent = 'Admin';
+      adminBtn.onclick = function(){ showSection('admin', this); };
+      nav.appendChild(adminBtn);
+    }
+    await loadAllData();
+    renderAll();
+  } catch(e) {
+    console.error('Launch error:', e);
+  } finally {
+    hide('loading');
+    show('app-screen');
   }
-  await loadAllData();
-  hide('loading'); show('app-screen');
-  renderAll();
 }
 
 async function loadAllData() {
