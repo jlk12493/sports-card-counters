@@ -373,15 +373,69 @@ input.fi{flex:1;min-width:160px;}
           </div>
         </div>
       </div>
-      <div class="fbar">
+      <div class="fbar" style="gap:6px;">
         <button class="btn-s" onclick="toggleForm('inv-form',true)" id="btn-add-inv">+ Add Card</button>
-        <button class="btn-export" onclick="exportCSV()">⬇ Export CSV</button>
-        <button class="btn-export" style="color:var(--amber);border-color:var(--amber);" onclick="openEVRecalc()">↻ Update Comps</button>
-        <input class="fi" type="text" id="inv-q" placeholder="Search player, set, card ID..." oninput="filterInv()">
-        <select class="fi" id="inv-sport" onchange="filterInv()"><option value="">All Sports</option><option>Baseball</option><option>Football</option><option>Basketball</option></select>
-        <select class="fi" id="inv-stat" onchange="filterInv()"><option value="">All Statuses</option><option>Raw</option><option>Submitted</option><option>Graded</option><option>Listed</option></select>
-        <select class="fi" id="inv-disp" onchange="filterInv()"><option value="">All Dispositions</option><option>Grade</option><option>Sell Raw</option><option>Hold</option></select>
-        <span class="fcnt" id="inv-cnt"></span>
+        <button class="btn-export" onclick="exportCSV()">Export CSV</button>
+        <button class="btn-export" style="color:var(--amber);border-color:var(--amber);" onclick="openEVRecalc()">Update Comps</button>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:12px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
+          <div>
+            <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Search</div>
+            <input class="fi" type="text" id="inv-q" placeholder="Player, set, card ID..." oninput="filterInv()" style="width:100%;">
+          </div>
+          <div>
+            <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Player</div>
+            <select class="fi" id="inv-player" onchange="filterInv()" style="width:100%;"><option value="">All Players</option></select>
+          </div>
+          <div>
+            <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Set / Brand</div>
+            <select class="fi" id="inv-set" onchange="filterInv()" style="width:100%;"><option value="">All Sets</option></select>
+          </div>
+          <div>
+            <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Card #</div>
+            <input class="fi" type="text" id="inv-cardno" placeholder="e.g. 264" oninput="filterInv()" style="width:100%;">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr 1fr;gap:8px;align-items:end;">
+          <div>
+            <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Sport</div>
+            <select class="fi" id="inv-sport" onchange="filterInv()" style="width:100%;"><option value="">All</option><option>Baseball</option><option>Football</option><option>Basketball</option></select>
+          </div>
+          <div>
+            <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Year</div>
+            <select class="fi" id="inv-year" onchange="filterInv()" style="width:100%;"><option value="">All Years</option></select>
+          </div>
+          <div>
+            <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Status</div>
+            <select class="fi" id="inv-stat" onchange="filterInv()" style="width:100%;"><option value="">All</option><option>Raw</option><option>Submitted</option><option>Graded</option><option>Listed</option></select>
+          </div>
+          <div>
+            <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Disposition</div>
+            <select class="fi" id="inv-disp" onchange="filterInv()" style="width:100%;"><option value="">All</option><option>Grade</option><option>Sell Raw</option><option>Hold</option></select>
+          </div>
+          <div>
+            <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Batch ID</div>
+            <input class="fi" type="text" id="inv-batch-filter" placeholder="e.g. 14442636" oninput="filterInv()" style="width:100%;">
+          </div>
+          <div>
+            <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Sort By</div>
+            <select class="fi" id="inv-sort" onchange="filterInv()" style="width:100%;">
+              <option value="newest">Newest First</option>
+              <option value="player">Player A-Z</option>
+              <option value="year-desc">Year (Newest)</option>
+              <option value="year-asc">Year (Oldest)</option>
+              <option value="ev-desc">EV% High to Low</option>
+              <option value="ev-asc">EV% Low to High</option>
+              <option value="cost-desc">Cost High to Low</option>
+              <option value="cost-asc">Cost Low to High</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
+          <span class="fcnt" id="inv-cnt"></span>
+          <button onclick="clearInvFilters()" style="background:transparent;border:none;color:var(--text-muted);font-size:11px;cursor:pointer;padding:0;">Clear all filters</button>
+        </div>
       </div>
       <div class="twrap">
         <table class="dtbl">
@@ -780,6 +834,7 @@ function goSec(name,btn) {
 function renderAll() {
   invF=[...INV.filter(r=>r.status!=='Sold')];
   blF=[...BL];
+  populateInvDropdowns();
   renderDash(); renderInv(); renderBatches(); renderSold(); renderBL();
 }
 
@@ -815,15 +870,52 @@ function renderDash() {
 }
 
 // - INVENTORY -
-function filterInv() {
-  const q=g('inv-q').value.toLowerCase();
-  const sp=g('inv-sport').value,st=g('inv-stat').value,dp=g('inv-disp').value;
-  invF=INV.filter(r=>r.status!=='Sold').filter(r=>{
-    const mq=!q||(r.card_id||'').toLowerCase().includes(q)||(r.player||'').toLowerCase().includes(q)||(r.set_name||'').toLowerCase().includes(q)||(r.parallel||'').toLowerCase().includes(q);
-    return mq&&(!sp||r.sport===sp)&&(!st||r.status===st)&&(!dp||r.disposition===dp);
-  });
-  invPg=1; renderInv();
+function populateInvDropdowns() {
+  const onHand = INV.filter(r => r.status !== 'Sold');
+  const players = [...new Set(onHand.map(r => r.player).filter(Boolean))].sort();
+  const sets = [...new Set(onHand.map(r => r.set_name).filter(Boolean))].sort();
+  const years = [...new Set(onHand.map(r => r.year).filter(Boolean))].sort((a,b) => b - a);
+  const playerSel = g('inv-player'), setSel = g('inv-set'), yearSel = g('inv-year');
+  if (!playerSel || !setSel || !yearSel) return;
+  const curPlayer = playerSel.value, curSet = setSel.value, curYear = yearSel.value;
+  playerSel.innerHTML = '<option value="">All Players</option>' + players.map(p => `<option value="${p}" ${p===curPlayer?'selected':''}>${p}</option>`).join('');
+  setSel.innerHTML = '<option value="">All Sets</option>' + sets.map(s => `<option value="${s}" ${s===curSet?'selected':''}>${s}</option>`).join('');
+  yearSel.innerHTML = '<option value="">All Years</option>' + years.map(y => `<option value="${y}" ${y==curYear?'selected':''}>${y}</option>`).join('');
 }
+
+function filterInv() {
+  const q = g('inv-q').value.toLowerCase();
+  const sp = g('inv-sport').value, st = g('inv-stat').value, dp = g('inv-disp').value;
+  const pl = g('inv-player').value, se = g('inv-set').value, yr = g('inv-year').value;
+  const cn = g('inv-cardno').value.toLowerCase();
+  const ba = g('inv-batch-filter').value.toLowerCase();
+  const sort = g('inv-sort').value;
+  invF = INV.filter(r => r.status !== 'Sold').filter(r => {
+    const mq = !q || (r.card_id||'').toLowerCase().includes(q) || (r.player||'').toLowerCase().includes(q) || (r.set_name||'').toLowerCase().includes(q) || (r.parallel||'').toLowerCase().includes(q);
+    const mcn = !cn || (r.card_no||'').toLowerCase().includes(cn);
+    const mba = !ba || (r.batch_id||'').toLowerCase().includes(ba);
+    return mq && mcn && mba && (!sp||r.sport===sp) && (!st||r.status===st) && (!dp||r.disposition===dp) && (!pl||r.player===pl) && (!se||r.set_name===se) && (!yr||String(r.year)===String(yr));
+  });
+  invF.sort((a,b) => {
+    if (sort==='player') return (a.player||'').localeCompare(b.player||'');
+    if (sort==='year-desc') return (b.year||0)-(a.year||0);
+    if (sort==='year-asc') return (a.year||0)-(b.year||0);
+    if (sort==='ev-desc') { const ea=(a.gem_rate&&a.psa10)?calcEV(a)/(a.total_cost||1):-999; const eb=(b.gem_rate&&b.psa10)?calcEV(b)/(b.total_cost||1):-999; return eb-ea; }
+    if (sort==='ev-asc') { const ea=(a.gem_rate&&a.psa10)?calcEV(a)/(a.total_cost||1):999; const eb=(b.gem_rate&&b.psa10)?calcEV(b)/(b.total_cost||1):999; return ea-eb; }
+    if (sort==='cost-desc') return (b.total_cost||0)-(a.total_cost||0);
+    if (sort==='cost-asc') return (a.total_cost||0)-(b.total_cost||0);
+    return 0;
+  });
+  invPg = 1; renderInv();
+}
+
+function clearInvFilters() {
+  ['inv-q','inv-cardno','inv-batch-filter'].forEach(id=>{const el=g(id);if(el)el.value='';});
+  ['inv-player','inv-set','inv-year','inv-sport','inv-stat','inv-disp'].forEach(id=>{const el=g(id);if(el)el.value='';});
+  g('inv-sort').value='newest';
+  filterInv();
+}
+
 
 function renderInv() {
   const tot=invF.length, pgs=Math.ceil(tot/PP);
