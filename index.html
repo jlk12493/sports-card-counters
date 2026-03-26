@@ -156,6 +156,18 @@ input.fi{flex:1;min-width:160px;}
 .empty-icon{font-size:36px;margin-bottom:10px;opacity:.4;}
 .empty-title{font-size:14px;font-weight:600;color:var(--text-2);margin-bottom:4px;}
 
+/* COLLAPSIBLE BATCH */
+.batch-toggle{cursor:pointer;user-select:none;}
+.batch-toggle:hover{background:rgba(255,255,255,.02);}
+.batch-chevron{display:inline-block;transition:transform .2s;font-style:normal;font-size:11px;color:var(--text-muted);margin-right:6px;}
+.batch-chevron.open{transform:rotate(90deg);}
+.batch-body{display:none;}
+.batch-body.open{display:block;}
+.batch-summary{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.bsum-item{display:flex;flex-direction:column;}
+.bsum-label{font-size:8px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;}
+.bsum-val{font-size:13px;font-weight:700;color:#fff;font-family:'Courier New',monospace;}
+
 /* TOAST */
 #toast{position:fixed;bottom:20px;right:20px;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);color:#fff;padding:10px 16px;border-radius:7px;font-size:12px;font-weight:600;z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s;}
 #toast.show{transform:translateY(0);opacity:1;}
@@ -998,28 +1010,73 @@ async function addBatch() {
 }
 
 function renderBatches() {
-  const wrap=g('batches-wrap');
-  if (!BATCHES.length){wrap.innerHTML=`<div class="empty"><div class="empty-icon">📬</div><div class="empty-title">No batches yet</div><div style="font-size:12px;">Click + Add Batch</div></div>`;return;}
-  const stMap={Sent:'b-sub',Received:'b-grd',Graded:'b-grd',Returned:'b-raw',Sold:'b-sld'};
-  wrap.innerHTML=BATCHES.map(b=>{
-    const cards=INV.filter(r=>r.batch_id===b.batch_id);
-    const fees=cards.reduce((s,r)=>s+(r.grading||0),0);
-    return `<div class="bcard">
-      <div class="bhdr">
-        <div><div class="bid">Batch #${b.batch_id}</div><div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${b.grader||'PSA'} · ${b.service||''} · ${b.submit_date||'TBD'}</div></div>
-        <div style="display:flex;align-items:center;gap:8px;"><span class="bdg ${stMap[b.status]||'b-raw'}">${b.status||'--'}</span><button class="bulk-btn" onclick="bulkUpdateBatch('${b.batch_id}')">Bulk Update Cards</button><button class="btn-del" onclick="delBatch('${b.id}')">x</button></div>
-      </div>
-      <div class="bmeta">
-        <div><div class="bsl">Cards</div><div class="bsv">${cards.length}</div></div>
-        <div><div class="bsl">Total Fees</div><div class="bsv">${f$(fees)}</div></div>
-        <div><div class="bsl">Grader</div><div class="bsv">${b.grader||'--'}</div></div>
-        <div><div class="bsl">Service</div><div class="bsv" style="font-size:11px;">${b.service||'--'}</div></div>
-        <div><div class="bsl">Notes</div><div class="bsv" style="font-size:11px;color:var(--text-muted);">${b.notes||'--'}</div></div>
-      </div>
-      ${cards.length?`<div class="twrap"><table class="dtbl"><thead><tr><th>Card ID</th><th>Player</th><th>Set</th><th>Parallel</th><th>Fee</th><th>Status</th></tr></thead><tbody>${cards.map(r=>`<tr><td class="mo" style="font-size:10px;color:#555;">${r.card_id||'--'}</td><td class="pl">${r.player||'--'}</td><td>${r.set_name||'--'}</td><td>${r.parallel||'--'}</td><td class="mo">${r.grading!=null?f$(r.grading):'--'}</td><td>${sBdg(r.status)}</td></tr>`).join('')}</tbody></table></div>`:'<div style="font-size:11px;color:var(--text-muted);padding:6px 0;">No cards linked to this batch ID</div>'}
-    </div>`;
+  const wrap = g('batches-wrap');
+  if (!BATCHES.length) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-icon">X</div><div class="empty-title">No batches yet</div><div style="font-size:12px;">Click + Add Batch</div></div>';
+    return;
+  }
+  const stMap = {Sent:'b-sub',Received:'b-grd',Graded:'b-grd',Returned:'b-raw',Sold:'b-sld'};
+  const openBatches = new Set();
+  wrap.querySelectorAll('.batch-body.open').forEach(function(el){ openBatches.add(el.dataset.bid); });
+  const html = BATCHES.map(function(b, idx) {
+    const cards = INV.filter(function(r){ return r.batch_id === b.batch_id; });
+    const fees = cards.reduce(function(s,r){ return s + (r.grading||0); }, 0);
+    const isOpen = openBatches.has(b.batch_id) || idx === 0;
+    const bid = b.batch_id;
+    const chevStyle = isOpen ? 'display:inline-block;transform:rotate(90deg);transition:transform .2s;font-style:normal;font-size:11px;color:#777;margin-right:6px;' : 'display:inline-block;transition:transform .2s;font-style:normal;font-size:11px;color:#777;margin-right:6px;';
+    const bodyStyle = isOpen ? 'padding:0 14px 14px;' : 'display:none;padding:0 14px 14px;';
+    const statBadge = '<span class="bdg ' + (stMap[b.status]||'b-raw') + '">' + (b.status||'--') + '</span>';
+    const cardRows = cards.map(function(r){
+      return '<tr>' +
+        '<td class="mo" style="font-size:10px;color:#555;">' + (r.card_id||'--') + '</td>' +
+        '<td class="pl">' + (r.player||'--') + '</td>' +
+        '<td>' + (r.set_name||'--') + '</td>' +
+        '<td>' + (r.parallel||'--') + '</td>' +
+        '<td class="mo">' + (r.card_no||'--') + '</td>' +
+        '<td class="mo">' + (r.grading!=null ? f$(r.grading) : '--') + '</td>' +
+        '<td>' + sBdg(r.status) + '</td>' +
+        '</tr>';
+    }).join('');
+    const cardTable = cards.length
+      ? '<div class="twrap"><table class="dtbl"><thead><tr><th>Card ID</th><th>Player</th><th>Set</th><th>Parallel</th><th>Card #</th><th>Fee</th><th>Status</th></tr></thead><tbody>' + cardRows + '</tbody></table></div>'
+      : '<div style="font-size:11px;color:var(--text-muted);padding:8px 0;">No inventory cards linked to this batch ID yet.</div>';
+    const noteHtml = b.notes ? '<div style="font-size:11px;color:var(--text-muted);margin-bottom:10px;">' + b.notes + '</div>' : '';
+    return '<div class="bcard" style="padding:0;overflow:hidden;margin-bottom:10px;">' +
+      '<div class="bhdr" style="padding:12px 14px;cursor:pointer;" onclick="toggleBatch(' + JSON.stringify(bid) + ')">' +
+        '<div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;flex-wrap:wrap;">' +
+          '<i style="' + chevStyle + '" id="chev-' + bid + '">&#9658;</i>' +
+          '<div style="font-size:14px;font-weight:800;color:#fff;">Batch #' + bid + '</div>' +
+          '<div style="display:flex;gap:14px;flex-wrap:wrap;">' +
+            '<div><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;">Grader</div><div style="font-size:12px;font-weight:700;color:#fff;">' + (b.grader||'PSA') + '</div></div>' +
+            '<div><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;">Service</div><div style="font-size:12px;font-weight:700;color:#fff;">' + (b.service||'--') + '</div></div>' +
+            '<div><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;">Cards</div><div style="font-size:12px;font-weight:700;color:#fff;">' + cards.length + '</div></div>' +
+            '<div><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;">Total Fees</div><div style="font-size:12px;font-weight:700;color:#fff;">' + f$(fees) + '</div></div>' +
+            '<div><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;">Date</div><div style="font-size:11px;font-weight:700;color:#fff;">' + (b.submit_date||'TBD') + '</div></div>' +
+          '</div>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;" onclick="event.stopPropagation()">' +
+          statBadge +
+          '<button class="bulk-btn" onclick="bulkUpdateBatch(' + JSON.stringify(bid) + ')">Bulk Update</button>' +
+          '<button class="btn-del" onclick="delBatch(' + JSON.stringify(b.id) + ')">x</button>' +
+        '</div>' +
+      '</div>' +
+      '<div id="body-' + bid + '" style="' + bodyStyle + '">' +
+        noteHtml + cardTable +
+      '</div>' +
+    '</div>';
   }).join('');
+  wrap.innerHTML = html;
 }
+
+function toggleBatch(batchId) {
+  const body = document.getElementById('body-' + batchId);
+  const chev = document.getElementById('chev-' + batchId);
+  if (!body) return;
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : '';
+  if (chev) chev.style.transform = isOpen ? '' : 'rotate(90deg)';
+}
+
 
 async function delBatch(id) {
   if (!confirm('Delete batch?')) return;
