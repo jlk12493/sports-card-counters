@@ -314,39 +314,83 @@ input.fi{flex:1;min-width:160px;}
 
     <!-- DASHBOARD -->
     <div class="sec active" id="sec-dashboard">
-      <div class="kgrid">
-        <div class="kcard"><div class="klbl">Realized Profit</div><div class="kval g" id="k-profit">$0.00</div><div class="ksub">All-time net</div></div>
-        <div class="kcard"><div class="klbl">Inventory Cost</div><div class="kval" id="k-inv">$0.00</div><div class="ksub">On-hand basis</div></div>
-        <div class="kcard"><div class="klbl">Avg EV$</div><div class="kval" id="k-ev">—</div><div class="ksub">Grade candidates</div></div>
-        <div class="kcard"><div class="klbl">Avg EV%</div><div class="kval" id="k-evp">—</div><div class="ksub">Expected return</div></div>
-        <div class="kcard"><div class="klbl">Active Subs</div><div class="kval" id="k-subs">0</div><div class="ksub">At grader</div></div>
-        <div class="kcard"><div class="klbl">Total Cards</div><div class="kval" id="k-total">0</div><div class="ksub">In portfolio</div></div>
+
+      <!-- KPI CARDS -->
+      <div class="kgrid" style="margin-bottom:20px;">
+        <div class="kcard" style="border-top-color:var(--green);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <div class="klbl">Realized Profit</div>
+            <span style="font-size:18px;">&#128176;</span>
+          </div>
+          <div class="kval g" id="k-profit">$0.00</div>
+          <div class="ksub">All-time net P&amp;L</div>
+        </div>
+        <div class="kcard" style="border-top-color:#3B82F6;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <div class="klbl">Inventory Cost</div>
+            <span style="font-size:18px;">&#128230;</span>
+          </div>
+          <div class="kval" id="k-inv">$0.00</div>
+          <div class="ksub">On-hand basis</div>
+        </div>
+        <div class="kcard" style="border-top-color:var(--amber);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <div class="klbl">Avg EV$</div>
+            <span style="font-size:18px;">&#128200;</span>
+          </div>
+          <div class="kval" id="k-ev">--</div>
+          <div class="ksub">Grade candidates</div>
+        </div>
+        <div class="kcard" style="border-top-color:var(--amber);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <div class="klbl">Avg EV%</div>
+            <span style="font-size:18px;">&#127919;</span>
+          </div>
+          <div class="kval" id="k-evp">--</div>
+          <div class="ksub">Expected return</div>
+        </div>
+        <div class="kcard" style="border-top-color:#3B82F6;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <div class="klbl">Active Subs</div>
+            <span style="font-size:18px;">&#128233;</span>
+          </div>
+          <div class="kval" id="k-subs">0</div>
+          <div class="ksub">At grader</div>
+        </div>
+        <div class="kcard">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <div class="klbl">Total Cards</div>
+            <span style="font-size:18px;">&#127183;</span>
+          </div>
+          <div class="kval" id="k-total">0</div>
+          <div class="ksub">In portfolio</div>
+        </div>
       </div>
-      <div class="dgrid">
-        <div class="panel">
-          <div class="ptitle">Inventory Status Summary</div>
-          <table class="stbl"><thead><tr><th>Status</th><th>Cards</th><th>Acq Cost</th></tr></thead><tbody id="d-status"></tbody></table>
+
+      <!-- STATUS TILES -->
+      <div style="margin-bottom:20px;">
+        <div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:6px;"><span style="display:inline-block;width:3px;height:12px;background:var(--red);border-radius:2px;"></span>Inventory Status</div>
+        <div id="d-status-tiles" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;"></div>
+      </div>
+
+      <!-- PERFORMERS + CHART -->
+      <div style="display:grid;grid-template-columns:1fr 2fr;gap:16px;margin-bottom:20px;">
+        <div class="panel" style="padding:0;overflow:hidden;">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+            <div class="ptitle" style="margin-bottom:0;">Top EV% Cards</div>
+            <span style="font-size:10px;color:var(--text-muted);">Grade candidates</span>
+          </div>
+          <div id="d-top-performers" style="padding:0;"></div>
         </div>
         <div class="panel">
-          <div class="ptitle">Top EV% Cards (Grade Candidates)</div>
-          <div id="d-top-performers"><div style="font-size:12px;color:var(--text-muted);padding:10px 0;">No grade candidates yet</div></div>
-        </div>
-      </div>
-      <div class="dgrid">
-        <div class="panel">
-          <div class="ptitle">Realized Profit Over Time</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <div class="ptitle" style="margin-bottom:0;">Realized Profit Over Time</div>
+            <span style="font-size:10px;color:var(--text-muted);" id="chart-subtitle"></span>
+          </div>
           <div class="chart-wrap"><canvas id="profit-chart"></canvas></div>
         </div>
-        <div class="panel">
-          <div class="ptitle">Definitions</div>
-          <div class="defbox">
-            <p>EV$ = estimated value minus total cost basis.</p>
-            <p>EV% = EV$ divided by total cost basis.</p>
-            <p>Avg EV metrics only include cards with Disposition = Grade.</p>
-            <p>Inventory cost uses purchase price + shipping only. Grading cost is in Total Cost Basis but excluded from on-hand inventory value.</p>
-          </div>
-        </div>
       </div>
+
     </div>
 
     <!-- INVENTORY -->
@@ -852,31 +896,57 @@ function renderAll() {
 
 // - DASHBOARD -
 function renderDash() {
-  const sold=INV.filter(r=>r.status==='Sold');
-  const onHand=INV.filter(r=>r.status!=='Sold');
-  const profit=sold.reduce((s,r)=>s+(r.sale_price||0)-(r.price||0)-(r.ship||0)-(r.fees||0)-(r.ship_out||0),0);
-  const invCost=onHand.reduce((s,r)=>s+(r.price||0)+(r.ship||0),0);
-  const graders=onHand.filter(r=>r.disposition==='Grade'&&r.gem_rate&&r.psa10);
-  const evVals=graders.map(r=>calcEV(r));
-  const avgEV=evVals.length?evVals.reduce((a,b)=>a+b,0)/evVals.length:null;
-  const avgEVP=graders.length?evVals.map((v,i)=>v/(graders[i].total_cost||1)).reduce((a,b)=>a+b,0)/graders.length:null;
-  setText('k-profit',f$(profit),profit>=0?'g':'r');
-  setText('k-inv',f$(invCost));
-  setText('k-ev',avgEV!==null?f$(avgEV):'--');
-  setText('k-evp',avgEVP!==null?((avgEVP*100).toFixed(1)+'%'):'--');
-  setText('k-subs',INV.filter(r=>r.status==='Submitted').length);
-  setText('k-total',INV.length);
-  const stRows=['Raw','Submitted','Graded','Listed'].map(st=>{
-    const c=onHand.filter(r=>r.status===st);
-    return `<tr><td><span class="bdg b-${st.toLowerCase().replace(' ','-')}">${st}</span></td><td>${c.length}</td><td>${f$(c.reduce((s,r)=>s+(r.price||0)+(r.ship||0),0))}</td></tr>`;
-  }).join('')+`<tr style="font-weight:700;color:#fff;"><td>Total On Hand</td><td>${onHand.length}</td><td>${f$(invCost)}</td></tr>`;
-  g('d-status').innerHTML=stRows;
-  g('s-cnt').textContent=sold.length;
-  const proc=sold.reduce((s,r)=>s+(r.sale_price||0)-(r.fees||0)-(r.ship_out||0),0);
-  const prof=sold.reduce((s,r)=>s+(r.sale_price||0)-(r.price||0)-(r.ship||0)-(r.fees||0)-(r.ship_out||0),0);
-  g('s-proc').textContent=f$(proc);
-  g('s-prof').textContent=f$(prof);
-  g('s-avg').textContent=sold.length?f$(prof/sold.length):'--';
+  const sold = INV.filter(r => r.status === 'Sold');
+  const onHand = INV.filter(r => r.status !== 'Sold');
+  const profit = sold.reduce((s,r) => s+(r.sale_price||0)-(r.price||0)-(r.ship||0)-(r.fees||0)-(r.ship_out||0), 0);
+  const invCost = onHand.reduce((s,r) => s+(r.price||0)+(r.ship||0), 0);
+  const graders = onHand.filter(r => r.disposition === 'Grade' && r.gem_rate && r.psa10);
+  const evVals = graders.map(r => calcEV(r));
+  const avgEV = evVals.length ? evVals.reduce((a,b) => a+b, 0)/evVals.length : null;
+  const avgEVP = graders.length ? evVals.map((v,i) => v/(graders[i].total_cost||1)).reduce((a,b) => a+b, 0)/graders.length : null;
+  setText('k-profit', f$(profit), profit >= 0 ? 'g' : 'r');
+  setText('k-inv', f$(invCost));
+  setText('k-ev', avgEV !== null ? f$(avgEV) : '--');
+  setText('k-evp', avgEVP !== null ? ((avgEVP*100).toFixed(1)+'%') : '--');
+  setText('k-subs', INV.filter(r => r.status === 'Submitted').length);
+  setText('k-total', INV.length);
+
+  // Status tiles
+  const statuses = [
+    {key:'Raw', color:'#555', icon:'&#9711;'},
+    {key:'Submitted', color:'#3B82F6', icon:'&#128233;'},
+    {key:'Graded', color:'var(--green)', icon:'&#10003;'},
+    {key:'Listed', color:'var(--amber)', icon:'&#128178;'},
+    {key:'Sold', color:'var(--red)', icon:'&#128176;'}
+  ];
+  const tilesEl = g('d-status-tiles');
+  if (tilesEl) {
+    tilesEl.innerHTML = statuses.map(st => {
+      const cards = INV.filter(r => r.status === st.key);
+      const cost = cards.reduce((s,r) => s+(r.price||0)+(r.ship||0), 0);
+      return '<div style="background:var(--surface);border:1px solid var(--border);border-top:2px solid ' + st.color + ';border-radius:var(--r);padding:14px 16px;">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">' +
+          '<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;">' + st.key + '</div>' +
+          '<span style="font-size:16px;">' + st.icon + '</span>' +
+        '</div>' +
+        '<div style="font-size:26px;font-weight:800;color:#fff;line-height:1;margin-bottom:4px;">' + cards.length + '</div>' +
+        '<div style="font-size:11px;color:var(--text-muted);">' + f$(cost) + ' cost basis</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  // Sold KPIs
+  const proc = sold.reduce((s,r) => s+(r.sale_price||0)-(r.fees||0)-(r.ship_out||0), 0);
+  const prof = sold.reduce((s,r) => s+(r.sale_price||0)-(r.price||0)-(r.ship||0)-(r.fees||0)-(r.ship_out||0), 0);
+  g('s-cnt').textContent = sold.length;
+  g('s-proc').textContent = f$(proc);
+  g('s-prof').textContent = f$(prof);
+  g('s-avg').textContent = sold.length ? f$(prof/sold.length) : '--';
+
+  // Chart subtitle
+  const chartSub = g('chart-subtitle');
+  if (chartSub) chartSub.textContent = sold.length ? sold.length + ' sales recorded' : '';
+
   renderTopPerformers();
   renderProfitChart();
 }
@@ -1553,17 +1623,34 @@ function renderProfitChart() {
 // - TOP PERFORMERS -
 function renderTopPerformers() {
   const graders = INV.filter(r => r.status !== 'Sold' && r.disposition === 'Grade' && r.gem_rate && r.psa10 && r.total_cost);
-  const sorted = graders.map(r => ({...r, ev: calcEV(r), evp: calcEV(r)/r.total_cost})).sort((a,b) => b.evp - a.evp).slice(0,5);
-  const el = document.getElementById('d-top-performers');
+  const sorted = graders.map(r => {
+    const ev = calcEV(r);
+    return {...r, ev, evp: ev/r.total_cost};
+  }).sort((a,b) => b.evp - a.evp).slice(0,5);
+  const el = g('d-top-performers');
   if (!el) return;
-  if (!sorted.length) { el.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:10px 0;">No grade candidates with EV data yet</div>'; return; }
-  el.innerHTML = sorted.map((r,i) => `<div class="perf-row">
-    <div>
-      <div class="perf-name">${i+1}. ${r.player||'--'}</div>
-      <div class="perf-set">${r.year||''} ${r.set_name||''} ${r.parallel||''}</div>
-    </div>
-    <div class="perf-ev" style="color:${r.evp>=1?'var(--green)':r.evp>=0.4?'var(--amber)':'#F87171'};">${(r.evp*100).toFixed(0)}%</div>
-  </div>`).join('');
+  if (!sorted.length) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:16px;">No grade candidates with EV data yet</div>';
+    return;
+  }
+  el.innerHTML = sorted.map((r,i) => {
+    const pct = r.evp * 100;
+    const barW = Math.min(Math.max(pct, 0), 200) / 2;
+    const col = pct >= 100 ? 'var(--green)' : pct >= 40 ? 'var(--amber)' : '#F87171';
+    const medal = i === 0 ? '&#127947;' : i === 1 ? '&#129352;' : i === 2 ? '&#129353;' : (i+1) + '.';
+    return '<div style="padding:10px 16px;border-bottom:1px solid #1a1a1a;">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">' +
+        '<div>' +
+          '<div style="font-size:12px;font-weight:700;color:#fff;">' + medal + ' ' + (r.player||'--') + '</div>' +
+          '<div style="font-size:10px;color:var(--text-muted);margin-top:1px;">' + (r.year||'') + ' ' + (r.set_name||'') + (r.parallel?' · '+r.parallel:'') + '</div>' +
+        '</div>' +
+        '<div style="font-size:15px;font-weight:800;color:' + col + ';">' + pct.toFixed(0) + '%</div>' +
+      '</div>' +
+      '<div style="height:3px;background:var(--border);border-radius:2px;overflow:hidden;">' +
+        '<div style="height:100%;width:' + barW.toFixed(0) + '%;background:' + col + ';border-radius:2px;"></div>' +
+      '</div>' +
+    '</div>';
+  }).join('') + '<div style="padding:10px 16px;font-size:10px;color:var(--text-muted);">Disposition = Grade only</div>';
 }
 
 // - EDIT CARD -
