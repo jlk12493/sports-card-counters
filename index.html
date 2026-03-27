@@ -253,7 +253,7 @@ input.fi{flex:1;min-width:160px;}
 <div id="toast"></div>
 
 <!-- ═══ AUTH ═══ -->
-<div id="auth-screen">
+<div id="auth-screen" style="display:none;">
   <div class="auth-wrap">
     <div class="auth-logo">
       <div class="auth-slab">
@@ -297,6 +297,28 @@ input.fi{flex:1;min-width:160px;}
         <div class="amsg" id="re-msg"></div>
         <div class="auth-note">Premium Discord members only</div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- RESET PASSWORD SCREEN -->
+<div id="reset-screen" style="display:none;position:fixed;inset:0;background:var(--black);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;">
+  <div style="width:100%;max-width:420px;">
+    <div style="text-align:center;margin-bottom:28px;">
+      <div style="display:inline-flex;flex-direction:column;align-items:center;background:#fff;border-radius:4px;padding:6px 10px;gap:2px;margin-bottom:10px;">
+        <div style="background:var(--red);color:#fff;font-size:7px;font-weight:900;letter-spacing:1px;padding:2px 6px;width:100%;text-align:center;">PSA</div>
+        <div style="font-size:22px;font-weight:900;color:#000;line-height:1;">10</div>
+        <div style="background:var(--red);color:#fff;font-size:7px;font-weight:900;letter-spacing:1px;padding:2px 6px;width:100%;text-align:center;">GEM MT</div>
+      </div>
+      <h1 style="font-size:20px;font-weight:800;letter-spacing:2px;text-transform:uppercase;">Sports Card Counters</h1>
+      <p style="font-size:10px;color:var(--red);letter-spacing:3px;text-transform:uppercase;font-weight:600;margin-top:3px;">Reset Password</p>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--red);border-radius:var(--r);padding:24px;">
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px;">Enter your new password below.</div>
+      <div class="afield"><label>New Password</label><input type="password" id="rp-pw" placeholder="Min 6 characters"></div>
+      <div class="afield"><label>Confirm Password</label><input type="password" id="rp-pw2" placeholder="Confirm new password"></div>
+      <button class="btn-p" id="btn-rp" onclick="doResetPassword()">Set New Password</button>
+      <div class="amsg" id="rp-msg"></div>
     </div>
   </div>
 </div>
@@ -830,6 +852,13 @@ function switchTab(t) {
   document.getElementById('tab-register').style.display = t==='register'?'':'none';
 }
 
+async function initAuth() {
+  const isReset = await checkResetToken();
+  if (!isReset) {
+    g('auth-screen').style.display = 'flex';
+  }
+}
+
 async function doLogin() {
   const email = g('li-email').value.trim();
   const pw = g('li-pw').value;
@@ -892,6 +921,56 @@ async function doLogout() {
   CU=null; INV=[]; BATCHES=[]; BL=[];
   g('app-screen').style.display='none';
   g('auth-screen').style.display='flex';
+}
+
+async function checkResetToken() {
+  // Check if URL has a recovery token from Supabase password reset email
+  const hash = window.location.hash;
+  const params = new URLSearchParams(hash.replace('#', '?'));
+  const type = params.get('type');
+  const accessToken = params.get('access_token');
+  if (type === 'recovery' && accessToken) {
+    // Set the session with the recovery token
+    const { error } = await sb.auth.setSession({
+      access_token: accessToken,
+      refresh_token: params.get('refresh_token') || ''
+    });
+    if (!error) {
+      g('auth-screen').style.display = 'none';
+      const resetEl = g('reset-screen');
+      resetEl.style.display = 'flex';
+      // Clear the hash from URL
+      history.replaceState(null, '', window.location.pathname);
+      return true;
+    }
+  }
+  return false;
+}
+
+async function doResetPassword() {
+  const pw = g('rp-pw').value;
+  const pw2 = g('rp-pw2').value;
+  if (!pw || !pw2) return msg('rp-msg', 'Please fill in both fields', 'error');
+  if (pw.length < 6) return msg('rp-msg', 'Password must be at least 6 characters', 'error');
+  if (pw !== pw2) return msg('rp-msg', 'Passwords do not match', 'error');
+  g('btn-rp').disabled = true;
+  g('btn-rp').textContent = 'Saving...';
+  const { error } = await sb.auth.updateUser({ password: pw });
+  g('btn-rp').disabled = false;
+  g('btn-rp').textContent = 'Set New Password';
+  if (error) return msg('rp-msg', error.message, 'error');
+  msg('rp-msg', 'Password updated! Signing you in...', 'success');
+  setTimeout(async () => {
+    const { data } = await sb.auth.getSession();
+    if (data.session) {
+      CU = data.session.user;
+      g('reset-screen').style.display = 'none';
+      await loadApp();
+    } else {
+      g('reset-screen').style.display = 'none';
+      g('auth-screen').style.display = 'flex';
+    }
+  }, 1500);
 }
 
 async function loadApp() {
@@ -1800,6 +1879,7 @@ function openModal(id){g(id).classList.add('open');}
 function closeModal(id){g(id).classList.remove('open');}
 let toastT;
 function toast(txt,err=false){const t=g('toast');t.textContent=txt;t.className='show'+(err?' err':'');clearTimeout(toastT);toastT=setTimeout(()=>t.className='',3000);}
+initAuth();
 </script>
 </body>
 </html>
