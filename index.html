@@ -1328,13 +1328,13 @@ function renderBatches() {
       '<div class="bhdr" style="padding:12px 14px;cursor:pointer;" onclick="toggleBatch(this)" data-bid="' + bid + '">'  +
         '<div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;flex-wrap:wrap;">' +
           '<i style="' + chevStyle + '" id="chev-' + bid + '">&#9658;</i>' +
-          '<div style="font-size:14px;font-weight:800;color:#fff;">Batch #' + bid + '</div>' +
+          '<div style="font-size:14px;font-weight:800;color:var(--text);">Batch #' + bid + '</div>' +
           '<div style="display:flex;gap:14px;flex-wrap:wrap;">' +
-            '<div><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;">Grader</div><div style="font-size:12px;font-weight:700;color:#fff;">' + (b.grader||'PSA') + '</div></div>' +
-            '<div><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;">Service</div><div style="font-size:12px;font-weight:700;color:#fff;">' + (b.service||'--') + '</div></div>' +
-            '<div><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;">Cards</div><div style="font-size:12px;font-weight:700;color:#fff;">' + cards.length + '</div></div>' +
-            '<div><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;">Total Fees</div><div style="font-size:12px;font-weight:700;color:#fff;">' + f$(fees) + '</div></div>' +
-            '<div><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;">Date</div><div style="font-size:11px;font-weight:700;color:#fff;">' + (b.submit_date||'TBD') + '</div></div>' +
+            '<div><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;">Grader</div><div style="font-size:12px;font-weight:700;color:var(--text);">' + (b.grader||'PSA') + '</div></div>' +
+            '<div><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;">Service</div><div style="font-size:12px;font-weight:700;color:var(--text);">' + (b.service||'--') + '</div></div>' +
+            '<div><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;">Cards</div><div style="font-size:12px;font-weight:700;color:var(--text);">' + cards.length + '</div></div>' +
+            '<div><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;">Total Fees</div><div style="font-size:12px;font-weight:700;color:var(--text);">' + f$(fees) + '</div></div>' +
+            '<div><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;">Date</div><div style="font-size:11px;font-weight:700;color:var(--text);">' + (b.submit_date||'TBD') + '</div></div>' +
           '</div>' +
         '</div>' +
         '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;" onclick="event.stopPropagation()">' +
@@ -1854,7 +1854,7 @@ function renderTopPerformers() {
     return '<div style="padding:10px 16px;border-bottom:1px solid #1a1a1a;">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">' +
         '<div>' +
-          '<div style="font-size:12px;font-weight:700;color:#fff;">' + medal + ' ' + (r.player||'--') + '</div>' +
+          '<div style="font-size:12px;font-weight:700;color:var(--text);">' + medal + ' ' + (r.player||'--') + '</div>' +
           '<div style="font-size:10px;color:var(--text-muted);margin-top:1px;">' + (r.year||'') + ' ' + (r.set_name||'') + (r.parallel?' · '+r.parallel:'') + '</div>' +
         '</div>' +
         '<div style="font-size:15px;font-weight:800;color:' + col + ';">' + pct.toFixed(0) + '%</div>' +
