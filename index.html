@@ -14,6 +14,34 @@
   --border:#333;--text:#FFF;--text-2:#BBB;--text-muted:#777;
   --green:#22C55E;--amber:#F59E0B;--blue:#3B82F6;--r:8px;
 }
+body.light-mode{
+  --black:#F1F1F1;--near-black:#E5E5E5;
+  --surface:#FFFFFF;--surface-2:#F5F5F5;--surface-3:#EEEEEE;
+  --border:#DDDDDD;--text:#111111;--text-2:#333333;--text-muted:#888888;
+}
+body.light-mode .hdr{background:#FFFFFF;border-bottom:3px solid var(--red);}
+body.light-mode .hdr-top{background:var(--red);}
+body.light-mode .dtbl thead{background:#F5F5F5;}
+body.light-mode .dtbl td.pl{color:#111;}
+body.light-mode #auth-screen{background:#F1F1F1;}
+body.light-mode .auth-card{background:#FFFFFF;}
+body.light-mode .afield input{background:#F5F5F5;color:#111;border-color:#DDD;}
+body.light-mode .fi{background:#FFFFFF;color:#111;border-color:#DDD;}
+body.light-mode .modal{background:#FFFFFF;}
+body.light-mode .ff input,.ff select{background:#F5F5F5;color:#111;}
+body.light-mode .panel{background:#FFFFFF;}
+body.light-mode .kcard{background:#FFFFFF;}
+body.light-mode .bcard{background:#FFFFFF;}
+body.light-mode .aform{background:#FFFFFF;}
+body.light-mode .ntab:hover{background:#F5F5F5;color:#111;}
+body.light-mode .ntab.active{color:var(--red);}
+body.light-mode .brand-text h1{color:#111;}
+body.light-mode .defbox{background:#F5F5F5;}
+body.light-mode #toast{background:#FFFFFF;}
+
+/* THEME TOGGLE */
+.theme-toggle{background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px;}
+.theme-toggle:hover{border-color:var(--red);color:var(--red);}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--black);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;min-height:100vh;}
 
@@ -341,6 +369,7 @@ input.fi{flex:1;min-width:160px;}
       </nav>
       <div class="huser">
         <span class="uemail" id="u-email"></span>
+        <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()">&#9790; Dark</button>
         <button class="btn-out" onclick="doLogout()">Sign Out</button>
       </div>
     </div>
@@ -921,6 +950,22 @@ async function doLogout() {
   CU=null; INV=[]; BATCHES=[]; BL=[];
   g('app-screen').style.display='none';
   g('auth-screen').style.display='flex';
+}
+
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light-mode');
+  const btn = g('theme-btn');
+  if (btn) btn.innerHTML = isLight ? '&#9788; Light' : '&#9790; Dark';
+  localStorage.setItem('scc-theme', isLight ? 'light' : 'dark');
+}
+
+function loadTheme() {
+  const saved = localStorage.getItem('scc-theme');
+  if (saved === 'light') {
+    document.body.classList.add('light-mode');
+    const btn = g('theme-btn');
+    if (btn) btn.innerHTML = '&#9788; Light';
+  }
 }
 
 async function checkResetToken() {
@@ -1879,6 +1924,7 @@ function openModal(id){g(id).classList.add('open');}
 function closeModal(id){g(id).classList.remove('open');}
 let toastT;
 function toast(txt,err=false){const t=g('toast');t.textContent=txt;t.className='show'+(err?' err':'');clearTimeout(toastT);toastT=setTimeout(()=>t.className='',3000);}
+loadTheme();
 initAuth();
 </script>
 </body>
