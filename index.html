@@ -1259,7 +1259,7 @@ function renderInv() {
     return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;overflow:hidden;">' +
 
       // COLLAPSED HEADER ROW
-      '<div style="padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;" onclick="toggleInvCard(' + JSON.stringify(r.id) + ')">' +
+      '<div style="padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;" onclick="toggleInvCard(this)" data-id="' + r.id + '">' +
         '<i id="ichev-' + r.id + '" style="font-style:normal;font-size:10px;color:var(--text-muted);transition:transform .2s;flex-shrink:0;' + (isOpen?'transform:rotate(90deg)':'') + '">&#9658;</i>' +
         '<div style="flex:1;min-width:0;">' +
           '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' +
@@ -1296,8 +1296,8 @@ function renderInv() {
         '</div>' +
         (r.notes ? '<div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;padding:8px 10px;background:var(--surface-2);border-radius:5px;">&#128221; ' + r.notes + '</div>' : '') +
         '<div style="display:flex;gap:8px;">' +
-          '<button class="btn-a" style="font-size:11px;padding:6px 14px;" onclick="openEdit(' + JSON.stringify(r.id) + ')">Edit</button>' +
-          '<button class="btn-c" style="font-size:11px;padding:6px 14px;color:#F87171;border-color:#F87171;" onclick="delCard(' + JSON.stringify(r.id) + ')">Delete</button>' +
+          '<button class="btn-a" style="font-size:11px;padding:6px 14px;" onclick="openEdit(\'' + r.id + '\')" >Edit</button>' +
+          '<button class="btn-c" style="font-size:11px;padding:6px 14px;color:#F87171;border-color:#F87171;" onclick="delCard(\'' + r.id + '\')" >Delete</button>' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -1315,7 +1315,8 @@ function detailCell(label, value, color) {
   '</div>';
 }
 
-function toggleInvCard(id) {
+function toggleInvCard(el) {
+  const id = el.dataset.id;
   const body = document.querySelector('.inv-body[data-id="' + id + '"]');
   const chev = document.getElementById('ichev-' + id);
   if (!body) return;
