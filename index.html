@@ -78,6 +78,15 @@ body.light-mode .perf-name{color:#1A1A1A;}
 body.light-mode .import-preview{color:#3A3A3A;}
 body.light-mode select option{background:#E8E4DF;color:#1A1A1A;}
 
+body.light-mode .kval{color:#1A1A1A;}
+body.light-mode .dtbl td.pl{color:#1A1A1A;}
+body.light-mode .bsum-val{color:#1A1A1A;}
+body.light-mode .ntab:hover{color:#1A1A1A;}
+body.light-mode .btn-c:hover{color:#1A1A1A;}
+body.light-mode .afield input{color:#1A1A1A;}
+body.light-mode .fi{color:#1A1A1A;}
+body.light-mode .ff input{color:#1A1A1A;}
+body.light-mode .ff select{color:#1A1A1A;}
 /* THEME TOGGLE */
 .theme-toggle{background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px;}
 .theme-toggle:hover{border-color:var(--red);color:var(--red);}
@@ -1133,7 +1142,7 @@ function renderDash() {
           '<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;">' + st.key + '</div>' +
           '<span style="font-size:16px;">' + st.icon + '</span>' +
         '</div>' +
-        '<div style="font-size:26px;font-weight:800;color:#fff;line-height:1;margin-bottom:4px;">' + cards.length + '</div>' +
+        '<div style="font-size:26px;font-weight:800;color:var(--text);line-height:1;margin-bottom:4px;">' + cards.length + '</div>' +
         '<div style="font-size:11px;color:var(--text-muted);">' + f$(cost) + ' cost basis</div>' +
       '</div>';
     }).join('');
