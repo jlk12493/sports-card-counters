@@ -274,7 +274,21 @@ input.fi{flex:1;min-width:160px;}
         <div class="afield"><label>Password</label><input type="password" id="li-pw" placeholder="........"></div>
         <button class="btn-p" id="btn-li" onclick="doLogin()">Sign In</button>
         <div class="amsg" id="li-msg"></div>
+        <div style="text-align:center;margin-top:12px;">
+          <button onclick="showForgot()" style="background:transparent;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;text-decoration:underline;">Forgot password?</button>
+        </div>
       </div>
+      <!-- FORGOT PASSWORD -->
+      <div id="tab-forgot" style="display:none;">
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;line-height:1.6;">Enter your email address and we'll send you a link to reset your password.</div>
+        <div class="afield"><label>Email</label><input type="email" id="fp-email" placeholder="your@email.com"></div>
+        <button class="btn-p" id="btn-fp" onclick="doForgotPassword()">Send Reset Link</button>
+        <div class="amsg" id="fp-msg"></div>
+        <div style="text-align:center;margin-top:12px;">
+          <button onclick="showLogin()" style="background:transparent;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;text-decoration:underline;">Back to sign in</button>
+        </div>
+      </div>
+
       <div id="tab-register" style="display:none;">
         <div class="afield"><label>Email</label><input type="email" id="re-email" placeholder="your@email.com"></div>
         <div class="afield"><label>Password</label><input type="password" id="re-pw" placeholder="Min 6 characters"></div>
@@ -844,6 +858,33 @@ async function doRegister() {
   await sb.from('invite_codes').update({used:true,used_by:ad.user.id}).eq('code',code);
   g('btn-re').disabled=false; g('btn-re').textContent='Create Account';
   msg('re-msg','Account created! You can now sign in.','success');
+}
+
+function showForgot() {
+  document.getElementById('tab-login').style.display = 'none';
+  document.getElementById('tab-forgot').style.display = '';
+  document.getElementById('fp-msg').style.display = 'none';
+  document.getElementById('fp-email').value = '';
+  setTimeout(() => document.getElementById('fp-email').focus(), 100);
+}
+
+function showLogin() {
+  document.getElementById('tab-forgot').style.display = 'none';
+  document.getElementById('tab-login').style.display = '';
+}
+
+async function doForgotPassword() {
+  const email = document.getElementById('fp-email').value.trim();
+  if (!email) return msg('fp-msg', 'Please enter your email', 'error');
+  document.getElementById('btn-fp').disabled = true;
+  document.getElementById('btn-fp').textContent = 'Sending...';
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin
+  });
+  document.getElementById('btn-fp').disabled = false;
+  document.getElementById('btn-fp').textContent = 'Send Reset Link';
+  if (error) return msg('fp-msg', error.message, 'error');
+  msg('fp-msg', 'Reset link sent! Check your email.', 'success');
 }
 
 async function doLogout() {
