@@ -544,11 +544,35 @@ input.fi{flex:1;min-width:160px;}
           <div class="stitle" style="margin-bottom:14px;">Add Card</div>
           <div class="fgrid">
             <!-- Card ID is auto-generated -->
-            <div class="ff"><label>Player</label><input type="text" id="f-player" placeholder="Shohei Ohtani"></div>
-            <div class="ff"><label>Year</label><input type="number" id="f-year" placeholder="2024"></div>
-            <div class="ff"><label>Set / Brand</label><input type="text" id="f-set" placeholder="Topps Now"></div>
-            <div class="ff"><label>Card / Parallel</label><input type="text" id="f-par" placeholder="Base"></div>
-            <div class="ff"><label>Card #</label><input type="text" id="f-cno" placeholder="264"></div>
+            <div class="ff"><label>Player *</label><input type="text" id="f-player" placeholder="Shohei Ohtani"></div>
+            <div class="ff"><label>Year *</label><input type="number" id="f-year" placeholder="2024"></div>
+            <div class="ff"><label>Brand *</label>
+              <input type="text" id="f-set" placeholder="e.g. Topps" list="f-brand-list" autocomplete="off">
+              <datalist id="f-brand-list">
+                <option>Topps</option><option>Bowman</option><option>Panini</option><option>Upper Deck</option>
+                <option>Donruss</option><option>Fleer</option><option>Score</option><option>Leaf</option>
+              </datalist>
+            </div>
+            <div class="ff"><label>Set *</label>
+              <input type="text" id="f-setname" placeholder="e.g. Chrome" list="f-set-list" autocomplete="off">
+              <datalist id="f-set-list">
+                <option>Chrome</option><option>Now</option><option>Update Series</option><option>Heritage</option>
+                <option>Finest</option><option>Stadium Club</option><option>Prizm</option><option>Select</option>
+                <option>Mosaic</option><option>Optic</option><option>Phoenix</option><option>Immaculate</option>
+                <option>National Treasures</option><option>Bowman Chrome</option><option>Bowman Draft</option>
+              </datalist>
+            </div>
+            <div class="ff"><label>Parallel *</label>
+              <input type="text" id="f-par" placeholder="e.g. Base" list="f-par-list" autocomplete="off">
+              <datalist id="f-par-list">
+                <option>Base</option><option>Refractor</option><option>Holo</option><option>Silver</option>
+                <option>Gold</option><option>Red</option><option>Blue</option><option>Green</option>
+                <option>Orange</option><option>Purple</option><option>Black</option><option>White</option>
+                <option>Mojo Refractor</option><option>Sepia Refractor</option><option>Prizm</option>
+                <option>Disco</option><option>Kaleidoscopic</option><option>Autograph</option>
+              </datalist>
+            </div>
+            <div class="ff"><label>Card # *</label><input type="text" id="f-cno" placeholder="264"></div>
             <div class="ff"><label>Sport</label><select id="f-sport"><option value="">Select...</option><option>Baseball</option><option>Football</option><option>Basketball</option><option>Hockey</option><option>Soccer</option></select></div>
             <div class="ff"><label>Date Acquired</label><input type="date" id="f-date"></div>
             <div class="ff"><label>Source</label><input type="text" id="f-src" placeholder="eBay"></div>
@@ -825,27 +849,34 @@ input.fi{flex:1;min-width:160px;}
             <option>Baseball</option><option>Football</option><option>Basketball</option><option>Hockey</option><option>Soccer</option>
           </select>
         </div>
-        <div class="ff" style="grid-column:1/-1;"><label>Set / Brand *</label>
-          <input type="text" id="qa-set" placeholder="e.g. Topps Chrome" style="font-size:16px;padding:12px;" list="qa-set-list" autocomplete="off">
-          <datalist id="qa-set-list">
-            <option>Topps Chrome</option><option>Topps Now</option><option>Topps Update Series</option><option>Topps</option>
-            <option>Bowman Chrome</option><option>Bowman</option><option>Bowman's Best</option>
-            <option>Prizm</option><option>Select</option><option>Mosaic</option><option>Optic</option>
-            <option>Phoenix</option><option>Topps Finest</option><option>Topps Heritage</option>
-            <option>Donruss</option><option>Score</option><option>Immaculate</option><option>National Treasures</option>
+        <div class="ff"><label>Brand *</label>
+          <input type="text" id="qa-brand" placeholder="e.g. Topps" style="font-size:16px;padding:12px;" list="qa-brand-list" autocomplete="off">
+          <datalist id="qa-brand-list">
+            <option>Topps</option><option>Bowman</option><option>Panini</option><option>Upper Deck</option>
+            <option>Donruss</option><option>Fleer</option><option>Score</option><option>Leaf</option>
           </datalist>
         </div>
-        <div class="ff"><label>Card / Parallel</label>
-          <input type="text" id="qa-parallel" placeholder="e.g. Refractor" style="font-size:16px;padding:12px;" list="qa-par-list" autocomplete="off">
+        <div class="ff"><label>Set *</label>
+          <input type="text" id="qa-set" placeholder="e.g. Chrome" style="font-size:16px;padding:12px;" list="qa-set-list" autocomplete="off">
+          <datalist id="qa-set-list">
+            <option>Chrome</option><option>Now</option><option>Update Series</option><option>Heritage</option>
+            <option>Finest</option><option>Stadium Club</option><option>Prizm</option><option>Select</option>
+            <option>Mosaic</option><option>Optic</option><option>Phoenix</option><option>Immaculate</option>
+            <option>National Treasures</option><option>Bowman Chrome</option><option>Bowman Draft</option>
+          </datalist>
+        </div>
+        <div class="ff"><label>Parallel *</label>
+          <input type="text" id="qa-parallel" placeholder="e.g. Base" style="font-size:16px;padding:12px;" list="qa-par-list" autocomplete="off">
           <datalist id="qa-par-list">
             <option>Base</option><option>Refractor</option><option>Holo</option><option>Silver</option>
             <option>Gold</option><option>Red</option><option>Blue</option><option>Green</option>
             <option>Orange</option><option>Purple</option><option>Black</option><option>White</option>
-            <option>Mojo Refractor</option><option>Sepia Refractor</option><option>Logo Refractor</option>
-            <option>Prizm</option><option>Disco</option><option>Kaleidoscopic</option>
+            <option>Mojo Refractor</option><option>Sepia Refractor</option><option>Prizm</option>
+            <option>Disco</option><option>Kaleidoscopic</option><option>Autograph</option>
           </datalist>
         </div>
-        <div class="ff"><label>Card #</label><input type="text" id="qa-cno" placeholder="e.g. 264" style="font-size:16px;padding:12px;"></div>
+        <div class="ff"><label>Card # *</label><input type="text" id="qa-cno" placeholder="e.g. 264" style="font-size:16px;padding:12px;"></div>
+      </div>
       </div>
       <div style="font-size:11px;color:var(--text-muted);margin-bottom:14px;">* Required fields</div>
       <button class="btn-a" style="width:100%;padding:13px;font-size:13px;" onclick="qaNext(1)">Next: Purchase Info</button>
@@ -1334,18 +1365,20 @@ function toggleInvCard(el) {
 function invPage(n){invPg=n;renderInv();}
 
 async function addCard() {
-  const player=gv('f-player'),year=ni('f-year'),setName=gv('f-set'),parallel=gv('f-par'),cardNo=gv('f-cno');
+  const player=gv('f-player'),year=ni('f-year'),brand=gv('f-set'),setName=gv('f-setname'),parallel=gv('f-par'),cardNo=gv('f-cno');
+  const fullSetName = [brand, setName].filter(Boolean).join(' ');
   if (!player) return toast('Player name is required',true);
   if (!year) return toast('Year is required',true);
-  if (!setName) return toast('Set / Brand is required',true);
+  if (!brand) return toast('Brand is required',true);
+  if (!setName) return toast('Set is required',true);
   if (!parallel) return toast('Parallel is required',true);
   if (!cardNo) return toast('Card # is required',true);
   const existingIDs = INV.map(r=>r.card_id).filter(Boolean);
-  const cardID = generateCardID(player, year, setName, parallel, cardNo, existingIDs);
+  const cardID = generateCardID(player, year, brand, parallel, cardNo, existingIDs);
   const c={
     user_id:CU.id,
     card_id:cardID,player,year,
-    set_name:setName,parallel,card_no:cardNo,
+    set_name:fullSetName,parallel,card_no:cardNo,
     sport:gv('f-sport'),date_acquired:gv('f-date'),source:gv('f-src'),
     price:nf('f-price'),ship:nf('f-ship'),grading:nf('f-grade'),
     gem_rate:nf('f-gem'),psa10:nf('f-p10'),psa9:nf('f-p9'),
@@ -1564,7 +1597,7 @@ async function delBL(id) {
 
 // - QUICK ADD -
 function openQuickAdd() {
-  ['qa-player','qa-year','qa-set','qa-parallel','qa-cno','qa-date','qa-src','qa-price','qa-ship','qa-grade','qa-gem','qa-p10','qa-p9','qa-batch'].forEach(id=>{const el=g(id);if(el)el.value='';});
+  ['qa-player','qa-year','qa-brand','qa-set','qa-parallel','qa-cno','qa-date','qa-src','qa-price','qa-ship','qa-grade','qa-gem','qa-p10','qa-p9','qa-batch'].forEach(id=>{const el=g(id);if(el)el.value='';});
   g('qa-sport').value='';
   g('qa-disp').value='Grade';
   g('qa-stat').value='Raw';
@@ -1589,8 +1622,9 @@ function qaNext(step) {
     if (!g('qa-player').value.trim()) { g('qa-player').style.borderColor='var(--red)'; g('qa-player').focus(); return; }
     if (!g('qa-year').value) { g('qa-year').style.borderColor='var(--red)'; g('qa-year').focus(); return; }
     if (!g('qa-sport').value) { g('qa-sport').style.borderColor='var(--red)'; return; }
+    if (!g('qa-brand').value.trim()) { g('qa-brand').style.borderColor='var(--red)'; g('qa-brand').focus(); return; }
     if (!g('qa-set').value.trim()) { g('qa-set').style.borderColor='var(--red)'; g('qa-set').focus(); return; }
-    g('qa-player').style.borderColor=''; g('qa-year').style.borderColor=''; g('qa-sport').style.borderColor=''; g('qa-set').style.borderColor='';
+    g('qa-player').style.borderColor=''; g('qa-year').style.borderColor=''; g('qa-sport').style.borderColor=''; g('qa-brand').style.borderColor=''; g('qa-set').style.borderColor='';
     qaShowStep(2);
     setTimeout(()=>g('qa-price').focus(),100);
   } else if (step===2) {
@@ -1630,14 +1664,20 @@ function qaCalcEV() {
 async function qaSave() {
   const player = g('qa-player').value.trim();
   const year = parseInt(g('qa-year').value)||null;
+  const brand = g('qa-brand').value.trim();
   const setName = g('qa-set').value.trim();
+  const fullSetName = [brand, setName].filter(Boolean).join(' ');
   const parallel = g('qa-parallel').value.trim();
   const cardNo = g('qa-cno').value.trim();
-  if (!parallel) { toast('Parallel is required (use "Base" if no parallel)',true); return; }
-  if (!cardNo) { toast('Card # is required',true); return; }
+  if (!player) { g('qa-player').style.borderColor='var(--red)'; toast('Player name is required',true); return; }
+  if (!year) { g('qa-year').style.borderColor='var(--red)'; toast('Year is required',true); return; }
+  if (!brand) { g('qa-brand').style.borderColor='var(--red)'; toast('Brand is required',true); return; }
+  if (!setName) { g('qa-set').style.borderColor='var(--red)'; toast('Set is required',true); return; }
+  if (!parallel) { g('qa-parallel').style.borderColor='var(--red)'; toast('Parallel is required — use "Base" if no parallel',true); return; }
+  if (!cardNo) { g('qa-cno').style.borderColor='var(--red)'; toast('Card # is required',true); return; }
   g('qa-save-btn').disabled=true; g('qa-save-btn').textContent='Saving...';
   const existingIDs = INV.map(r=>r.card_id).filter(Boolean);
-  const cardID = generateCardID(player, year, setName, parallel, cardNo, existingIDs);
+  const cardID = generateCardID(player, year, brand, parallel, cardNo, existingIDs);
   const price=parseFloat(g('qa-price').value)||0;
   const ship=parseFloat(g('qa-ship').value)||0;
   const grade=parseFloat(g('qa-grade').value)||0;
@@ -1646,7 +1686,7 @@ async function qaSave() {
     user_id:CU.id,
     card_id:cardID,
     player, year, sport:g('qa-sport').value,
-    set_name:setName, parallel, card_no:cardNo,
+    set_name:fullSetName, parallel, card_no:cardNo,
     date_acquired:g('qa-date').value||null,
     source:g('qa-src').value.trim()||null,
     price, ship, grading:grade,
