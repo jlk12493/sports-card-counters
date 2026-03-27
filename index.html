@@ -1811,9 +1811,9 @@ function openEVRecalc() {
         <tbody>${cards.map(r=>`<tr>
           <td class="pl">${r.player||'--'}</td>
           <td style="font-size:11px;">${r.set_name||''} ${r.parallel||''}</td>
-          <td><input type="number" step="0.01" placeholder="${r.gem_rate!=null?(r.gem_rate*100).toFixed(0)+'%':''}" id="rc-gem-${r.id}" style="width:70px;background:var(--surface-2);border:1px solid var(--border);color:#fff;padding:4px 6px;border-radius:4px;font-size:12px;outline:none;"></td>
-          <td><input type="number" step="0.01" placeholder="${r.psa10!=null?'$'+r.psa10:''}" id="rc-p10-${r.id}" style="width:80px;background:var(--surface-2);border:1px solid var(--border);color:#fff;padding:4px 6px;border-radius:4px;font-size:12px;outline:none;"></td>
-          <td><input type="number" step="0.01" placeholder="${r.psa9!=null?'$'+r.psa9:''}" id="rc-p9-${r.id}" style="width:80px;background:var(--surface-2);border:1px solid var(--border);color:#fff;padding:4px 6px;border-radius:4px;font-size:12px;outline:none;"></td>
+          <td><input type="number" step="0.01" placeholder="${r.gem_rate!=null?(r.gem_rate*100).toFixed(0)+'%':''}" id="rc-gem-${r.id}" style="width:70px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);background:var(--surface-2);padding:4px 6px;border-radius:4px;font-size:12px;outline:none;"></td>
+          <td><input type="number" step="0.01" placeholder="${r.psa10!=null?'$'+r.psa10:''}" id="rc-p10-${r.id}" style="width:80px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);background:var(--surface-2);padding:4px 6px;border-radius:4px;font-size:12px;outline:none;"></td>
+          <td><input type="number" step="0.01" placeholder="${r.psa9!=null?'$'+r.psa9:''}" id="rc-p9-${r.id}" style="width:80px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);background:var(--surface-2);padding:4px 6px;border-radius:4px;font-size:12px;outline:none;"></td>
         </tr>`).join('')}</tbody>
       </table>
     </div>
