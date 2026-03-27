@@ -543,7 +543,7 @@ input.fi{flex:1;min-width:160px;}
         <div class="aform">
           <div class="stitle" style="margin-bottom:14px;">Add Card</div>
           <div class="fgrid">
-            <div class="ff"><label>Card ID</label><input type="text" id="f-cid" placeholder="SO-24-TN264-BASE-001"></div>
+            <!-- Card ID is auto-generated -->
             <div class="ff"><label>Player</label><input type="text" id="f-player" placeholder="Shohei Ohtani"></div>
             <div class="ff"><label>Year</label><input type="number" id="f-year" placeholder="2024"></div>
             <div class="ff"><label>Set / Brand</label><input type="text" id="f-set" placeholder="Topps Now"></div>
@@ -722,7 +722,10 @@ input.fi{flex:1;min-width:160px;}
 
     <!-- ADMIN -->
     <div class="sec" id="sec-admin">
-      <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:5px;padding:8px 12px;margin-bottom:16px;font-size:11px;color:#FCD34D;">⚙ Admin Panel — Only visible to you</div>
+      <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:5px;padding:8px 12px;margin-bottom:16px;font-size:11px;color:#FCD34D;display:flex;align-items:center;justify-content:space-between;">
+        <span>⚙ Admin Panel — Only visible to you</span>
+        <button class="btn-gen" style="background:var(--surface-3);border:1px solid var(--amber);color:var(--amber);font-size:11px;" onclick="bulkRegenerateIDs()">Regenerate All Card IDs</button>
+      </div>
       <div class="agrid">
         <div class="panel">
           <div class="ptitle">Invite Codes</div>
@@ -1330,23 +1333,30 @@ function toggleInvCard(el) {
 function invPage(n){invPg=n;renderInv();}
 
 async function addCard() {
+  const player=gv('f-player'),year=ni('f-year'),setName=gv('f-set'),parallel=gv('f-par'),cardNo=gv('f-cno');
+  if (!player) return toast('Player name is required',true);
+  if (!year) return toast('Year is required',true);
+  if (!setName) return toast('Set / Brand is required',true);
+  if (!parallel) return toast('Parallel is required',true);
+  if (!cardNo) return toast('Card # is required',true);
+  const existingIDs = INV.map(r=>r.card_id).filter(Boolean);
+  const cardID = generateCardID(player, year, setName, parallel, cardNo, existingIDs);
   const c={
     user_id:CU.id,
-    card_id:gv('f-cid'),player:gv('f-player'),year:ni('f-year'),
-    set_name:gv('f-set'),parallel:gv('f-par'),card_no:gv('f-cno'),
+    card_id:cardID,player,year,
+    set_name:setName,parallel,card_no:cardNo,
     sport:gv('f-sport'),date_acquired:gv('f-date'),source:gv('f-src'),
     price:nf('f-price'),ship:nf('f-ship'),grading:nf('f-grade'),
     gem_rate:nf('f-gem'),psa10:nf('f-p10'),psa9:nf('f-p9'),
     disposition:gv('f-disp'),status:gv('f-stat'),batch_id:gv('f-batch')
   };
   c.total_cost=(c.price||0)+(c.ship||0)+(c.grading||0);
-  if (!c.player) return toast('Player name required',true);
   const {data,error}=await sb.from('inventory').insert(c).select().single();
   if (error) return toast('Error: '+error.message,true);
   INV.unshift(data);
   toggleForm('inv-form',false);
-  clearForm(['f-cid','f-player','f-year','f-set','f-par','f-cno','f-date','f-src','f-price','f-ship','f-grade','f-gem','f-p10','f-p9','f-batch']);
-  renderAll(); toast('Card added!');
+  clearForm(['f-player','f-year','f-set','f-par','f-cno','f-date','f-src','f-price','f-ship','f-grade','f-gem','f-p10','f-p9','f-batch']);
+  renderAll(); toast('Card added! ID: '+cardID);
 }
 
 async function delCard(id) {
@@ -1617,26 +1627,30 @@ function qaCalcEV() {
 }
 
 async function qaSave() {
+  const player = g('qa-player').value.trim();
+  const year = parseInt(g('qa-year').value)||null;
+  const setName = g('qa-set').value.trim();
+  const parallel = g('qa-parallel').value.trim();
+  const cardNo = g('qa-cno').value.trim();
+  if (!parallel) { toast('Parallel is required (use "Base" if no parallel)',true); return; }
+  if (!cardNo) { toast('Card # is required',true); return; }
   g('qa-save-btn').disabled=true; g('qa-save-btn').textContent='Saving...';
+  const existingIDs = INV.map(r=>r.card_id).filter(Boolean);
+  const cardID = generateCardID(player, year, setName, parallel, cardNo, existingIDs);
   const price=parseFloat(g('qa-price').value)||0;
   const ship=parseFloat(g('qa-ship').value)||0;
   const grade=parseFloat(g('qa-grade').value)||0;
   const pf=id=>{const v=parseFloat(g(id).value);return isNaN(v)?null:v;};
   const card={
     user_id:CU.id,
-    player:g('qa-player').value.trim(),
-    year:parseInt(g('qa-year').value)||null,
-    sport:g('qa-sport').value,
-    set_name:g('qa-set').value.trim(),
-    parallel:g('qa-parallel').value.trim()||null,
-    card_no:g('qa-cno').value.trim()||null,
+    card_id:cardID,
+    player, year, sport:g('qa-sport').value,
+    set_name:setName, parallel, card_no:cardNo,
     date_acquired:g('qa-date').value||null,
     source:g('qa-src').value.trim()||null,
     price, ship, grading:grade,
     total_cost:price+ship+grade,
-    gem_rate:pf('qa-gem'),
-    psa10:pf('qa-p10'),
-    psa9:pf('qa-p9'),
+    gem_rate:pf('qa-gem'), psa10:pf('qa-p10'), psa9:pf('qa-p9'),
     disposition:g('qa-disp').value,
     status:g('qa-stat').value,
     batch_id:g('qa-batch').value.trim()||null,
@@ -1646,7 +1660,7 @@ async function qaSave() {
   INV.unshift(data);
   closeModal('quickadd-modal');
   renderAll();
-  toast('Card added!');
+  toast('Card added! ID: '+cardID);
 }
 
 // - IMPORT -
@@ -1750,6 +1764,29 @@ async function loadAdmin() {
   const codes=cr.data||[],users=ur.data||[];
   g('admin-codes').innerHTML=codes.map(c=>`<div class="code-row"><span class="code-val">${c.code}</span><span style="font-size:11px;color:${c.used?'var(--text-muted)':'var(--green)'};">${c.used?'✓ Used':'Available'}</span></div>`).join('')||'<div style="color:var(--text-muted);font-size:12px;">No codes yet</div>';
   g('admin-users').innerHTML=users.map(u=>`<div class="user-row"><div style="font-size:12px;font-weight:600;color:#fff;">${u.email||'Unknown'}</div><div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Joined ${u.created_at?new Date(u.created_at).toLocaleDateString():'--'}</div></div>`).join('')||'<div style="color:var(--text-muted);font-size:12px;">No users yet</div>';
+}
+
+async function bulkRegenerateIDs() {
+  if (!confirm('This will regenerate Card IDs for ALL cards in your inventory using the new format. Continue?')) return;
+  const cards = [...INV];
+  let updated = 0;
+  const usedIDs = [];
+  // Sort by created_at so oldest get 001
+  cards.sort((a,b) => new Date(a.created_at||0) - new Date(b.created_at||0));
+  for (const card of cards) {
+    const newID = generateCardID(card.player, card.year, card.set_name, card.parallel, card.card_no, usedIDs);
+    usedIDs.push(newID);
+    if (newID !== card.card_id) {
+      const {error} = await sb.from('inventory').update({card_id: newID}).eq('id', card.id);
+      if (!error) {
+        const idx = INV.findIndex(r => r.id === card.id);
+        if (idx !== -1) INV[idx].card_id = newID;
+        updated++;
+      }
+    }
+  }
+  renderAll();
+  toast('Regenerated IDs for ' + updated + ' cards!');
 }
 
 async function genCode() {
@@ -2045,6 +2082,40 @@ async function saveEdit() {
 }
 
 // - HELPERS -
+function generateCardID(player, year, setName, parallel, cardNo, existingIDs) {
+  // Initials: first letter of first + last name
+  const nameParts = (player||'').trim().split(' ').filter(p=>p.length>0);
+  const initials = nameParts.length >= 2
+    ? (nameParts[0][0] + nameParts[nameParts.length-1][0]).toUpperCase()
+    : (nameParts[0]||'XX').substring(0,2).toUpperCase();
+
+  // Year: last 2 digits
+  const yr = year ? String(year).slice(-2) : 'XX';
+
+  // Brand: first 3 letters of set, letters only
+  const brandClean = (setName||'').replace(/[^a-zA-Z]/g,'').toUpperCase();
+  const brand = brandClean.substring(0,3) || 'XXX';
+
+  // Parallel: first 3 letters, letters only
+  const parClean = (parallel||'BASE').replace(/[^a-zA-Z]/g,'').toUpperCase();
+  const par = parClean.substring(0,3) || 'BAS';
+
+  // Card number: clean it up
+  const cno = (cardNo||'0').toString().replace(/[^a-zA-Z0-9]/g,'') || '0';
+
+  // Base ID without sequence
+  const baseID = initials + '-' + yr + '-' + brand + '-' + par + '-' + cno;
+
+  // Find next available sequence number
+  const pattern = new RegExp('^' + baseID.replace(/[-]/g,'\\-') + '-(\\d+)$');
+  const usedNums = (existingIDs||[])
+    .map(id => { const m = id.match(pattern); return m ? parseInt(m[1]) : 0; })
+    .filter(n => n > 0);
+  const nextNum = usedNums.length > 0 ? Math.max(...usedNums) + 1 : 1;
+
+  return baseID + '-' + String(nextNum).padStart(3,'0');
+}
+
 function fmtDate(d) {
   if (!d) return null;
   // Handle Excel serial numbers (numbers like 45000)
