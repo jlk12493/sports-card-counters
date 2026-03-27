@@ -944,25 +944,52 @@ input.fi{flex:1;min-width:160px;}
 
 <!-- IMPORT MODAL -->
 <div class="modal-bg" id="import-modal">
-  <div class="modal">
+  <div class="modal" style="max-width:600px;">
     <div class="modal-title">
-      📂 Import Spreadsheet
-      <button class="modal-close" onclick="closeModal('import-modal')">✕</button>
+      Import Spreadsheet
+      <button class="modal-close" onclick="closeModal('import-modal')">x</button>
     </div>
-    <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;line-height:1.6;">
-      Upload your existing Sports Card Counters Excel spreadsheet. All cards from the Inventory tab will be imported into your portfolio.
+
+    <!-- STEP 1: Upload -->
+    <div id="imp-step-upload">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;line-height:1.6;">
+        Upload any spreadsheet with your card inventory. If your columns match our format they will import automatically. Otherwise you will get to map your columns manually.
+      </div>
+      <div class="import-drop" id="import-drop" onclick="document.getElementById('import-file').click()">
+        <input type="file" id="import-file" accept=".xlsx,.xls,.csv" onchange="handleImport(this)">
+        <div style="font-size:28px;margin-bottom:8px;">&#128202;</div>
+        <div style="font-size:13px;color:var(--text-muted);">Tap to select your spreadsheet</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">.xlsx, .xls, .csv supported</div>
+      </div>
+      <div class="factions">
+        <button class="btn-c" onclick="closeModal('import-modal')">Cancel</button>
+      </div>
     </div>
-    <div class="import-drop" id="import-drop" onclick="document.getElementById('import-file').click()">
-      <input type="file" id="import-file" accept=".xlsx,.xls,.csv" onchange="handleImport(this)">
-      <div style="font-size:24px;margin-bottom:8px;">📊</div>
-      <div style="font-size:13px;color:var(--text-muted);">Tap to select your .xlsx file</div>
-      <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Supports .xlsx, .xls, .csv</div>
+
+    <!-- STEP 2: Column Mapping -->
+    <div id="imp-step-mapping" style="display:none;">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;line-height:1.6;">
+        We found <strong id="imp-col-count" style="color:var(--text);"></strong> columns in your spreadsheet. Match them to our fields below. Columns already matched are highlighted.
+      </div>
+      <div style="font-size:11px;color:var(--amber);margin-bottom:14px;" id="imp-auto-msg"></div>
+      <div style="max-height:340px;overflow-y:auto;margin-bottom:14px;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr>
+              <th style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;padding:6px 10px;text-align:left;border-bottom:1px solid var(--border);">Your Column</th>
+              <th style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;padding:6px 10px;text-align:left;border-bottom:1px solid var(--border);">Maps To</th>
+            </tr>
+          </thead>
+          <tbody id="imp-mapping-rows"></tbody>
+        </table>
+      </div>
+      <div class="import-preview" id="import-preview" style="display:none;margin-bottom:14px;"></div>
+      <div class="factions">
+        <button class="btn-a" id="btn-import-confirm" onclick="confirmImport()">Import Cards</button>
+        <button class="btn-c" onclick="impReset()">Back</button>
+      </div>
     </div>
-    <div class="import-preview" id="import-preview"></div>
-    <div class="factions">
-      <button class="btn-a" id="btn-import-confirm" onclick="confirmImport()" style="display:none;">Import Cards</button>
-      <button class="btn-c" onclick="closeModal('import-modal')">Cancel</button>
-    </div>
+
   </div>
 </div>
 
@@ -1705,334 +1732,187 @@ async function qaSave() {
 }
 
 // - IMPORT -
-function openImport() { g('import-modal').classList.add('open'); importRows=[]; g('import-preview').style.display='none'; g('btn-import-confirm').style.display='none'; }
+let importRawRows = [];
+let importHeaders = [];
+let importMappings = {};
+
+const IMP_FIELDS = [
+  {key:'player',       label:'Player',          aliases:['player','player name','name','card name','athlete']},
+  {key:'year',         label:'Year',            aliases:['year','yr','card year','season']},
+  {key:'brand',        label:'Brand',           aliases:['brand','manufacturer','make']},
+  {key:'set_name',     label:'Set',             aliases:['set','set name','set / brand','set/brand','product','series']},
+  {key:'parallel',     label:'Parallel',        aliases:['parallel','card / parallel','card/parallel','variation','version','finish','color']},
+  {key:'card_no',      label:'Card #',          aliases:['card no','card #','card number','number','#','no.','card no.']},
+  {key:'sport',        label:'Sport',           aliases:['sport','league']},
+  {key:'date_acquired',label:'Date Acquired',   aliases:['date acquired','date','purchase date','bought','acquired']},
+  {key:'source',       label:'Source',          aliases:['source','purchase source','bought from','seller','platform','where']},
+  {key:'price',        label:'Purchase Price',  aliases:['purchase price','price','cost','buy price','paid','amount']},
+  {key:'ship',         label:'Ship / Tax',      aliases:['ship','shipping','inbound ship / tax','inbound ship','tax','s&h','shipping cost']},
+  {key:'grading',      label:'Grading Cost',    aliases:['grading','grading cost','grade fee','grading fee','submission fee']},
+  {key:'gem_rate',     label:'Gem Rate',        aliases:['gem rate','gem','gem %','pop rate','psa 10 rate']},
+  {key:'psa10',        label:'PSA 10 $',        aliases:['psa10','psa 10','gross psa 10 value','psa10 value','10 value','gem value']},
+  {key:'psa9',         label:'PSA 9 $',         aliases:['psa9','psa 9','gross psa 9 value','psa9 value','9 value']},
+  {key:'disposition',  label:'Disposition',     aliases:['disposition','intent','plan']},
+  {key:'status',       label:'Status',          aliases:['status','card status','condition','state']},
+  {key:'batch_id',     label:'Batch ID',        aliases:['batch id','batch','submission batch id','submission id','batch number']},
+  {key:'sale_price',   label:'Sale Price',      aliases:['sale price','sold price','selling price','sold for','sale']},
+  {key:'fees',         label:'Platform Fees',   aliases:['fees','platform fees','selling fees','ebay fees','commission']},
+  {key:'ship_out',     label:'Ship Out',        aliases:['ship out','shipping out','outbound ship','outbound shipping']},
+  {key:'notes',        label:'Notes',           aliases:['notes','note','comments','comment','memo']},
+  {key:'skip',         label:'-- Skip --',      aliases:[]},
+];
+
+function openImport() {
+  g('import-modal').classList.add('open');
+  impReset();
+}
+
+function impReset() {
+  importRawRows = []; importHeaders = []; importMappings = {}; importRows = [];
+  g('imp-step-upload').style.display = '';
+  g('imp-step-mapping').style.display = 'none';
+  g('import-preview').style.display = 'none';
+  g('import-file').value = '';
+}
 
 function handleImport(input) {
-  const file=input.files[0]; if (!file) return;
-  const reader=new FileReader();
-  reader.onload=function(e) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
     try {
-      const wb=XLSX.read(e.target.result,{type:'binary'});
-      // Try to find Inventory sheet
-      const sheetName=wb.SheetNames.find(n=>n.toLowerCase().includes('inventor'))||wb.SheetNames[0];
-      const ws=wb.Sheets[sheetName];
-      const rows=XLSX.utils.sheet_to_json(ws,{defval:null});
-      // Map columns from your spreadsheet format
-      importRows=rows.filter(r=>r['Player']||r['player']).map(r=>{
-        const price=parseFloat(r['Purchase Price'])||0;
-        const ship=parseFloat(r['Inbound Ship / Tax'])||0;
-        const grade=parseFloat(r['Grading Cost'])||0;
-        const pf = (v)=>{ const n=parseFloat(v); return isNaN(n)?null:n; };
-        const pi = (v)=>{ const n=parseInt(v); return isNaN(n)?null:n; };
-        const ps = (v)=>{ if(!v||v==='NaN'||v==='null')return null; const s=String(v).trim(); return s.length>0?s:null; };
-        const pd = (v)=>{ 
-          if(!v||v==='NaN'||v==='Invalid Date'||v===null)return null;
-          // Handle Excel serial number dates
-          if(typeof v === 'number' && v > 1000 && v < 100000) {
-            const excelEpoch = new Date(1899, 11, 30);
-            const d = new Date(excelEpoch.getTime() + v * 86400000);
-            if(!isNaN(d.getTime()) && d.getFullYear() > 1970) return d.toISOString().split('T')[0];
-            return null;
-          }
-          try{ 
-            const d=new Date(v); 
-            if(isNaN(d.getTime()))return null;
-            if(d.getFullYear()<=1970)return null;
-            return d.toISOString().split('T')[0]; 
-          }catch(e){return null;} 
-        };
-        return {
-          user_id:CU.id,
-          card_id:ps(r['Card ID']),
-          player:ps(r['Player']),
-          year:pi(r['Year']),
-          set_name:ps(r['Set / Brand']),
-          parallel:ps(r['Card / Parallel']),
-          card_no:ps(r['Card No.']),
-          sport:ps(r['Sport']),
-          date_acquired:pd(r['Date Acquired']),
-          source:ps(r['Purchase Source']),
-          price:price, ship:ship, grading:grade,
-          total_cost:price+ship+grade,
-          gem_rate:pf(r['Gem Rate']),
-          psa10:pf(r['Gross PSA 10 Value']),
-          psa9:pf(r['Gross PSA 9 Value']),
-          disposition:ps(r['Disposition'])||'Grade',
-          status:ps(r['Status'])||'Raw',
-          batch_id:ps(r['Submission Batch ID']),
-          sale_price:pf(r['Sale Price']),
-          fees:pf(r['Platform Fees']),
-          ship_out:pf(r['Shipping Out']),
-          notes:ps(r['Notes']),
-        };
+      const wb = XLSX.read(e.target.result, {type:'binary'});
+      const sheetName = wb.SheetNames.find(n => n.toLowerCase().includes('inventor')) || wb.SheetNames[0];
+      const ws = wb.Sheets[sheetName];
+      importRawRows = XLSX.utils.sheet_to_json(ws, {defval:null});
+      if (!importRawRows.length) { toast('No data found in spreadsheet', true); return; }
+      importHeaders = Object.keys(importRawRows[0]);
+      g('imp-col-count').textContent = importHeaders.length + ' columns';
+
+      // Auto-detect mappings
+      let autoMatched = 0;
+      importMappings = {};
+      importHeaders.forEach(h => {
+        const hn = h.toLowerCase().trim();
+        const match = IMP_FIELDS.find(f => f.key !== 'skip' && f.aliases.some(a => a === hn));
+        if (match) { importMappings[h] = match.key; autoMatched++; }
+        else importMappings[h] = 'skip';
       });
-      g('import-preview').style.display='block';
-      g('import-preview').innerHTML=`<strong style="color:#fff;">${importRows.length} cards found</strong> in sheet "${sheetName}"<br><span style="color:var(--text-muted);">First card: ${importRows[0]?.player||'Unknown'} ${importRows[0]?.year||''} ${importRows[0]?.set_name||''}</span>`;
-      g('btn-import-confirm').style.display='';
+
+      const pct = Math.round(autoMatched/importHeaders.length*100);
+      g('imp-auto-msg').textContent = autoMatched + ' of ' + importHeaders.length + ' columns matched automatically (' + pct + '%). Review below then click Import.';
+      g('imp-auto-msg').style.color = pct === 100 ? 'var(--green)' : 'var(--amber)';
+
+      const fieldOpts = IMP_FIELDS.map(f => '<option value="' + f.key + '">' + f.label + '</option>').join('');
+      g('imp-mapping-rows').innerHTML = importHeaders.map(function(h) {
+        const mapped = importMappings[h];
+        const sample = importRawRows.slice(0,3).map(r => r[h]).filter(v => v != null).slice(0,2).join(', ');
+        const isMatched = mapped !== 'skip';
+        const bColor = isMatched ? 'var(--green)' : 'var(--border)';
+        const bg = isMatched ? 'rgba(34,197,94,0.05)' : '';
+        const opts = fieldOpts.replace('value="' + mapped + '"', 'value="' + mapped + '" selected');
+        return '<tr style="background:' + bg + '">' +
+          '<td style="padding:7px 10px;border-bottom:1px solid var(--border);">' +
+            '<div style="font-size:12px;font-weight:600;color:var(--text);">' + h + '</div>' +
+            '<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">' + (sample ? 'e.g. ' + sample : '--') + '</div>' +
+          '</td>' +
+          '<td style="padding:7px 10px;border-bottom:1px solid var(--border);">' +
+            '<select data-col="' + h + '" onchange="updateMapping(this)" ' +
+              'style="width:100%;background:var(--surface-2);border:1px solid ' + bColor + ';color:var(--text);padding:5px 8px;border-radius:4px;font-size:12px;outline:none;">' +
+              opts +
+            '</select>' +
+          '</td>' +
+        '</tr>';
+      }).join('');
+
+      g('imp-step-upload').style.display = 'none';
+      g('imp-step-mapping').style.display = '';
     } catch(err) {
-      g('import-preview').style.display='block';
-      g('import-preview').innerHTML=`<span style="color:#F87171;">Error reading file: ${err.message}</span>`;
+      toast('Error reading file: ' + err.message, true);
     }
   };
   reader.readAsBinaryString(file);
 }
 
+function updateMapping(sel) {
+  const h = sel.dataset.col;
+  importMappings[h] = sel.value;
+  const isMapped = sel.value !== 'skip';
+  sel.style.borderColor = isMapped ? 'var(--green)' : 'var(--border)';
+  sel.closest('tr').style.background = isMapped ? 'rgba(34,197,94,0.05)' : '';
+}
+
 async function confirmImport() {
-  if (!importRows.length) return;
-  g('btn-import-confirm').disabled=true; g('btn-import-confirm').textContent='Importing...';
-  // Insert in chunks of 50
-  const chunks=[];
-  for (let i=0;i<importRows.length;i+=50) chunks.push(importRows.slice(i,i+50));
-  let count=0;
+  const pf = v => { const n = parseFloat(v); return isNaN(n) ? null : n; };
+  const pi = v => { const n = parseInt(v); return isNaN(n) ? null : n; };
+  const ps = v => { if (!v || v === 'NaN' || v === 'null') return null; const s = String(v).trim(); return s.length > 0 ? s : null; };
+  const pd = v => {
+    if (!v || v === 'NaN' || v === 'Invalid Date' || v === null) return null;
+    if (typeof v === 'number' && v > 1000 && v < 100000) {
+      const d = new Date(new Date(1899,11,30).getTime() + v*86400000);
+      if (!isNaN(d.getTime()) && d.getFullYear() > 1970) return d.toISOString().split('T')[0];
+      return null;
+    }
+    try { const d = new Date(v); if (isNaN(d.getTime()) || d.getFullYear() <= 1970) return null; return d.toISOString().split('T')[0]; } catch(e) { return null; }
+  };
+
+  const rev = {};
+  Object.entries(importMappings).forEach(([h,k]) => { if (k !== 'skip') rev[k] = h; });
+  const get = (row, key) => rev[key] !== undefined ? row[rev[key]] : null;
+
+  importRows = importRawRows.filter(r => ps(get(r,'player'))).map(r => {
+    const price = parseFloat(get(r,'price')||0)||0;
+    const ship = parseFloat(get(r,'ship')||0)||0;
+    const grade = parseFloat(get(r,'grading')||0)||0;
+    const brand = ps(get(r,'brand'));
+    const setName = ps(get(r,'set_name'));
+    const fullSet = brand && setName ? brand+' '+setName : (brand||setName||null);
+    return {
+      user_id: CU.id,
+      player: ps(get(r,'player')),
+      year: pi(get(r,'year')),
+      set_name: fullSet,
+      parallel: ps(get(r,'parallel')),
+      card_no: ps(get(r,'card_no')),
+      sport: ps(get(r,'sport')),
+      date_acquired: pd(get(r,'date_acquired')),
+      source: ps(get(r,'source')),
+      price, ship, grading: grade,
+      total_cost: price+ship+grade,
+      gem_rate: pf(get(r,'gem_rate')),
+      psa10: pf(get(r,'psa10')),
+      psa9: pf(get(r,'psa9')),
+      disposition: ps(get(r,'disposition'))||'Grade',
+      status: ps(get(r,'status'))||'Raw',
+      batch_id: ps(get(r,'batch_id')),
+      sale_price: pf(get(r,'sale_price')),
+      fees: pf(get(r,'fees')),
+      ship_out: pf(get(r,'ship_out')),
+      notes: ps(get(r,'notes')),
+    };
+  });
+
+  if (!importRows.length) { toast('No valid cards found — make sure Player is mapped', true); return; }
+
+  g('btn-import-confirm').disabled = true;
+  g('btn-import-confirm').textContent = 'Importing...';
+
+  const chunks = [];
+  for (let i = 0; i < importRows.length; i+=50) chunks.push(importRows.slice(i,i+50));
+  let count = 0;
   for (const chunk of chunks) {
-    const {data,error}=await sb.from('inventory').insert(chunk).select();
-    if (error){toast('Import error: '+error.message,true);break;}
-    if (data){INV=[...INV,...data];count+=data.length;}
+    const {data, error} = await sb.from('inventory').insert(chunk).select();
+    if (error) { toast('Import error: '+error.message, true); break; }
+    if (data) { INV = [...INV, ...data]; count += data.length; }
   }
+
   closeModal('import-modal');
   renderAll();
-  g('btn-import-confirm').disabled=false; g('btn-import-confirm').textContent='Import Cards';
-  toast(`Imported ${count} cards successfully!`);
+  migrateCardIDs();
+  g('btn-import-confirm').disabled = false;
+  g('btn-import-confirm').textContent = 'Import Cards';
+  toast('Imported ' + count + ' cards successfully!');
 }
 
-// - ADMIN -
-async function loadAdmin() {
-  if (CU.email!==ADMIN) return;
-  const [cr,ur]=await Promise.all([
-    sb.from('invite_codes').select('*').order('created_at',{ascending:false}),
-    sb.from('profiles').select('*').order('created_at',{ascending:false})
-  ]);
-  const codes=cr.data||[],users=ur.data||[];
-  g('admin-codes').innerHTML=codes.map(c=>`<div class="code-row"><span class="code-val">${c.code}</span><span style="font-size:11px;color:${c.used?'var(--text-muted)':'var(--green)'};">${c.used?'✓ Used':'Available'}</span></div>`).join('')||'<div style="color:var(--text-muted);font-size:12px;">No codes yet</div>';
-  g('admin-users').innerHTML=users.map(u=>`<div class="user-row"><div style="font-size:12px;font-weight:600;color:#fff;">${u.email||'Unknown'}</div><div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Joined ${u.created_at?new Date(u.created_at).toLocaleDateString():'--'}</div></div>`).join('')||'<div style="color:var(--text-muted);font-size:12px;">No users yet</div>';
-}
-
-async function bulkRegenerateIDs() {
-  if (!confirm('This will regenerate Card IDs for ALL cards in your inventory using the new format. Continue?')) return;
-  const cards = [...INV];
-  let updated = 0;
-  const usedIDs = [];
-  // Sort by created_at so oldest get 001
-  cards.sort((a,b) => new Date(a.created_at||0) - new Date(b.created_at||0));
-  for (const card of cards) {
-    const newID = generateCardID(card.player, card.year, card.set_name, card.parallel, card.card_no, usedIDs);
-    usedIDs.push(newID);
-    if (newID !== card.card_id) {
-      const {error} = await sb.from('inventory').update({card_id: newID}).eq('id', card.id);
-      if (!error) {
-        const idx = INV.findIndex(r => r.id === card.id);
-        if (idx !== -1) INV[idx].card_id = newID;
-        updated++;
-      }
-    }
-  }
-  renderAll();
-  toast('Regenerated IDs for ' + updated + ' cards!');
-}
-
-async function genCode() {
-  const code=g('new-code').value.trim().toUpperCase();
-  if (!code) return toast('Enter a code first',true);
-  const {error}=await sb.from('invite_codes').insert({code});
-  if (error) return toast(error.message.includes('unique')?'Code already exists':error.message,true);
-  g('new-code').value=''; loadAdmin(); toast('Code added: '+code);
-}
-
-async function genBulk() {
-  const {data:ex}=await sb.from('invite_codes').select('code').ilike('code','SCC-%');
-  const nums=(ex||[]).map(r=>parseInt((r.code.match(/\d+$/)||[0])[0])).filter(n=>!isNaN(n));
-  const next=nums.length?Math.max(...nums)+1:1;
-  const codes=Array.from({length:10},(_,i)=>({code:`SCC-${String(next+i).padStart(4,'0')}`}));
-  const {error}=await sb.from('invite_codes').insert(codes);
-  if (error) return toast('Error generating codes',true);
-  loadAdmin(); toast('10 new codes generated!');
-}
-
-
-
-// - BULK UPDATE BATCH -
-async function bulkUpdateBatch(batchId) {
-  const cards = INV.filter(r => r.batch_id === batchId);
-  if (!cards.length) return toast('No inventory cards linked to this batch', true);
-  const statuses = ['Raw','Submitted','Graded','Listed','Sold'];
-  const current = cards[0].status || 'Submitted';
-  const html = `<div style="padding:4px 0;">
-    <div style="font-size:13px;color:var(--text-2);margin-bottom:14px;">Update all <strong style="color:#fff;">${cards.length} cards</strong> in batch <strong style="color:#fff;">#${batchId}</strong> to:</div>
-    <select id="bulk-stat" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:#fff;padding:9px 12px;border-radius:6px;font-size:14px;outline:none;margin-bottom:4px;">
-      ${statuses.map(s=>`<option value="${s}" ${s===current?'selected':''}>${s}</option>`).join('')}
-    </select>
-  </div>`;
-  const modal = document.createElement('div');
-  modal.className = 'modal-bg open';
-  modal.id = 'bulk-modal';
-  modal.innerHTML = `<div class="modal" style="max-width:400px;">
-    <div class="modal-title">Bulk Update Batch #${batchId}<button class="modal-close" onclick="document.getElementById('bulk-modal').remove()">x</button></div>
-    ${html}
-    <div class="factions">
-      <button class="btn-a" onclick="confirmBulkUpdate('${batchId}')">Update All Cards</button>
-      <button class="btn-c" onclick="document.getElementById('bulk-modal').remove()">Cancel</button>
-    </div>
-  </div>`;
-  document.body.appendChild(modal);
-}
-
-async function confirmBulkUpdate(batchId) {
-  const newStatus = document.getElementById('bulk-stat').value;
-  const cards = INV.filter(r => r.batch_id === batchId);
-  const ids = cards.map(r => r.id);
-  const {error} = await sb.from('inventory').update({status: newStatus}).in('id', ids);
-  if (error) return toast('Error: ' + error.message, true);
-  INV = INV.map(r => ids.includes(r.id) ? {...r, status: newStatus} : r);
-  document.getElementById('bulk-modal').remove();
-  renderAll();
-  toast(`${cards.length} cards updated to ${newStatus}!`);
-}
-
-// - EV RECALCULATOR -
-function openEVRecalc() {
-  const cards = INV.filter(r => r.status !== 'Sold' && r.disposition === 'Grade');
-  if (!cards.length) return toast('No grade candidates in inventory', true);
-  const modal = document.createElement('div');
-  modal.className = 'modal-bg open';
-  modal.id = 'recalc-modal';
-  modal.innerHTML = `<div class="modal" style="max-width:680px;">
-    <div class="modal-title">EV Recalculator<button class="modal-close" onclick="document.getElementById('recalc-modal').remove()">x</button></div>
-    <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">Update PSA 10/9 comps and gem rates for your grade candidates. Leave blank to keep existing values.</div>
-    <div style="max-height:400px;overflow-y:auto;">
-      <table class="dtbl" style="min-width:400px;">
-        <thead><tr><th>Player</th><th>Set / Parallel</th><th>Gem Rate</th><th>New PSA 10 $</th><th>New PSA 9 $</th></tr></thead>
-        <tbody>${cards.map(r=>`<tr>
-          <td class="pl">${r.player||'--'}</td>
-          <td style="font-size:11px;">${r.set_name||''} ${r.parallel||''}</td>
-          <td><input type="number" step="0.01" placeholder="${r.gem_rate!=null?(r.gem_rate*100).toFixed(0)+'%':''}" id="rc-gem-${r.id}" style="width:70px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);background:var(--surface-2);padding:4px 6px;border-radius:4px;font-size:12px;outline:none;"></td>
-          <td><input type="number" step="0.01" placeholder="${r.psa10!=null?'$'+r.psa10:''}" id="rc-p10-${r.id}" style="width:80px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);background:var(--surface-2);padding:4px 6px;border-radius:4px;font-size:12px;outline:none;"></td>
-          <td><input type="number" step="0.01" placeholder="${r.psa9!=null?'$'+r.psa9:''}" id="rc-p9-${r.id}" style="width:80px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);background:var(--surface-2);padding:4px 6px;border-radius:4px;font-size:12px;outline:none;"></td>
-        </tr>`).join('')}</tbody>
-      </table>
-    </div>
-    <div class="factions" style="margin-top:14px;">
-      <button class="btn-a" id="recalc-save-btn" onclick="saveEVRecalc()">Save Updates</button>
-      <button class="btn-c" onclick="document.getElementById('recalc-modal').remove()">Cancel</button>
-    </div>
-  </div>`;
-  document.body.appendChild(modal);
-}
-
-async function saveEVRecalc() {
-  const ids = INV.filter(r => r.status !== 'Sold' && r.disposition === 'Grade').map(r => r.id);
-  let updated = 0;
-  for (const id of ids) {
-    const gem = parseFloat(document.getElementById('rc-gem-'+id)?.value);
-    const p10 = parseFloat(document.getElementById('rc-p10-'+id)?.value);
-    const p9 = parseFloat(document.getElementById('rc-p9-'+id)?.value);
-    const updates = {};
-    if (!isNaN(gem)) updates.gem_rate = gem;
-    if (!isNaN(p10)) updates.psa10 = p10;
-    if (!isNaN(p9)) updates.psa9 = p9;
-    if (Object.keys(updates).length === 0) continue;
-    const {data, error} = await sb.from('inventory').update(updates).eq('id', id).select().single();
-    if (!error && data) { const idx = INV.findIndex(r => r.id === id); if (idx !== -1) INV[idx] = {...INV[idx], ...updates}; updated++; }
-  }
-  document.getElementById('recalc-modal').remove();
-  renderAll();
-  toast(`Updated comps for ${updated} card${updated!==1?'s':''}!`);
-}
-
-// - EXPORT CSV -
-function exportCSV() {
-  const cards = invF.length ? invF : INV.filter(r => r.status !== 'Sold');
-  if (!cards.length) return toast('No cards to export', true);
-  const headers = ['Card ID','Player','Year','Set','Parallel','Card #','Sport','Date Acquired','Source','Purchase Price','Ship/Tax','Grading Cost','Total Cost','Gem Rate','PSA 10','PSA 9','EV$','EV%','Disposition','Status','Batch ID','Notes'];
-  const rows = cards.map(r => {
-    const ev = (r.gem_rate && r.psa10) ? calcEV(r) : null;
-    const evp = (ev !== null && r.total_cost) ? (ev/r.total_cost*100).toFixed(1)+'%' : '';
-    return [
-      r.card_id||'', r.player||'', r.year||'', r.set_name||'', r.parallel||'', r.card_no||'',
-      r.sport||'', r.date_acquired||'', r.source||'',
-      r.price!=null?r.price:'', r.ship!=null?r.ship:'', r.grading!=null?r.grading:'', r.total_cost!=null?r.total_cost:'',
-      r.gem_rate!=null?r.gem_rate:'', r.psa10!=null?r.psa10:'', r.psa9!=null?r.psa9:'',
-      ev!=null?ev.toFixed(2):'', evp, r.disposition||'', r.status||'', r.batch_id||'', r.notes||''
-    ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(',');
-  });
-  const csv = [headers.join(','), ...rows].join('\n');
-  const blob = new Blob([csv], {type:'text/csv'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'scc-inventory-'+new Date().toISOString().split('T')[0]+'.csv';
-  a.click(); URL.revokeObjectURL(url);
-  toast('CSV exported!');
-}
-
-// - PROFIT CHART -
-let profitChart = null;
-function renderProfitChart() {
-  const sold = INV.filter(r => r.status === 'Sold' && r.date_sold).sort((a,b) => new Date(a.date_sold)-new Date(b.date_sold));
-  const canvas = document.getElementById('profit-chart');
-  if (!canvas) return;
-  if (!sold.length) { canvas.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:200px;color:var(--text-muted);font-size:12px;">No sold cards yet</div>'; return; }
-  const labels = sold.map(r => r.date_sold);
-  let running = 0;
-  const data = sold.map(r => { running += (r.realized_profit || 0); return parseFloat(running.toFixed(2)); });
-  if (profitChart) profitChart.destroy();
-  profitChart = new Chart(canvas, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Cumulative Profit',
-        data,
-        borderColor: '#22C55E',
-        backgroundColor: 'rgba(34,197,94,0.1)',
-        borderWidth: 2,
-        pointRadius: 4,
-        pointBackgroundColor: '#22C55E',
-        fill: true,
-        tension: 0.3
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { ticks: { color: '#777', font: {size:10} }, grid: { color: '#222' } },
-        y: { ticks: { color: '#777', font: {size:10}, callback: v => '$'+v }, grid: { color: '#222' } }
-      }
-    }
-  });
-}
-
-// - TOP PERFORMERS -
-function renderTopPerformers() {
-  const graders = INV.filter(r => r.status !== 'Sold' && r.disposition === 'Grade' && r.gem_rate && r.psa10 && r.total_cost);
-  const sorted = graders.map(r => {
-    const ev = calcEV(r);
-    return {...r, ev, evp: ev/r.total_cost};
-  }).sort((a,b) => b.evp - a.evp).slice(0,5);
-  const el = g('d-top-performers');
-  if (!el) return;
-  if (!sorted.length) {
-    el.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:16px;">No grade candidates with EV data yet</div>';
-    return;
-  }
-  el.innerHTML = sorted.map((r,i) => {
-    const pct = r.evp * 100;
-    const barW = Math.min(Math.max(pct, 0), 200) / 2;
-    const col = pct >= 100 ? 'var(--green)' : pct >= 40 ? 'var(--amber)' : '#F87171';
-    const medal = i === 0 ? '&#127947;' : i === 1 ? '&#129352;' : i === 2 ? '&#129353;' : (i+1) + '.';
-    return '<div style="padding:10px 16px;border-bottom:1px solid #1a1a1a;">' +
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">' +
-        '<div>' +
-          '<div style="font-size:12px;font-weight:700;color:var(--text);">' + medal + ' ' + (r.player||'--') + '</div>' +
-          '<div style="font-size:10px;color:var(--text-muted);margin-top:1px;">' + (r.year||'') + ' ' + (r.set_name||'') + (r.parallel?' · '+r.parallel:'') + '</div>' +
-        '</div>' +
-        '<div style="font-size:15px;font-weight:800;color:' + col + ';">' + pct.toFixed(0) + '%</div>' +
-      '</div>' +
-      '<div style="height:3px;background:var(--border);border-radius:2px;overflow:hidden;">' +
-        '<div style="height:100%;width:' + barW.toFixed(0) + '%;background:' + col + ';border-radius:2px;"></div>' +
-      '</div>' +
-    '</div>';
-  }).join('') + '<div style="padding:10px 16px;font-size:10px;color:var(--text-muted);">Disposition = Grade only</div>';
-}
 
 // - EDIT CARD -
 function openEdit(id) {
