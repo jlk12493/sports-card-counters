@@ -1278,7 +1278,7 @@ function renderInv() {
       '<div class="inv-body' + (isOpen?' open':'') + '" data-id="' + r.id + '" style="' + (isOpen?'':'display:none;') + 'border-top:1px solid var(--border);padding:14px;">' +
         '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:14px;">' +
           detailCell('Sport', r.sport) +
-          detailCell('Date Acquired', r.date_acquired) +
+          detailCell('Date Acquired', fmtDate(r.date_acquired)) +
           detailCell('Source', r.source) +
           detailCell('Card ID', r.card_id) +
           detailCell('Batch ID', r.batch_id) +
@@ -1670,7 +1670,22 @@ function handleImport(input) {
         const pf = (v)=>{ const n=parseFloat(v); return isNaN(n)?null:n; };
         const pi = (v)=>{ const n=parseInt(v); return isNaN(n)?null:n; };
         const ps = (v)=>{ if(!v||v==='NaN'||v==='null')return null; const s=String(v).trim(); return s.length>0?s:null; };
-        const pd = (v)=>{ if(!v||v==='NaN'||v==='Invalid Date')return null; try{ const d=new Date(v); if(isNaN(d.getTime()))return null; return d.toISOString().split('T')[0]; }catch(e){return null;} };
+        const pd = (v)=>{ 
+          if(!v||v==='NaN'||v==='Invalid Date'||v===null)return null;
+          // Handle Excel serial number dates
+          if(typeof v === 'number' && v > 1000 && v < 100000) {
+            const excelEpoch = new Date(1899, 11, 30);
+            const d = new Date(excelEpoch.getTime() + v * 86400000);
+            if(!isNaN(d.getTime()) && d.getFullYear() > 1970) return d.toISOString().split('T')[0];
+            return null;
+          }
+          try{ 
+            const d=new Date(v); 
+            if(isNaN(d.getTime()))return null;
+            if(d.getFullYear()<=1970)return null;
+            return d.toISOString().split('T')[0]; 
+          }catch(e){return null;} 
+        };
         return {
           user_id:CU.id,
           card_id:ps(r['Card ID']),
@@ -2030,6 +2045,30 @@ async function saveEdit() {
 }
 
 // - HELPERS -
+function fmtDate(d) {
+  if (!d) return null;
+  // Handle Excel serial numbers (numbers like 45000)
+  if (typeof d === 'number') {
+    // Excel dates start from 1900-01-01, serial 1 = Jan 1 1900
+    if (d > 1000 && d < 100000) {
+      const excelEpoch = new Date(1899, 11, 30);
+      const date = new Date(excelEpoch.getTime() + d * 86400000);
+      if (!isNaN(date.getTime()) && date.getFullYear() > 1970) {
+        return date.toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'});
+      }
+    }
+    return null;
+  }
+  // Handle string dates
+  const s = String(d).trim();
+  if (!s || s === 'null' || s === 'undefined') return null;
+  const date = new Date(s);
+  if (isNaN(date.getTime())) return null;
+  // Reject epoch date (1970-01-01)
+  if (date.getFullYear() <= 1970) return null;
+  return date.toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'});
+}
+
 function calcEV(r){const n10=r.psa10*0.865,n9=(r.psa9||0)*0.865;return r.gem_rate*n10+(1-r.gem_rate)*n9-(r.total_cost||0);}
 function f$(v){if(v==null||isNaN(v))return'--';return(v<0?'-$':'$')+Math.abs(v).toFixed(2);}
 function evBar(p){const pct=p*100,w=Math.min(Math.max(pct,0),200)/2,c=pct>=100?'#22C55E':pct>=40?'#F59E0B':'#CC0000';return`<div class="evw"><div class="evb"><div class="evf" style="width:${w.toFixed(0)}%;background:${c};"></div></div><span style="font-size:10px;color:${c};font-family:'Courier New',monospace;">${pct.toFixed(0)}%</span></div>`;}
