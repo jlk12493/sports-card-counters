@@ -1112,6 +1112,7 @@ async function loadApp() {
   invF=[...INV]; blF=[...BL];
   renderAll();
   g('app-screen').style.display='block';
+  migrateCardIDs();
 }
 
 // - NAV -
@@ -2082,6 +2083,36 @@ async function saveEdit() {
 }
 
 // - HELPERS -
+async function migrateCardIDs() {
+  // Find cards that don't match the new ID format: XX-YY-BBB-PPP-N-NNN
+  const newFormatPattern = /^[A-Z]{2}-\d{2}-[A-Z]{3}-[A-Z]{3}-.+-\d{3}$/;
+  const needsMigration = INV.filter(r => !r.card_id || !newFormatPattern.test(r.card_id));
+  if (!needsMigration.length) return;
+
+  // Sort by created_at so oldest get 001
+  const allCards = [...INV].sort((a,b) => new Date(a.created_at||0) - new Date(b.created_at||0));
+  const usedIDs = allCards
+    .filter(r => r.card_id && newFormatPattern.test(r.card_id))
+    .map(r => r.card_id);
+
+  let updated = 0;
+  for (const card of allCards) {
+    if (card.card_id && newFormatPattern.test(card.card_id)) continue;
+    const newID = generateCardID(card.player, card.year, card.set_name, card.parallel, card.card_no, usedIDs);
+    usedIDs.push(newID);
+    const {error} = await sb.from('inventory').update({card_id: newID}).eq('id', card.id);
+    if (!error) {
+      const idx = INV.findIndex(r => r.id === card.id);
+      if (idx !== -1) INV[idx].card_id = newID;
+      updated++;
+    }
+  }
+  if (updated > 0) {
+    invF = [...INV.filter(r => r.status !== 'Sold')];
+    renderInv();
+  }
+}
+
 function generateCardID(player, year, setName, parallel, cardNo, existingIDs) {
   // Initials: first letter of first + last name
   const nameParts = (player||'').trim().split(' ').filter(p=>p.length>0);
