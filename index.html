@@ -2034,6 +2034,71 @@ async function migrateCardIDs() {
   }
 }
 
+
+// - ADMIN -
+async function loadAdmin() {
+  if (!CU || CU.email !== ADMIN) return;
+  const [codesRes, usersRes] = await Promise.all([
+    sb.from('invite_codes').select('*').order('created_at', {ascending:false}),
+    sb.from('profiles').select('*').order('created_at', {ascending:false})
+  ]);
+  const codes = codesRes.data || [];
+  const users = usersRes.data || [];
+  const codesEl = g('admin-codes');
+  const usersEl = g('admin-users');
+  if (codesEl) codesEl.innerHTML = codes.map(c =>
+    '<div class="code-row">' +
+      '<span class="code-val">' + c.code + '</span>' +
+      '<span style="font-size:11px;color:' + (c.used ? 'var(--text-muted)' : 'var(--green)') + ';">' + (c.used ? 'Used' : 'Available') + '</span>' +
+    '</div>'
+  ).join('') || '<div style="color:var(--text-muted);font-size:12px;">No codes yet</div>';
+  if (usersEl) usersEl.innerHTML = users.map(u =>
+    '<div class="user-row">' +
+      '<div style="font-size:12px;font-weight:600;color:var(--text);">' + (u.email||'Unknown') + '</div>' +
+      '<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Joined ' + (u.created_at ? new Date(u.created_at).toLocaleDateString() : '--') + '</div>' +
+    '</div>'
+  ).join('') || '<div style="color:var(--text-muted);font-size:12px;">No users yet</div>';
+}
+
+async function genCode() {
+  const code = g('new-code').value.trim().toUpperCase();
+  if (!code) return toast('Enter a code first', true);
+  const {error} = await sb.from('invite_codes').insert({code});
+  if (error) return toast(error.message.includes('unique') ? 'Code already exists' : error.message, true);
+  g('new-code').value = '';
+  loadAdmin();
+  toast('Code added: ' + code);
+}
+
+async function genBulk() {
+  const {data:ex} = await sb.from('invite_codes').select('code').ilike('code','SCC-%');
+  const nums = (ex||[]).map(r => parseInt((r.code.match(/\d+$/)||[0])[0])).filter(n => !isNaN(n));
+  const next = nums.length ? Math.max(...nums)+1 : 1;
+  const codes = Array.from({length:10}, (_,i) => ({code:'SCC-'+String(next+i).padStart(4,'0')}));
+  const {error} = await sb.from('invite_codes').insert(codes);
+  if (error) return toast('Error generating codes', true);
+  loadAdmin();
+  toast('10 new codes generated!');
+}
+
+async function bulkRegenerateIDs() {
+  if (!confirm('Regenerate Card IDs for ALL cards in your inventory using the new format?')) return;
+  const cards = [...INV].sort((a,b) => new Date(a.created_at||0)-new Date(b.created_at||0));
+  let updated = 0;
+  const usedIDs = [];
+  for (const card of cards) {
+    const newID = generateCardID(card.player, card.year, card.set_name, card.parallel, card.card_no, usedIDs);
+    usedIDs.push(newID);
+    if (newID !== card.card_id) {
+      const {error} = await sb.from('inventory').update({card_id:newID}).eq('id',card.id);
+      if (!error) { const idx = INV.findIndex(r=>r.id===card.id); if (idx!==-1) INV[idx].card_id=newID; updated++; }
+    }
+  }
+  renderAll();
+  toast('Regenerated IDs for ' + updated + ' cards!');
+}
+
+
 function generateCardID(player, year, setName, parallel, cardNo, existingIDs) {
   // Initials: first letter of first + last name
   const nameParts = (player||'').trim().split(' ').filter(p=>p.length>0);
