@@ -1574,47 +1574,6 @@ function blDec(r) {
   return (ev/r.total_cost)>=0.40?'BUY':'PASS';
 }
 
-function renderProfitChart() {
-  const sold = INV.filter(r => r.status === 'Sold' && r.date_sold).sort((a,b) => new Date(a.date_sold)-new Date(b.date_sold));
-  const canvas = document.getElementById('profit-chart');
-  if (!canvas) return;
-  if (!sold.length) {
-    canvas.parentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:200px;color:var(--text-muted);font-size:12px;">No sold cards yet</div>';
-    return;
-  }
-  const labels = sold.map(r => r.date_sold);
-  let running = 0;
-  const data = sold.map(r => { running += (r.realized_profit||0); return parseFloat(running.toFixed(2)); });
-  if (typeof Chart === 'undefined') return;
-  const existing = Chart.getChart(canvas);
-  if (existing) existing.destroy();
-  new Chart(canvas, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Cumulative Profit',
-        data,
-        borderColor: '#22C55E',
-        backgroundColor: 'rgba(34,197,94,0.1)',
-        borderWidth: 2,
-        pointRadius: 4,
-        pointBackgroundColor: '#22C55E',
-        fill: true,
-        tension: 0.3
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { ticks: { color: '#777', font: {size:10} }, grid: { color: '#222' } },
-        y: { ticks: { color: '#777', font: {size:10}, callback: v => '$'+v }, grid: { color: '#222' } }
-      }
-    }
-  });
-}
-
 
 function renderBL() {
   g('bl-cnt').textContent=blF.length+' entries';
@@ -2150,40 +2109,49 @@ function openModal(id){g(id).classList.add('open');}
 function closeModal(id){g(id).classList.remove('open');}
 let toastT;
 function toast(txt,err=false){const t=g('toast');t.textContent=txt;t.className='show'+(err?' err':'');clearTimeout(toastT);toastT=setTimeout(()=>t.className='',3000);}
+
+function renderTopPerformers() {
+  const graders = INV.filter(r => r.status !== 'Sold' && r.disposition === 'Grade' && r.gem_rate && r.psa10 && r.total_cost);
+  const sorted = graders.map(r => { const ev=calcEV(r); return {...r,ev,evp:ev/r.total_cost}; }).sort((a,b)=>b.evp-a.evp).slice(0,5);
+  const el = g('d-top-performers');
+  if (!el) return;
+  if (!sorted.length) { el.innerHTML='<div style="font-size:12px;color:var(--text-muted);padding:16px;">No grade candidates with EV data yet</div>'; return; }
+  el.innerHTML = sorted.map(function(r,i){
+    const pct=r.evp*100, barW=Math.min(Math.max(pct,0),200)/2;
+    const col=pct>=100?'var(--green)':pct>=40?'var(--amber)':'#F87171';
+    const medal=i===0?'#1':i===1?'#2':i===2?'#3':(i+1)+'.';
+    return '<div style="padding:10px 16px;border-bottom:1px solid #1a1a1a;">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">'+
+        '<div><div style="font-size:12px;font-weight:700;color:var(--text);">'+medal+' '+(r.player||'--')+'</div>'+
+        '<div style="font-size:10px;color:var(--text-muted);">'+(r.year||'')+' '+(r.set_name||'')+(r.parallel?' · '+r.parallel:'')+'</div></div>'+
+        '<div style="font-size:15px;font-weight:800;color:'+col+';">'+pct.toFixed(0)+'%</div>'+
+      '</div>'+
+      '<div style="height:3px;background:var(--border);border-radius:2px;overflow:hidden;">'+
+        '<div style="height:100%;width:'+barW.toFixed(0)+'%;background:'+col+';border-radius:2px;"></div>'+
+      '</div></div>';
+  }).join('')+'<div style="padding:10px 16px;font-size:10px;color:var(--text-muted);">Disposition = Grade only</div>';
+}
+
+function renderProfitChart() {
+  const sold=INV.filter(r=>r.status==='Sold'&&r.date_sold).sort((a,b)=>new Date(a.date_sold)-new Date(b.date_sold));
+  const canvas=document.getElementById('profit-chart');
+  if (!canvas) return;
+  if (!sold.length){canvas.parentElement.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:200px;color:var(--text-muted);font-size:12px;">No sold cards yet</div>';return;}
+  const labels=sold.map(r=>r.date_sold);
+  let running=0;
+  const data=sold.map(r=>{running+=(r.realized_profit||0);return parseFloat(running.toFixed(2));});
+  if (typeof Chart==='undefined') return;
+  const existing=Chart.getChart(canvas);
+  if (existing) existing.destroy();
+  new Chart(canvas,{
+    type:'line',
+    data:{labels,datasets:[{label:'Cumulative Profit',data,borderColor:'#22C55E',backgroundColor:'rgba(34,197,94,0.1)',borderWidth:2,pointRadius:4,pointBackgroundColor:'#22C55E',fill:true,tension:0.3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#777',font:{size:10}},grid:{color:'#222'}},y:{ticks:{color:'#777',font:{size:10},callback:v=>'$'+v},grid:{color:'#222'}}}}
+  });
+}
+
 loadTheme();
 initAuth();
 </script>
 </body>
-</html>function renderTopPerformers() {
-  const graders = INV.filter(r => r.status !== 'Sold' && r.disposition === 'Grade' && r.gem_rate && r.psa10 && r.total_cost);
-  const sorted = graders.map(r => {
-    const ev = calcEV(r);
-    return {...r, ev, evp: ev/r.total_cost};
-  }).sort((a,b) => b.evp - a.evp).slice(0,5);
-  const el = g('d-top-performers');
-  if (!el) return;
-  if (!sorted.length) {
-    el.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:16px;">No grade candidates with EV data yet</div>';
-    return;
-  }
-  el.innerHTML = sorted.map(function(r,i) {
-    const pct = r.evp * 100;
-    const barW = Math.min(Math.max(pct,0),200)/2;
-    const col = pct>=100?'var(--green)':pct>=40?'var(--amber)':'#F87171';
-    const medal = i===0?'#1':i===1?'#2':i===2?'#3':(i+1)+'.';
-    return '<div style="padding:10px 16px;border-bottom:1px solid #1a1a1a;">' +
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">' +
-        '<div>' +
-          '<div style="font-size:12px;font-weight:700;color:var(--text);">' + medal + ' ' + (r.player||'--') + '</div>' +
-          '<div style="font-size:10px;color:var(--text-muted);margin-top:1px;">' + (r.year||'') + ' ' + (r.set_name||'') + (r.parallel?' · '+r.parallel:'') + '</div>' +
-        '</div>' +
-        '<div style="font-size:15px;font-weight:800;color:'+col+';">' + pct.toFixed(0) + '%</div>' +
-      '</div>' +
-      '<div style="height:3px;background:var(--border);border-radius:2px;overflow:hidden;">' +
-        '<div style="height:100%;width:'+barW.toFixed(0)+'%;background:'+col+';border-radius:2px;"></div>' +
-      '</div>' +
-    '</div>';
-  }).join('') + '<div style="padding:10px 16px;font-size:10px;color:var(--text-muted);">Disposition = Grade only</div>';
-}
-
-
+</html>
