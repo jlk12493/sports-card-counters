@@ -19,74 +19,100 @@ body.light-mode{
   --surface:#F0EDE9;--surface-2:#E8E4DF;--surface-3:#DDD9D4;
   --border:#C8C4BF;--text:#1A1A1A;--text-2:#3A3A3A;--text-muted:#777066;
 }
-body.light-mode .hdr{background:#DDD9D4;border-bottom:3px solid var(--red);}
-body.light-mode .hdr-top{background:var(--red);}
-body.light-mode .dtbl thead{background:#DDD9D4;}
-body.light-mode .dtbl td.pl{color:#1A1A1A;}
-body.light-mode #auth-screen{background:#E8E4DF;}
-body.light-mode .auth-card{background:#F0EDE9;}
-body.light-mode .afield input{background:#E8E4DF;color:#1A1A1A;border-color:#C8C4BF;}
-body.light-mode .fi{background:#F0EDE9;color:#1A1A1A;border-color:#C8C4BF;}
-body.light-mode .modal{background:#F0EDE9;}
-body.light-mode .ff input,.ff select{background:#E8E4DF;color:#1A1A1A;border-color:#C8C4BF;}
-body.light-mode .panel{background:#F0EDE9;}
-body.light-mode .kcard{background:#F0EDE9;}
-body.light-mode .bcard{background:#F0EDE9;}
-body.light-mode .aform{background:#F0EDE9;}
-body.light-mode .ntab:hover{background:#DDD9D4;color:#1A1A1A;}
-body.light-mode .ntab.active{color:var(--red);}
-body.light-mode .brand-text h1{color:#1A1A1A;}
-body.light-mode .defbox{background:#E8E4DF;}
-body.light-mode #toast{background:#F0EDE9;}
-body.light-mode .auth-tabs{background:#DDD9D4;}
-body.light-mode .gen-inp{background:#E8E4DF;color:#1A1A1A;border-color:#C8C4BF;}
-body.light-mode .code-row{background:#E8E4DF;border-color:#C8C4BF;}
-body.light-mode .user-row{background:#E8E4DF;border-color:#C8C4BF;}
-body.light-mode .dtbl td{color:#3A3A3A;}
-body.light-mode .dtbl th{color:#666;}
-body.light-mode .kval{color:#1A1A1A;}
-body.light-mode .ksub{color:#777066;}
-body.light-mode .klbl{color:#777066;}
-body.light-mode .ptitle{color:#777066;}
-body.light-mode .stbl td{color:#3A3A3A;}
-body.light-mode .stbl th{color:#666;}
-body.light-mode .ntab{color:#666;}
-body.light-mode .uemail{color:#666;}
-body.light-mode .btn-out{color:#666;border-color:#C8C4BF;}
-body.light-mode .theme-toggle{color:#666;border-color:#C8C4BF;}
-body.light-mode .bid{color:#1A1A1A;}
-body.light-mode .bsv{color:#1A1A1A;}
-body.light-mode .bsl{color:#777066;}
-body.light-mode .brand-text p{color:var(--red);}
-body.light-mode .auth-logo h1{color:#1A1A1A;}
-body.light-mode .afield label{color:#666;}
-body.light-mode .auth-note{color:#777066;}
-body.light-mode .auth-divider{color:#777066;}
-body.light-mode .btn-c{color:#666;border-color:#C8C4BF;}
-body.light-mode .btn-s{color:#666;border-color:#C8C4BF;}
-body.light-mode .btn-export{color:#666;border-color:#C8C4BF;}
-body.light-mode .fcnt{color:#777066;}
-body.light-mode .empty-title{color:#3A3A3A;}
-body.light-mode .empty{color:#777066;}
-body.light-mode .ff label{color:#666;}
-body.light-mode .ff select{background:#E8E4DF;color:#1A1A1A;}
-body.light-mode .scan-status{color:#777066;}
-body.light-mode .code-val{color:#1A1A1A;}
-body.light-mode .modal-title{color:#1A1A1A;}
-body.light-mode .stitle{color:#3A3A3A;}
-body.light-mode .perf-name{color:#1A1A1A;}
-body.light-mode .import-preview{color:#3A3A3A;}
-body.light-mode select option{background:#E8E4DF;color:#1A1A1A;}
 
-body.light-mode .kval{color:#1A1A1A;}
-body.light-mode .dtbl td.pl{color:#1A1A1A;}
-body.light-mode .bsum-val{color:#1A1A1A;}
-body.light-mode .ntab:hover{color:#1A1A1A;}
-body.light-mode .btn-c:hover{color:#1A1A1A;}
-body.light-mode .afield input{color:#1A1A1A;}
-body.light-mode .fi{color:#1A1A1A;}
-body.light-mode .ff input{color:#1A1A1A;}
-body.light-mode .ff select{color:#1A1A1A;}
+/* Light mode — force ALL text dark */
+body.light-mode,
+body.light-mode *:not(.btn-a):not(.btn-p):not(.auth-tab.active):not(.ntab.active):not(.pbtn.active):not(.bdg):not(.bulk-btn) {
+  color: #1A1A1A;
+}
+body.light-mode .btn-a,
+body.light-mode .btn-p,
+body.light-mode .auth-tab.active,
+body.light-mode .pbtn.active { color: #fff; }
+body.light-mode .ntab.active { color: var(--red); }
+body.light-mode .kval.g { color: var(--green); }
+body.light-mode .kval.r { color: var(--red); }
+body.light-mode .dtbl td.gn { color: var(--green); }
+body.light-mode .dtbl td.rd { color: #CC2200; }
+body.light-mode .text-muted,
+body.light-mode .ksub,
+body.light-mode .klbl,
+body.light-mode .ptitle,
+body.light-mode .fcnt,
+body.light-mode .uemail,
+body.light-mode .auth-note { color: #777066; }
+
+/* Backgrounds */
+body.light-mode { background: var(--black); }
+body.light-mode .hdr { background: #DDD9D4; border-bottom: 3px solid var(--red); }
+body.light-mode .hdr-top { background: var(--red); }
+body.light-mode #auth-screen { background: #E8E4DF; }
+body.light-mode .auth-card,
+body.light-mode .modal,
+body.light-mode .panel,
+body.light-mode .kcard,
+body.light-mode .bcard,
+body.light-mode .aform { background: #F0EDE9; border-color: #C8C4BF; }
+body.light-mode .auth-tabs { background: #DDD9D4; }
+body.light-mode .auth-tab { color: #777066; }
+body.light-mode .auth-tab.active { background: var(--red); color: #fff; }
+
+/* Inputs and selects */
+body.light-mode input,
+body.light-mode select,
+body.light-mode textarea,
+body.light-mode .fi,
+body.light-mode .afield input,
+body.light-mode .ff input,
+body.light-mode .ff select,
+body.light-mode .gen-inp,
+body.light-mode .scan-field input,
+body.light-mode .gen-code-input {
+  background: #E8E4DF;
+  color: #1A1A1A;
+  border-color: #C8C4BF;
+}
+body.light-mode input::placeholder,
+body.light-mode textarea::placeholder { color: #AAA09A; }
+body.light-mode select option { background: #E8E4DF; color: #1A1A1A; }
+
+/* Tables */
+body.light-mode .dtbl thead { background: #DDD9D4; }
+body.light-mode .dtbl th { color: #666; border-bottom-color: var(--red); }
+body.light-mode .dtbl td { color: #3A3A3A; border-bottom-color: #D5D0CB; }
+body.light-mode .dtbl tr:hover td { background: rgba(0,0,0,.03); }
+body.light-mode .stbl th { color: #666; border-bottom-color: #C8C4BF; }
+body.light-mode .stbl td { color: #3A3A3A; border-bottom-color: #D5D0CB; }
+
+/* Buttons */
+body.light-mode .btn-out,
+body.light-mode .btn-c,
+body.light-mode .btn-s,
+body.light-mode .btn-export,
+body.light-mode .theme-toggle { color: #555; border-color: #C8C4BF; background: transparent; }
+body.light-mode .btn-out:hover,
+body.light-mode .btn-c:hover { color: #1A1A1A; border-color: #888; }
+body.light-mode .btn-del { color: #AAA; }
+body.light-mode .btn-del:hover { color: #CC2200; }
+
+/* Nav */
+body.light-mode .ntab { color: #666; }
+body.light-mode .ntab:hover { color: #1A1A1A; background: #DDD9D4; }
+
+/* Misc */
+body.light-mode .defbox { background: #E8E4DF; border-left-color: var(--red); }
+body.light-mode .code-row,
+body.light-mode .user-row { background: #E8E4DF; border-color: #C8C4BF; }
+body.light-mode #toast { background: #F0EDE9; border-color: #C8C4BF; }
+body.light-mode .import-drop { background: #E8E4DF; border-color: #C8C4BF; }
+body.light-mode .import-preview { background: #E8E4DF; border-color: #C8C4BF; }
+body.light-mode .scan-area { background: #E8E4DF; border-color: #C8C4BF; }
+body.light-mode .pbtn { background: #E8E4DF; border-color: #C8C4BF; color: #555; }
+body.light-mode .pbtn.active { background: var(--red); border-color: var(--red); color: #fff; }
+body.light-mode .modal-bg { background: rgba(0,0,0,.5); }
+body.light-mode #bl-preview,
+body.light-mode #qa-ev-preview { background: #E8E4DF; border-color: #C8C4BF; }
+body.light-mode .batch-toggle:hover { background: rgba(0,0,0,.03); }
 /* THEME TOGGLE */
 .theme-toggle{background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px;}
 .theme-toggle:hover{border-color:var(--red);color:var(--red);}
@@ -606,12 +632,7 @@ input.fi{flex:1;min-width:160px;}
           <button onclick="clearInvFilters()" style="background:transparent;border:none;color:var(--text-muted);font-size:11px;cursor:pointer;padding:0;">Clear all filters</button>
         </div>
       </div>
-      <div class="twrap">
-        <table class="dtbl">
-          <thead><tr><th></th><th>Card ID</th><th>Player</th><th>Year</th><th>Set</th><th>Parallel</th><th>#</th><th>Sport</th><th>Source</th><th>Purchase</th><th>Ship</th><th>Grade Fee</th><th>Total Cost</th><th>Gem %</th><th>PSA 10</th><th>PSA 9</th><th>EV$</th><th>EV%</th><th>Disposition</th><th>Status</th><th>Batch</th><th>Notes</th></tr></thead>
-          <tbody id="inv-tbody"></tbody>
-        </table>
-      </div>
+      <div id="inv-list"></div>
       <div class="pag" id="inv-pag"></div>
     </div>
 
@@ -1213,44 +1234,97 @@ function clearInvFilters() {
 
 
 function renderInv() {
-  const tot=invF.length, pgs=Math.ceil(tot/PP);
-  const sl=invF.slice((invPg-1)*PP,invPg*PP);
-  g('inv-cnt').textContent=tot+' cards';
-  const tb=g('inv-tbody');
-  if (!tot) { tb.innerHTML=`<tr><td colspan="21"><div class="empty"><div class="empty-icon">📦</div><div class="empty-title">No cards yet</div><div style="font-size:12px;">Click + Add Card or Import Spreadsheet</div></div></td></tr>`; }
-  else {
-    tb.innerHTML=sl.map(r=>{
-      const ev=(r.gem_rate&&r.psa10)?calcEV(r):null;
-      const evp=(ev!==null&&r.total_cost)?ev/r.total_cost:null;
-      return `<tr>
-        <td style="display:flex;gap:4px;"><button class="btn-del" onclick="delCard('${r.id}')" title="Delete">x</button><button style="background:transparent;border:none;color:#555;cursor:pointer;font-size:13px;padding:2px 5px;border-radius:3px;" onmouseover="this.style.color='#60A5FA'" onmouseout="this.style.color='#555'" onclick="openEdit('${r.id}')" title="Edit">Edit</button></td>
-        <td class="mo" style="font-size:10px;color:#555;">${r.card_id||'--'}</td>
-        <td class="pl">${r.player||'--'}</td>
-        <td class="mo">${r.year||'--'}</td>
-        <td>${r.set_name||'--'}</td>
-        <td>${r.parallel||'--'}</td>
-        <td class="mo">${r.card_no||'--'}</td>
-        <td>${r.sport||'--'}</td>
-        <td>${r.source||'--'}</td>
-        <td class="mo">${r.price!=null?f$(r.price):'--'}</td>
-        <td class="mo">${r.ship!=null?f$(r.ship):'--'}</td>
-        <td class="mo">${r.grading!=null?f$(r.grading):'--'}</td>
-        <td class="mo" style="font-weight:700;">${r.total_cost!=null?f$(r.total_cost):'--'}</td>
-        <td class="mo">${r.gem_rate!=null?((r.gem_rate*100).toFixed(0)+'%'):'--'}</td>
-        <td class="mo">${r.psa10!=null?f$(r.psa10):'--'}</td>
-        <td class="mo">${r.psa9!=null?f$(r.psa9):'--'}</td>
-        <td class="mo ${ev!=null&&ev<0?'rd':ev!=null&&ev>0?'gn':''}">${ev!=null?f$(ev):'--'}</td>
-        <td>${evp!=null?evBar(evp):'--'}</td>
-        <td>${dBdg(r.disposition)}</td>
-        <td>${sBdg(r.status)}</td>
-        <td class="mo" style="font-size:10px;color:#555;">${r.batch_id||'--'}</td>
-        <td class="note-cell" title="${r.notes||''}">${r.notes||'--'}</td>
-      </tr>`;
-    }).join('');
+  const tot = invF.length, pgs = Math.ceil(tot/PP);
+  const sl = invF.slice((invPg-1)*PP, invPg*PP);
+  g('inv-cnt').textContent = tot + ' cards';
+  const wrap = g('inv-list');
+  if (!tot) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-icon">&#128230;</div><div class="empty-title">No cards yet</div><div style="font-size:12px;">Click + Add Card or Import Spreadsheet</div></div>';
+    g('inv-pag').innerHTML = '';
+    return;
   }
-  g('inv-pag').innerHTML=`<span style="font-size:11px;color:var(--text-muted);">${tot} cards</span>`+
-    Array.from({length:pgs},(_,i)=>`<button class="pbtn ${i+1===invPg?'active':''}" onclick="invPage(${i+1})">${i+1}</button>`).join('');
+  // Remember open cards
+  const openCards = new Set();
+  wrap.querySelectorAll('.inv-body.open').forEach(el => openCards.add(el.dataset.id));
+
+  wrap.innerHTML = sl.map(r => {
+    const ev = (r.gem_rate && r.psa10) ? calcEV(r) : null;
+    const evp = (ev !== null && r.total_cost) ? ev/r.total_cost : null;
+    const net10 = r.psa10 ? r.psa10 * 0.865 : null;
+    const net9 = r.psa9 ? r.psa9 * 0.865 : null;
+    const isOpen = openCards.has(r.id);
+    const evColor = evp !== null ? (evp >= 1 ? 'var(--green)' : evp >= 0.4 ? 'var(--amber)' : '#F87171') : 'var(--text-muted)';
+    const evBarW = evp !== null ? Math.min(Math.max(evp*100, 0), 200)/2 : 0;
+
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;overflow:hidden;">' +
+
+      // COLLAPSED HEADER ROW
+      '<div style="padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;" onclick="toggleInvCard(' + JSON.stringify(r.id) + ')">' +
+        '<i id="ichev-' + r.id + '" style="font-style:normal;font-size:10px;color:var(--text-muted);transition:transform .2s;flex-shrink:0;' + (isOpen?'transform:rotate(90deg)':'') + '">&#9658;</i>' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' +
+            '<span style="font-size:13px;font-weight:700;color:var(--text);">' + (r.player||'--') + '</span>' +
+            '<span style="font-size:11px;color:var(--text-muted);">' + (r.year||'') + (r.set_name?' · '+r.set_name:'') + (r.parallel?' · '+r.parallel:'') + (r.card_no?' #'+r.card_no:'') + '</span>' +
+          '</div>' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;">' +
+            sBdg(r.status) + dBdg(r.disposition) +
+            '<span style="font-size:11px;color:var(--text-muted);">Cost: <strong style="color:var(--text);">' + (r.total_cost!=null?f$(r.total_cost):'--') + '</strong></span>' +
+            (evp !== null ? '<div style="display:flex;align-items:center;gap:4px;"><div style="width:50px;height:3px;background:var(--border);border-radius:2px;overflow:hidden;"><div style="height:100%;width:' + evBarW.toFixed(0) + '%;background:' + evColor + ';border-radius:2px;"></div></div><span style="font-size:11px;font-weight:700;color:' + evColor + ';">' + (evp*100).toFixed(0) + '%</span></div>' : '') +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+
+      // EXPANDED DETAIL
+      '<div class="inv-body' + (isOpen?' open':'') + '" data-id="' + r.id + '" style="' + (isOpen?'':'display:none;') + 'border-top:1px solid var(--border);padding:14px;">' +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:14px;">' +
+          detailCell('Sport', r.sport) +
+          detailCell('Date Acquired', r.date_acquired) +
+          detailCell('Source', r.source) +
+          detailCell('Card ID', r.card_id) +
+          detailCell('Batch ID', r.batch_id) +
+          detailCell('Purchase Price', r.price!=null?f$(r.price):null) +
+          detailCell('Ship / Tax', r.ship!=null?f$(r.ship):null) +
+          detailCell('Grading Cost', r.grading!=null?f$(r.grading):null) +
+          detailCell('Total Cost', r.total_cost!=null?f$(r.total_cost):null) +
+          detailCell('Gem Rate', r.gem_rate!=null?((r.gem_rate*100).toFixed(0)+'%'):null) +
+          detailCell('Gross PSA 10', r.psa10!=null?f$(r.psa10):null) +
+          detailCell('Gross PSA 9', r.psa9!=null?f$(r.psa9):null) +
+          detailCell('Net PSA 10', net10!=null?f$(net10):null) +
+          detailCell('Net PSA 9', net9!=null?f$(net9):null) +
+          (ev!==null ? detailCell('EV$', f$(ev), ev>=0?'var(--green)':'#F87171') : '') +
+          (evp!==null ? detailCell('EV%', (evp*100).toFixed(1)+'%', evColor) : '') +
+        '</div>' +
+        (r.notes ? '<div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;padding:8px 10px;background:var(--surface-2);border-radius:5px;">&#128221; ' + r.notes + '</div>' : '') +
+        '<div style="display:flex;gap:8px;">' +
+          '<button class="btn-a" style="font-size:11px;padding:6px 14px;" onclick="openEdit(' + JSON.stringify(r.id) + ')">Edit</button>' +
+          '<button class="btn-c" style="font-size:11px;padding:6px 14px;color:#F87171;border-color:#F87171;" onclick="delCard(' + JSON.stringify(r.id) + ')">Delete</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  g('inv-pag').innerHTML = '<span style="font-size:11px;color:var(--text-muted);">' + tot + ' cards</span>' +
+    Array.from({length:pgs}, (_,i) => '<button class="pbtn ' + (i+1===invPg?'active':'') + '" onclick="invPage(' + (i+1) + ')">' + (i+1) + '</button>').join('');
 }
+
+function detailCell(label, value, color) {
+  if (!value && value !== 0) return '';
+  return '<div>' +
+    '<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">' + label + '</div>' +
+    '<div style="font-size:13px;font-weight:600;color:' + (color||'var(--text)') + ';">' + value + '</div>' +
+  '</div>';
+}
+
+function toggleInvCard(id) {
+  const body = document.querySelector('.inv-body[data-id="' + id + '"]');
+  const chev = document.getElementById('ichev-' + id);
+  if (!body) return;
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : '';
+  body.classList.toggle('open', !isOpen);
+  if (chev) chev.style.transform = isOpen ? '' : 'rotate(90deg)';
+}
+
 
 function invPage(n){invPg=n;renderInv();}
 
