@@ -740,25 +740,37 @@ input.fi{flex:1;min-width:160px;}
     <div class="sec" id="sec-buylog">
       <div id="bl-form" style="display:none;">
         <div class="aform">
-          <div class="stitle" style="margin-bottom:14px;">Log EV Evaluation</div>
-          <div class="fgrid">
-            <div class="ff"><label>Player</label><input type="text" id="bl-player" placeholder="Shohei Ohtani"></div>
-            <div class="ff"><label>Year</label><input type="number" id="bl-year" placeholder="2024"></div>
-            <div class="ff"><label>Set</label><input type="text" id="bl-set" placeholder="Topps Chrome"></div>
-            <div class="ff"><label>Card #</label><input type="text" id="bl-cno" placeholder="1"></div>
-            <div class="ff"><label>Source</label><input type="text" id="bl-src" placeholder="eBay"></div>
-            <div class="ff"><label>Gem Rate (0–1)</label><input type="number" step="0.01" id="bl-gem" oninput="blCalc()" placeholder="0.75"></div>
-            <div class="ff"><label>Gross PSA 10 $</label><input type="number" step="0.01" id="bl-p10" oninput="blCalc()" placeholder="200.00"></div>
-            <div class="ff"><label>Gross PSA 9 $</label><input type="number" step="0.01" id="bl-p9" oninput="blCalc()" placeholder="50.00"></div>
-            <div class="ff"><label>Total Cost $</label><input type="number" step="0.01" id="bl-cost" oninput="blCalc()" placeholder="55.00"></div>
-            <div class="ff"><label>Notes</label><input type="text" id="bl-notes" placeholder="Optional"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <div class="stitle" style="margin-bottom:0;">Quick Eval</div>
+            <button onclick="toggleBLDetails()" id="bl-details-toggle" class="btn-s" style="font-size:10px;padding:4px 10px;">+ Card Details</button>
           </div>
-          <div id="bl-preview" style="display:none;background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:12px;">
-            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
-              <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;">NET PSA 10</div><div style="font-size:15px;font-weight:700;color:#fff;" id="c-n10">—</div></div>
-              <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;">EV$</div><div style="font-size:15px;font-weight:700;" id="c-ev">—</div></div>
-              <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;">EV%</div><div style="font-size:15px;font-weight:700;" id="c-evp">—</div></div>
-              <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;">DECISION</div><div style="font-size:15px;font-weight:700;" id="c-dec">—</div></div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;">
+            <div class="ff"><label>Gem Rate *</label><input type="number" step="0.01" id="bl-gem" oninput="blCalc()" placeholder="0.75" style="font-size:16px;padding:10px;"></div>
+            <div class="ff"><label>PSA 10 $ *</label><input type="number" step="0.01" id="bl-p10" oninput="blCalc()" placeholder="200.00" style="font-size:16px;padding:10px;"></div>
+            <div class="ff"><label>PSA 9 $</label><input type="number" step="0.01" id="bl-p9" oninput="blCalc()" placeholder="50.00" style="font-size:16px;padding:10px;"></div>
+            <div class="ff"><label>Your Cost $ *</label><input type="number" step="0.01" id="bl-cost" oninput="blCalc()" placeholder="55.00" style="font-size:16px;padding:10px;"></div>
+          </div>
+          <div id="bl-preview" style="display:none;border-radius:8px;padding:16px;margin-bottom:14px;border:2px solid var(--border);">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:10px;align-items:center;">
+              <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;text-transform:uppercase;">Net PSA 10</div><div style="font-size:16px;font-weight:700;color:var(--text);" id="c-n10">--</div></div>
+              <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;text-transform:uppercase;">Net PSA 9</div><div style="font-size:16px;font-weight:700;color:var(--text);" id="c-n9">--</div></div>
+              <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;text-transform:uppercase;">EV$</div><div style="font-size:16px;font-weight:700;" id="c-ev">--</div></div>
+              <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;text-transform:uppercase;">EV%</div><div style="font-size:16px;font-weight:700;" id="c-evp">--</div></div>
+              <div style="text-align:center;"><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:6px;text-transform:uppercase;">Decision</div><div style="font-size:20px;font-weight:900;padding:6px 12px;border-radius:6px;" id="c-dec">--</div></div>
+            </div>
+            <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);display:flex;align-items:center;gap:20px;">
+              <div style="font-size:11px;color:var(--text-muted);">Max Buy @ 40%: <strong style="color:var(--text);" id="c-maxbuy">--</strong></div>
+              <div style="font-size:11px;color:var(--text-muted);">Max Buy @ 35%: <strong style="color:var(--text);" id="c-maxbuy35">--</strong></div>
+            </div>
+          </div>
+          <div id="bl-details" style="display:none;border-top:1px solid var(--border);padding-top:14px;margin-bottom:14px;">
+            <div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Card Details (optional)</div>
+            <div class="fgrid">
+              <div class="ff"><label>Player</label><input type="text" id="bl-player" placeholder="Shohei Ohtani"></div>
+              <div class="ff"><label>Year</label><input type="number" id="bl-year" placeholder="2024"></div>
+              <div class="ff"><label>Set</label><input type="text" id="bl-set" placeholder="Topps Chrome"></div>
+              <div class="ff"><label>Card #</label><input type="text" id="bl-cno" placeholder="1"></div>
+              <div class="ff"><label>Notes</label><input type="text" id="bl-notes" placeholder="Optional"></div>
             </div>
           </div>
           <div class="factions">
@@ -767,6 +779,7 @@ input.fi{flex:1;min-width:160px;}
           </div>
         </div>
       </div>
+
       <div class="fbar">
         <button class="btn-s" onclick="toggleForm('bl-form',true)">+ Log Evaluation</button>
         <input class="fi" type="text" id="bl-q" placeholder="Search player, set..." oninput="filterBL()">
@@ -775,7 +788,7 @@ input.fi{flex:1;min-width:160px;}
       </div>
       <div class="twrap">
         <table class="dtbl">
-          <thead><tr><th></th><th>Date</th><th>Player</th><th>Year</th><th>Set</th><th>#</th><th>Source</th><th>Gem %</th><th>PSA 10</th><th>PSA 9</th><th>Net 10</th><th>Net 9</th><th>Cost</th><th>EV$</th><th>EV%</th><th>Max Buy @40%</th><th>Decision</th><th>Notes</th></tr></thead>
+          <thead><tr><th></th><th>Date</th><th>Player</th><th>Year</th><th>Set</th><th>#</th><th>Gem %</th><th>PSA 10</th><th>PSA 9</th><th>Net 10</th><th>Net 9</th><th>Cost</th><th>EV$</th><th>EV%</th><th>Max @40%</th><th>Max @35%</th><th>Decision</th><th>Notes</th><th></th></tr></thead>
           <tbody id="bl-tbody"></tbody>
         </table>
       </div>
@@ -1917,7 +1930,6 @@ function renderBL() {
       <td class="mo">${r.year||'--'}</td>
       <td>${r.set_name||'--'}</td>
       <td class="mo">${r.card_no||'--'}</td>
-      <td>${r.source||'--'}</td>
       <td class="mo">${r.gem_rate!=null?((r.gem_rate*100).toFixed(0)+'%'):'--'}</td>
       <td class="mo">${r.psa10!=null?f$(r.psa10):'--'}</td>
       <td class="mo">${r.psa9!=null?f$(r.psa9):'--'}</td>
@@ -1934,12 +1946,58 @@ function renderBL() {
 }
 
 async function addBL() {
-  const e={user_id:CU.id,date_ran:new Date().toISOString().split('T')[0],player:gv('bl-player'),year:ni('bl-year'),set_name:gv('bl-set'),card_no:gv('bl-cno'),source:gv('bl-src'),gem_rate:nf('bl-gem'),psa10:nf('bl-p10'),psa9:nf('bl-p9'),total_cost:nf('bl-cost'),notes:gv('bl-notes')};
-  if (!e.player) return toast('Player name required',true);
+  const gem=nf('bl-gem'), p10=nf('bl-p10'), cost=nf('bl-cost');
+  if (!gem||!p10||!cost) return toast('Gem Rate, PSA 10, and Your Cost are required',true);
+  const e={
+    user_id:CU.id, date_ran:new Date().toISOString().split('T')[0],
+    player:gv('bl-player'), year:ni('bl-year'), set_name:gv('bl-set'),
+    card_no:gv('bl-cno'), source:null,
+    gem_rate:gem, psa10:p10, psa9:nf('bl-p9'), total_cost:cost,
+    notes:gv('bl-notes')
+  };
   const {data,error}=await sb.from('ev_log').insert(e).select().single();
   if (error) return toast('Error: '+error.message,true);
   BL.unshift(data); blF=[...BL];
-  toggleForm('bl-form',false); renderBL(); toast('Entry logged!');
+  toggleForm('bl-form',false);
+  // Reset form
+  ['bl-gem','bl-p10','bl-p9','bl-cost','bl-player','bl-year','bl-set','bl-cno','bl-notes'].forEach(id=>{const el=g(id);if(el)el.value='';});
+  g('bl-preview').style.display='none';
+  g('bl-details').style.display='none';
+  renderBL(); toast('Entry logged!');
+}
+
+function toggleBLDetails() {
+  const el = g('bl-details');
+  const btn = g('bl-details-toggle');
+  if (!el) return;
+  const isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : '';
+  if (btn) btn.textContent = isOpen ? '+ Card Details' : '- Card Details';
+}
+
+function markBLPurchased(id) {
+  const entry = BL.find(r => r.id === id);
+  if (!entry) return;
+  // Pre-fill Quick Add form with BL data
+  openQuickAdd();
+  setTimeout(() => {
+    if (entry.player) g('qa-player').value = entry.player;
+    if (entry.year) g('qa-year').value = entry.year;
+    if (entry.set_name) {
+      const parts = entry.set_name.split(' ');
+      g('qa-brand').value = parts[0] || '';
+      g('qa-set').value = parts.slice(1).join(' ') || '';
+    }
+    if (entry.card_no) g('qa-cno').value = entry.card_no;
+    if (entry.gem_rate) g('qa-gem').value = entry.gem_rate;
+    if (entry.psa10) g('qa-p10').value = entry.psa10;
+    if (entry.psa9) g('qa-p9').value = entry.psa9;
+    if (entry.total_cost) g('qa-price').value = entry.total_cost;
+    qaCalcCost();
+    qaCalcEV();
+    qaShowStep(1);
+    toast('Card details pre-filled from EV Log — complete and save!');
+  }, 200);
 }
 
 async function delBL(id) {
@@ -2907,4 +2965,26 @@ loadTheme();
 initAuth();
 </script>
 </body>
-</html>
+</htmlfunction blCalc() {
+  const gem=nf('bl-gem'),p10=nf('bl-p10'),p9=nf('bl-p9'),cost=nf('bl-cost');
+  if (!gem||!p10||!cost){g('bl-preview').style.display='none';return;}
+  const n10=p10*0.865,n9=(p9||0)*0.865;
+  const ev=gem*n10+(1-gem)*n9-cost;
+  const evp=ev/cost;
+  const dec=evDecision(evp);
+  const maxBuy40=(gem*n10+(1-gem)*n9)/1.40;
+  const maxBuy35=(gem*n10+(1-gem)*n9)/1.35;
+  const decColor=dec==='BUY'?'var(--green)':dec==='CAUTION'?'var(--amber)':'#F87171';
+  const evColor=evp>=0.40?'var(--green)':evp>=0.35?'var(--amber)':'#F87171';
+  g('bl-preview').style.display='block';
+  g('bl-preview').style.borderColor=decColor;
+  g('c-n10').textContent=f$(n10);
+  const n9el=g('c-n9'); if(n9el) n9el.textContent=f$(n9);
+  g('c-ev').textContent=f$(ev); g('c-ev').style.color=ev>=0?'var(--green)':'#F87171';
+  g('c-evp').textContent=(evp*100).toFixed(1)+'%'; g('c-evp').style.color=evColor;
+  g('c-dec').textContent=dec;
+  g('c-dec').style.color='#fff';
+  g('c-dec').style.background=decColor;
+  const mb=g('c-maxbuy'); if(mb) mb.textContent=f$(maxBuy40);
+  const mb35=g('c-maxbuy35'); if(mb35) mb35.textContent=f$(maxBuy35);
+}
