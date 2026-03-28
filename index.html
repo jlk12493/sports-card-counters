@@ -860,10 +860,33 @@ input.fi{flex:1;min-width:160px;}
 
     <!-- ADMIN -->
     <div class="sec" id="sec-admin">
-      <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:5px;padding:8px 12px;margin-bottom:16px;font-size:11px;color:#FCD34D;display:flex;align-items:center;justify-content:space-between;">
-        <span>⚙ Admin Panel — Only visible to you</span>
-        <button class="btn-gen" style="background:var(--surface-3);border:1px solid var(--amber);color:var(--amber);font-size:11px;" onclick="bulkRegenerateIDs()">Regenerate All Card IDs</button>
+      <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:5px;padding:8px 12px;margin-bottom:16px;font-size:11px;color:#FCD34D;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <span>Admin Panel — Only visible to you</span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn-gen" style="background:var(--surface-3);border:1px solid var(--amber);color:var(--amber);font-size:11px;" onclick="bulkRegenerateIDs()">Regenerate All Card IDs</button>
+          <button class="btn-gen" style="background:var(--surface-3);border:1px solid #3B82F6;color:#3B82F6;font-size:11px;" onclick="showManualRegister()">+ Register User</button>
+        </div>
       </div>
+
+      <!-- MANUAL REGISTER FORM -->
+      <div id="manual-reg-form" style="display:none;background:var(--surface);border:1px solid var(--border);border-top:2px solid #3B82F6;border-radius:var(--r);padding:16px;margin-bottom:16px;">
+        <div style="font-size:11px;font-weight:700;color:#3B82F6;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">Manually Register a User</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;">
+          <div class="ff"><label>Email</label><input type="email" id="mreg-email" placeholder="member@email.com" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;"></div>
+          <div class="ff"><label>Password</label><input type="text" id="mreg-pw" placeholder="Temp password" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;"></div>
+          <div class="ff"><label>Invite Code</label>
+            <select id="mreg-code" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;">
+              <option value="">Select available code...</option>
+            </select>
+          </div>
+        </div>
+        <div class="amsg" id="mreg-msg"></div>
+        <div class="factions" style="margin-top:10px;">
+          <button class="btn-a" onclick="doManualRegister()">Register User</button>
+          <button class="btn-c" onclick="hideManualRegister()">Cancel</button>
+        </div>
+      </div>
+
       <div class="agrid">
         <div class="panel">
           <div class="ptitle">Invite Codes</div>
@@ -1192,6 +1215,52 @@ async function doForgotPassword() {
 function toggleMobileNav() {
   const nav = g('mobile-nav');
   nav.classList.toggle('open');
+}
+
+function showManualRegister() {
+  g('manual-reg-form').style.display = '';
+  // Populate available codes
+  const sel = g('mreg-code');
+  if (sel) {
+    sb.from('invite_codes').select('*').eq('used', false).order('created_at').then(({data}) => {
+      sel.innerHTML = '<option value="">Select available code...</option>' +
+        (data||[]).map(c => '<option value="' + c.code + '">' + c.code + '</option>').join('');
+    });
+  }
+}
+
+function hideManualRegister() {
+  g('manual-reg-form').style.display = 'none';
+  g('mreg-email').value = '';
+  g('mreg-pw').value = '';
+  g('mreg-msg').style.display = 'none';
+}
+
+async function doManualRegister() {
+  const email = g('mreg-email').value.trim();
+  const pw = g('mreg-pw').value.trim();
+  const code = g('mreg-code').value;
+  if (!email || !pw) return showAdminMsg('Email and password are required');
+  if (!code) return showAdminMsg('Please select an invite code');
+  if (pw.length < 6) return showAdminMsg('Password must be at least 6 characters');
+  showAdminMsg('Creating account...', false);
+  const {data, error} = await sb.auth.signUp({email, password:pw});
+  if (error) return showAdminMsg(error.message);
+  const uid = data.user.id;
+  await sb.from('profiles').upsert({id:uid, email});
+  await sb.from('invite_codes').update({used:true, used_by:uid}).eq('code', code);
+  showAdminMsg('Account created for ' + email + '! Share password: ' + pw, false);
+  g('mreg-email').value = '';
+  g('mreg-pw').value = '';
+  loadAdmin();
+}
+
+function showAdminMsg(msg, isError=true) {
+  const el = g('mreg-msg');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'amsg ' + (isError ? 'error' : 'success');
+  el.style.display = 'block';
 }
 
 async function removeUser(userId, email) {
@@ -2338,15 +2407,23 @@ async function loadAdmin() {
       '<span style="font-size:11px;color:' + (c.used ? 'var(--text-muted)' : 'var(--green)') + ';">' + (c.used ? 'Used' : 'Available') + '</span>' +
     '</div>'
   ).join('') || '<div style="color:var(--text-muted);font-size:12px;">No codes yet</div>';
-  if (usersEl) usersEl.innerHTML = users.map(u =>
-    '<div class="user-row" style="display:flex;align-items:center;justify-content:space-between;">' +
-      '<div>' +
-        '<div style="font-size:12px;font-weight:600;color:var(--text);">' + (u.email||'Unknown') + '</div>' +
-        '<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Joined ' + (u.created_at ? new Date(u.created_at).toLocaleDateString() : '--') + '</div>' +
-      '</div>' +
-      '<button class="btn-del" style="color:#F87171;" onclick="removeUser(' + JSON.stringify(u.id) + ',' + JSON.stringify(u.email||'') + ')">Remove</button>' +
-    '</div>'
-  ).join('') || '<div style="color:var(--text-muted);font-size:12px;">No users yet</div>';
+  if (usersEl) {
+    usersEl.innerHTML = users.map(u =>
+      '<div class="user-row" style="display:flex;align-items:center;justify-content:space-between;">' +
+        '<div>' +
+          '<div style="font-size:12px;font-weight:600;color:var(--text);">' + (u.email||'Unknown') + '</div>' +
+          '<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Joined ' + (u.created_at ? new Date(u.created_at).toLocaleDateString() : '--') + '</div>' +
+        '</div>' +
+        '<button class="btn-del" style="color:#F87171;font-size:11px;border:1px solid #F87171;padding:3px 8px;border-radius:4px;" data-uid="' + u.id + '" data-email="' + (u.email||'') + '">Remove</button>' +
+      '</div>'
+    ).join('') || '<div style="color:var(--text-muted);font-size:12px;">No users yet</div>';
+    // Attach click handlers
+    usersEl.querySelectorAll('[data-uid]').forEach(btn => {
+      btn.addEventListener('click', function() {
+        removeUser(this.dataset.uid, this.dataset.email);
+      });
+    });
+  }
 }
 
 async function genCode() {
