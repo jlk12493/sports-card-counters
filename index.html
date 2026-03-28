@@ -907,6 +907,7 @@ input.fi{flex:1;min-width:160px;}
         </div>
         <div class="panel">
           <div class="ptitle">Registered Users</div>
+          <div id="admin-activity-summary" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;"></div>
           <div class="ulist" id="admin-users"></div>
         </div>
       </div>
@@ -1378,6 +1379,8 @@ async function doResetPassword() {
 async function loadApp() {
   g('auth-screen').style.display='none';
   g('u-email').textContent = CU.email;
+  // Record last active timestamp
+  sb.from('profiles').update({last_active: new Date().toISOString()}).eq('id', CU.id);
   if (CU.email===ADMIN) {
     const nav = g('main-nav');
     if (!nav.querySelector('.atab')) {
@@ -2561,22 +2564,55 @@ async function loadAdmin() {
     '</div>'
   ).join('') || '<div style="color:var(--text-muted);font-size:12px;">No codes yet</div>';
   if (usersEl) {
-    usersEl.innerHTML = users.map(u =>
-      '<div class="user-row" style="display:flex;align-items:center;justify-content:space-between;">' +
-        '<div>' +
-          '<div style="font-size:12px;font-weight:600;color:var(--text);">' + (u.email||'Unknown') + '</div>' +
-          '<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Joined ' + (u.created_at ? new Date(u.created_at).toLocaleDateString() : '--') + '</div>' +
+    usersEl.innerHTML = users.map(u => {
+      const lastActive = u.last_active ? timeAgo(new Date(u.last_active)) : 'Never';
+      const isRecent = u.last_active && (Date.now() - new Date(u.last_active).getTime()) < 24*60*60*1000;
+      const isWeek = u.last_active && (Date.now() - new Date(u.last_active).getTime()) < 7*24*60*60*1000;
+      const dotColor = isRecent ? 'var(--green)' : isWeek ? 'var(--amber)' : 'var(--text-muted)';
+      return '<div class="user-row" style="display:flex;align-items:center;justify-content:space-between;">' +
+        '<div style="display:flex;align-items:center;gap:8px;">' +
+          '<div style="width:8px;height:8px;border-radius:50%;background:' + dotColor + ';flex-shrink:0;"></div>' +
+          '<div>' +
+            '<div style="font-size:12px;font-weight:600;color:var(--text);">' + (u.email||'Unknown') + '</div>' +
+            '<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Joined ' + (u.created_at ? new Date(u.created_at).toLocaleDateString() : '--') + ' · Last active: ' + lastActive + '</div>' +
+          '</div>' +
         '</div>' +
         '<button class="btn-del" style="color:#F87171;font-size:11px;border:1px solid #F87171;padding:3px 8px;border-radius:4px;" data-uid="' + u.id + '" data-email="' + (u.email||'') + '">Remove</button>' +
-      '</div>'
-    ).join('') || '<div style="color:var(--text-muted);font-size:12px;">No users yet</div>';
+      '</div>';
+    }).join('') || '<div style="color:var(--text-muted);font-size:12px;">No users yet</div>';
     // Attach click handlers
     usersEl.querySelectorAll('[data-uid]').forEach(btn => {
       btn.addEventListener('click', function() {
         removeUser(this.dataset.uid, this.dataset.email);
       });
     });
+    // Activity summary
+    const now = Date.now();
+    const activeToday = users.filter(u => u.last_active && (now - new Date(u.last_active).getTime()) < 24*60*60*1000).length;
+    const activeWeek = users.filter(u => u.last_active && (now - new Date(u.last_active).getTime()) < 7*24*60*60*1000).length;
+    const activeMonth = users.filter(u => u.last_active && (now - new Date(u.last_active).getTime()) < 30*24*60*60*1000).length;
+    const summaryEl = g('admin-activity-summary');
+    if (summaryEl) summaryEl.innerHTML = [
+      {label:'Total Users', val:users.length, color:'var(--text)'},
+      {label:'Active This Week', val:activeWeek, color:'var(--amber)'},
+      {label:'Active Today', val:activeToday, color:'var(--green)'},
+    ].map(s => '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;text-align:center;">' +
+      '<div style="font-size:20px;font-weight:800;color:' + s.color + ';">' + s.val + '</div>' +
+      '<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-top:3px;">' + s.label + '</div>' +
+    '</div>').join('');
   }
+}
+
+function timeAgo(date) {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return 'Just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return minutes + 'm ago';
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return hours + 'h ago';
+  const days = Math.floor(hours / 24);
+  if (days < 30) return days + 'd ago';
+  return date.toLocaleDateString();
 }
 
 async function genCode() {
