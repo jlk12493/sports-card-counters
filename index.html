@@ -2258,7 +2258,13 @@ async function saveEdit() {
   const idx = INV.findIndex(c => c.id === id);
   if (idx !== -1) INV[idx] = data;
   closeModal('edit-modal');
-  renderAll();
+  // Re-apply current filters instead of resetting
+  populateInvDropdowns();
+  filterInv();
+  renderDash();
+  renderSold();
+  renderBatches();
+  renderBL();
   toast('Card updated!');
 }
 
