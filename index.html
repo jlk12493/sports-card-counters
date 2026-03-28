@@ -765,12 +765,37 @@ input.fi{flex:1;min-width:160px;}
             </div>
           </div>
           <div id="bl-details" style="display:none;border-top:1px solid var(--border);padding-top:14px;margin-bottom:14px;">
-            <div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Card Details (optional)</div>
+            <div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Card Details (optional — needed to generate Card ID)</div>
             <div class="fgrid">
-              <div class="ff"><label>Player</label><input type="text" id="bl-player" placeholder="Shohei Ohtani"></div>
+              <div class="ff"><label>Player</label><input type="text" id="bl-player" placeholder="Shohei Ohtani" autocomplete="off"></div>
               <div class="ff"><label>Year</label><input type="number" id="bl-year" placeholder="2024"></div>
-              <div class="ff"><label>Set</label><input type="text" id="bl-set" placeholder="Topps Chrome"></div>
-              <div class="ff"><label>Card #</label><input type="text" id="bl-cno" placeholder="1"></div>
+              <div class="ff"><label>Brand</label>
+                <input type="text" id="bl-brand" placeholder="e.g. Topps" list="bl-brand-list" autocomplete="off">
+                <datalist id="bl-brand-list">
+                  <option>Topps</option><option>Bowman</option><option>Panini</option><option>Upper Deck</option>
+                  <option>Donruss</option><option>Fleer</option><option>Score</option><option>Leaf</option>
+                </datalist>
+              </div>
+              <div class="ff"><label>Set</label>
+                <input type="text" id="bl-set" placeholder="e.g. Chrome" list="bl-set-list" autocomplete="off">
+                <datalist id="bl-set-list">
+                  <option>Chrome</option><option>Now</option><option>Update Series</option><option>Heritage</option>
+                  <option>Finest</option><option>Stadium Club</option><option>Prizm</option><option>Select</option>
+                  <option>Mosaic</option><option>Optic</option><option>Phoenix</option><option>Immaculate</option>
+                  <option>National Treasures</option><option>Bowman Chrome</option><option>Bowman Draft</option>
+                </datalist>
+              </div>
+              <div class="ff"><label>Parallel</label>
+                <input type="text" id="bl-parallel" placeholder="e.g. Base" list="bl-par-list" autocomplete="off">
+                <datalist id="bl-par-list">
+                  <option>Base</option><option>Refractor</option><option>Holo</option><option>Silver</option>
+                  <option>Gold</option><option>Red</option><option>Blue</option><option>Green</option>
+                  <option>Orange</option><option>Purple</option><option>Black</option><option>White</option>
+                  <option>Mojo Refractor</option><option>Sepia Refractor</option><option>Prizm</option>
+                  <option>Disco</option><option>Kaleidoscopic</option><option>Autograph</option>
+                </datalist>
+              </div>
+              <div class="ff"><label>Card #</label><input type="text" id="bl-cno" placeholder="e.g. 264" autocomplete="off"></div>
               <div class="ff"><label>Notes</label><input type="text" id="bl-notes" placeholder="Optional"></div>
             </div>
           </div>
@@ -1951,9 +1976,13 @@ function renderBL() {
 async function addBL() {
   const gem=nf('bl-gem'), p10=nf('bl-p10'), cost=nf('bl-cost');
   if (!gem||!p10||!cost) return toast('Gem Rate, PSA 10, and Your Cost are required',true);
+  const blBrand = gv('bl-brand');
+  const blSet = gv('bl-set');
+  const blFullSet = [blBrand, blSet].filter(Boolean).join(' ') || null;
   const e={
     user_id:CU.id, date_ran:new Date().toISOString().split('T')[0],
-    player:gv('bl-player'), year:ni('bl-year'), set_name:gv('bl-set'),
+    player:gv('bl-player'), year:ni('bl-year'),
+    set_name:blFullSet, parallel:gv('bl-parallel'),
     card_no:gv('bl-cno'), source:null,
     gem_rate:gem, psa10:p10, psa9:nf('bl-p9'), total_cost:cost,
     notes:gv('bl-notes')
@@ -1963,7 +1992,7 @@ async function addBL() {
   BL.unshift(data); blF=[...BL];
   toggleForm('bl-form',false);
   // Reset form
-  ['bl-gem','bl-p10','bl-p9','bl-cost','bl-player','bl-year','bl-set','bl-cno','bl-notes'].forEach(id=>{const el=g(id);if(el)el.value='';});
+  ['bl-gem','bl-p10','bl-p9','bl-cost','bl-player','bl-year','bl-brand','bl-set','bl-parallel','bl-cno','bl-notes'].forEach(id=>{const el=g(id);if(el)el.value='';});
   g('bl-preview').style.display='none';
   g('bl-details').style.display='none';
   renderBL(); toast('Entry logged!');
@@ -1988,9 +2017,10 @@ function markBLPurchased(id) {
     if (entry.year) g('qa-year').value = entry.year;
     if (entry.set_name) {
       const parts = entry.set_name.split(' ');
-      g('qa-brand').value = parts[0] || '';
-      g('qa-set').value = parts.slice(1).join(' ') || '';
+      if (g('qa-brand')) g('qa-brand').value = parts[0] || '';
+      if (g('qa-set')) g('qa-set').value = parts.slice(1).join(' ') || '';
     }
+    if (entry.parallel && g('qa-parallel')) g('qa-parallel').value = entry.parallel;
     if (entry.card_no) g('qa-cno').value = entry.card_no;
     if (entry.gem_rate) g('qa-gem').value = entry.gem_rate;
     if (entry.psa10) g('qa-p10').value = entry.psa10;
