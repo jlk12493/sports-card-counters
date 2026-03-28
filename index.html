@@ -933,9 +933,10 @@ input.fi{flex:1;min-width:160px;}
       <div class="ff"><label>Sport</label><select id="e-sport"><option value="">Select...</option><option>Baseball</option><option>Football</option><option>Basketball</option><option>Hockey</option><option>Soccer</option></select></div>
       <div class="ff"><label>Date Acquired</label><input type="date" id="e-date"></div>
       <div class="ff"><label>Source</label><input type="text" id="e-src"></div>
-      <div class="ff"><label>Purchase Price $</label><input type="number" step="0.01" id="e-price"></div>
-      <div class="ff"><label>Ship / Tax $</label><input type="number" step="0.01" id="e-ship"></div>
-      <div class="ff"><label>Grading Cost $</label><input type="number" step="0.01" id="e-grade"></div>
+      <div class="ff"><label>Purchase Price $</label><input type="number" step="0.01" id="e-price" oninput="calcEditTotal()"></div>
+      <div class="ff"><label>Ship / Tax $</label><input type="number" step="0.01" id="e-ship" oninput="calcEditTotal()"></div>
+      <div class="ff"><label>Grading Cost $</label><input type="number" step="0.01" id="e-grade" oninput="calcEditTotal()"></div>
+      <div class="ff"><label>Total Cost</label><div id="e-total-preview" style="background:var(--surface-3);border:1px solid var(--border);border-radius:5px;padding:7px 9px;font-size:13px;font-weight:700;color:var(--green);">$0.00</div></div>
       <div class="ff"><label>Gem Rate (0–1)</label><input type="number" step="0.01" id="e-gem"></div>
       <div class="ff"><label>Gross PSA 10 $</label><input type="number" step="0.01" id="e-p10"></div>
       <div class="ff"><label>Gross PSA 9 $</label><input type="number" step="0.01" id="e-p9"></div>
@@ -947,14 +948,15 @@ input.fi{flex:1;min-width:160px;}
       <div style="font-size:10px;font-weight:700;color:var(--green);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">Sale Details</div>
       <div class="fgrid" style="margin-bottom:0;">
         <div class="ff"><label>Date Sold</label><input type="date" id="e-datesold"></div>
-        <div class="ff"><label>Sale Price $</label><input type="number" step="0.01" id="e-saleprice" oninput="calcSoldPreview()"></div>
+        <div class="ff"><label>Sale Price $</label><input type="number" step="0.01" id="e-saleprice" oninput="onSalePriceEntered()"></div>
         <div class="ff"><label>Platform Fees $</label><input type="number" step="0.01" id="e-fees" oninput="calcSoldPreview()"></div>
         <div class="ff"><label>Shipping Out $</label><input type="number" step="0.01" id="e-shipout" oninput="calcSoldPreview()"></div>
       </div>
       <div id="sold-preview" style="margin-top:12px;display:none;">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;">NET PROCEEDS</div><div style="font-size:15px;font-weight:700;color:#fff;" id="sp-proc">—</div></div>
-          <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;">REALIZED PROFIT</div><div style="font-size:15px;font-weight:700;" id="sp-prof">—</div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+          <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;">NET PROCEEDS</div><div style="font-size:15px;font-weight:700;color:var(--text);" id="sp-proc">--</div></div>
+          <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;">REALIZED PROFIT</div><div style="font-size:15px;font-weight:700;" id="sp-prof">--</div></div>
+          <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;">ROI</div><div style="font-size:15px;font-weight:700;" id="sp-roi">--</div></div>
         </div>
       </div>
     </div>
@@ -1559,6 +1561,7 @@ function renderInv() {
             sBdg(r.status) + dBdg(r.disposition) +
             '<span style="font-size:11px;color:var(--text-muted);">Cost: <strong style="color:var(--text);">' + (r.total_cost!=null?f$(r.total_cost):'--') + '</strong></span>' +
             (evp !== null ? '<div style="display:flex;align-items:center;gap:4px;"><div style="width:50px;height:3px;background:var(--border);border-radius:2px;overflow:hidden;"><div style="height:100%;width:' + evBarW.toFixed(0) + '%;background:' + evColor + ';border-radius:2px;"></div></div><span style="font-size:11px;font-weight:700;color:' + evColor + ';">' + (evp*100).toFixed(0) + '%</span></div>' : '') +
+            (isStaleComps(r) ? '<span style="font-size:9px;background:rgba(245,158,11,.2);color:var(--amber);border:1px solid rgba(245,158,11,.3);border-radius:3px;padding:1px 5px;font-weight:700;">STALE</span>' : '') +
           '</div>' +
         '</div>' +
       '</div>' +
@@ -1594,6 +1597,15 @@ function renderInv() {
 
   g('inv-pag').innerHTML = '<span style="font-size:11px;color:var(--text-muted);">' + tot + ' cards</span>' +
     Array.from({length:pgs}, (_,i) => '<button class="pbtn ' + (i+1===invPg?'active':'') + '" onclick="invPage(' + (i+1) + ')">' + (i+1) + '</button>').join('');
+}
+
+function isStaleComps(r) {
+  if (!r.psa10 || !r.gem_rate) return false;
+  // Check if card has a comps_updated_at field, otherwise use created_at
+  const lastUpdate = r.comps_updated_at || r.created_at;
+  if (!lastUpdate) return false;
+  const days = (Date.now() - new Date(lastUpdate).getTime()) / (1000*60*60*24);
+  return days > 30;
 }
 
 function detailCell(label, value, color) {
@@ -1648,6 +1660,13 @@ async function addCard() {
   toggleForm('inv-form',false);
   clearForm(['f-player','f-year','f-set','f-par','f-cno','f-date','f-src','f-price','f-ship','f-grade','f-gem','f-p10','f-p9','f-batch']);
   renderAll(); toast('Card added! ID: '+cardID);
+  // Auto-log to EV Buy Log if comps were entered
+  if (c.gem_rate && c.psa10 && c.total_cost) {
+    if (confirm('Comps detected — log this card to EV Buy Log automatically?')) {
+      const entry = {user_id:CU.id, date_ran:new Date().toISOString().split('T')[0], player:c.player, year:c.year, set_name:c.set_name, card_no:c.card_no, source:c.source, gem_rate:c.gem_rate, psa10:c.psa10, psa9:c.psa9, total_cost:c.total_cost, notes:'Auto-logged from inventory'};
+      sb.from('ev_log').insert(entry).select().single().then(function(res){ if(res.data){BL.unshift(res.data);} });
+    }
+  }
 }
 
 async function delCard(id) {
@@ -1722,7 +1741,9 @@ function renderBatches() {
     const bid = b.batch_id;
     const chevStyle = isOpen ? 'display:inline-block;transform:rotate(90deg);transition:transform .2s;font-style:normal;font-size:11px;color:#777;margin-right:6px;' : 'display:inline-block;transition:transform .2s;font-style:normal;font-size:11px;color:#777;margin-right:6px;';
     const bodyStyle = isOpen ? 'padding:0 14px 14px;' : 'display:none;padding:0 14px 14px;';
-    const statBadge = '<span class="bdg ' + (stMap[b.status]||'b-raw') + '">' + (b.status||'--') + '</span>';
+    const statBadge = '<select onchange="updateBatchStatus(' + JSON.stringify(b.id) + ',this.value)" style="background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;outline:none;">' +
+    ['Sent','Received','Graded','Returned','Sold'].map(s => '<option value="'+s+'" '+(b.status===s?'selected':'')+'>'+s+'</option>').join('') +
+    '</select>';
     const cardRows = cards.map(function(r){
       return '<tr>' +
         '<td class="mo" style="font-size:10px;color:#555;">' + (r.card_id||'--') + '</td>' +
@@ -1775,6 +1796,32 @@ function toggleBatch(el) {
   if (chev) chev.style.transform = isOpen ? '' : 'rotate(90deg)';
 }
 
+
+async function updateBatchStatus(batchId, newStatus) {
+  // Find the batch
+  const batch = BATCHES.find(b => b.id === batchId);
+  if (!batch) return;
+  const {error} = await sb.from('batches').update({status:newStatus}).eq('id',batchId);
+  if (error) return toast('Error: '+error.message, true);
+  const idx = BATCHES.findIndex(b => b.id === batchId);
+  if (idx !== -1) BATCHES[idx].status = newStatus;
+
+  // Auto-update card statuses
+  const cards = INV.filter(r => r.batch_id === batch.batch_id);
+  if (cards.length > 0) {
+    const statusMap = {Sent:'Submitted', Received:'Submitted', Graded:'Graded', Returned:'Graded', Sold:'Sold'};
+    const cardStatus = statusMap[newStatus];
+    if (cardStatus && confirm('Update all ' + cards.length + ' cards in this batch to "' + cardStatus + '"?')) {
+      const ids = cards.map(r => r.id);
+      await sb.from('inventory').update({status:cardStatus}).in('id', ids);
+      INV = INV.map(r => ids.includes(r.id) ? {...r, status:cardStatus} : r);
+      toast('Batch and ' + cards.length + ' cards updated to ' + newStatus + '!');
+    }
+  } else {
+    toast('Batch status updated!');
+  }
+  renderAll();
+}
 
 async function delBatch(id) {
   if (!confirm('Delete batch?')) return;
@@ -1888,6 +1935,7 @@ function openQuickAdd() {
   g('qa-sport').value='';
   g('qa-disp').value='Grade';
   g('qa-stat').value='Raw';
+  g('qa-date').value=new Date().toISOString().split('T')[0];
   g('qa-total').textContent='$0.00';
   g('qa-ev-preview').style.display='none';
   g('qa-save-btn').disabled=false;
@@ -2211,19 +2259,43 @@ function toggleSoldFields() {
   g('sold-fields').style.display = isSold ? 'block' : 'none';
 }
 
+function calcEditTotal() {
+  const p = parseFloat(g('e-price')?.value)||0;
+  const s = parseFloat(g('e-ship')?.value)||0;
+  const gr = parseFloat(g('e-grade')?.value)||0;
+  const el = g('e-total-preview');
+  if (el) el.textContent = f$(p+s+gr);
+}
+
+function onSalePriceEntered() {
+  // Auto-flip status to Sold if sale price is entered
+  const sp = parseFloat(g('e-saleprice')?.value)||0;
+  if (sp > 0 && g('e-stat').value !== 'Sold') {
+    g('e-stat').value = 'Sold';
+    toggleSoldFields();
+    if (!g('e-datesold').value) g('e-datesold').value = new Date().toISOString().split('T')[0];
+  }
+  calcSoldPreview();
+}
+
 function calcSoldPreview() {
-  const sp = parseFloat(g('e-saleprice').value) || 0;
-  const fees = parseFloat(g('e-fees').value) || 0;
-  const shipout = parseFloat(g('e-shipout').value) || 0;
-  const price = parseFloat(g('e-price').value) || 0;
-  const ship = parseFloat(g('e-ship').value) || 0;
+  const sp = parseFloat(g('e-saleprice')?.value) || 0;
+  const fees = parseFloat(g('e-fees')?.value) || 0;
+  const shipout = parseFloat(g('e-shipout')?.value) || 0;
+  const price = parseFloat(g('e-price')?.value) || 0;
+  const ship = parseFloat(g('e-ship')?.value) || 0;
+  const grade = parseFloat(g('e-grade')?.value) || 0;
   if (!sp) { g('sold-preview').style.display = 'none'; return; }
   const proc = sp - fees - shipout;
+  const basis = price + ship + grade;
   const prof = proc - price - ship;
+  const roi = basis > 0 ? (prof/basis*100) : 0;
   g('sold-preview').style.display = 'block';
   g('sp-proc').textContent = f$(proc);
   g('sp-prof').textContent = f$(prof);
   g('sp-prof').style.color = prof >= 0 ? 'var(--green)' : '#F87171';
+  const roiEl = g('sp-roi');
+  if (roiEl) { roiEl.textContent = roi.toFixed(1)+'%'; roiEl.style.color = roi>=0?'var(--green)':'#F87171'; }
 }
 
 async function saveEdit() {
@@ -2241,7 +2313,7 @@ async function saveEdit() {
     price, ship, grading: grade,
     total_cost: price + ship + grade,
     gem_rate: pf('e-gem'), psa10: pf('e-p10'), psa9: pf('e-p9'),
-    disposition: g('e-disp').value, status: g('e-stat').value,
+    disposition: g('e-disp').value, status: g('e-stat').value, comps_updated_at: new Date().toISOString(),
     batch_id: ps('e-batch'),
   };
   if (g('e-stat').value === 'Sold') {
@@ -2602,7 +2674,13 @@ function ni(id){const v=parseInt(gv(id));return isNaN(v)?null:v;}
 function nf(id){const v=parseFloat(gv(id));return isNaN(v)?null:v;}
 function setText(id,text,cls){const el=g(id);if(!el)return;el.textContent=text;if(cls)el.className='kval '+cls;}
 function msg(id,text,type){const el=g(id);if(!el)return;el.textContent=text;el.className='amsg '+(type||'');el.style.display=text?'block':'none';}
-function toggleForm(id,show){const el=g(id);if(el)el.style.display=show?'block':'none';}
+function toggleForm(id,show){
+  const el=g(id);if(el)el.style.display=show?'block':'none';
+  if(show && id==='inv-form'){
+    const dateEl=g('f-date');
+    if(dateEl && !dateEl.value) dateEl.value=new Date().toISOString().split('T')[0];
+  }
+}
 function clearForm(ids){ids.forEach(id=>{const el=g(id);if(el)el.value='';});}
 function openModal(id){g(id).classList.add('open');}
 function closeModal(id){g(id).classList.remove('open');}
@@ -2698,6 +2776,7 @@ async function saveEVRecalc(ids) {
     const p9El  = document.getElementById('rc-p9-'+id);
     const updates = {};
     if (gemEl && gemEl.value) updates.gem_rate = parseFloat(gemEl.value);
+    updates.comps_updated_at = new Date().toISOString();
     if (p10El && p10El.value) updates.psa10 = parseFloat(p10El.value);
     if (p9El  && p9El.value)  updates.psa9  = parseFloat(p9El.value);
     if (!Object.keys(updates).length) continue;
