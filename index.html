@@ -1,4 +1,5 @@
-<!DOCTYPE html>
+<!DOC
+YPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -775,7 +776,7 @@ input.fi{flex:1;min-width:160px;}
           </div>
           <div class="factions">
             <button class="btn-a" onclick="addBL()">Save Entry</button>
-            <button class="btn-c" onclick="toggleForm('bl-form',false)">Cancel</button>
+            <button class="btn-c" onclick="toggleForm('bl-form',false);g('bl-preview').style.display='none';g('bl-details').style.display='none';">Cancel</button>
           </div>
         </div>
       </div>
@@ -1433,6 +1434,8 @@ function renderAll() {
   blF=[...BL];
   populateInvDropdowns();
   renderDash(); renderInv(); renderBatches(); renderSold(); renderBL();
+  // Reset sold filters when data changes
+  const soldQ = g('sold-q'); if(soldQ && soldQ.value) filterSold();
 }
 
 // - DASHBOARD -
@@ -1914,7 +1917,7 @@ function evDecision(evp) {
 }
 
 function renderBL() {
-  g('bl-cnt').textContent=blF.length+' entries';
+  const el=g('bl-cnt'); if(el) el.textContent=blF.length+' entr'+(blF.length===1?'y':'ies');
   const tb=g('bl-tbody');
   if (!blF.length){tb.innerHTML=`<tr><td colspan="18"><div class="empty"><div class="empty-icon">📊</div><div class="empty-title">No evaluations yet</div><div style="font-size:12px;">Click + Log Evaluation</div></div></td></tr>`;return;}
   tb.innerHTML=blF.map(r=>{
@@ -2330,6 +2333,7 @@ function openEdit(id) {
   calcSoldPreview();
   calcEditTotal();
   g('edit-modal').classList.add('open');
+  setTimeout(()=>{ const pl=g('e-player'); if(pl) pl.focus(); }, 100);
 }
 
 function toggleSoldFields() {
@@ -2454,7 +2458,7 @@ function renderFinancials() {
   const tbody = g('fin-sales-tbody');
   if (tbody) {
     if (!sold.length) {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:20px;font-size:12px;">No sales in '+yr+'</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><div class="empty-icon">&#128176;</div><div class="empty-title">No sales in '+yr+'</div><div style="font-size:12px;">Mark cards as Sold to see them here</div></div></td></tr>';
     } else {
       const totCOGS = sold.reduce((s,r)=>s+(r.price||0)+(r.ship||0)+(r.grading||0),0);
       const totProc = sold.reduce((s,r)=>s+(r.sale_price||0)-(r.fees||0)-(r.ship_out||0),0);
@@ -2835,6 +2839,13 @@ function filterSold() {
     return mq && my;
   });
   renderSoldRows(filtered);
+  // Update KPIs to reflect filtered view
+  const proc = filtered.reduce((s,r)=>s+(r.sale_price||0)-(r.fees||0)-(r.ship_out||0),0);
+  const prof = filtered.reduce((s,r)=>s+(r.sale_price||0)-(r.price||0)-(r.ship||0)-(r.fees||0)-(r.ship_out||0),0);
+  g('s-cnt').textContent = filtered.length;
+  g('s-proc').textContent = f$(proc);
+  g('s-prof').textContent = f$(prof);
+  g('s-avg').textContent = filtered.length ? f$(prof/filtered.length) : '--';
 }
 
 // - EV RECALC -
@@ -2963,9 +2974,8 @@ function renderProfitChart() {
 
 loadTheme();
 initAuth();
-</script>
-</body>
-</htmlfunction blCalc() {
+
+function blCalc() {
   const gem=nf('bl-gem'),p10=nf('bl-p10'),p9=nf('bl-p9'),cost=nf('bl-cost');
   if (!gem||!p10||!cost){g('bl-preview').style.display='none';return;}
   const n10=p10*0.865,n9=(p9||0)*0.865;
@@ -2988,3 +2998,6 @@ initAuth();
   const mb=g('c-maxbuy'); if(mb) mb.textContent=f$(maxBuy40);
   const mb35=g('c-maxbuy35'); if(mb35) mb35.textContent=f$(maxBuy35);
 }
+</script>
+</body>
+</html>
