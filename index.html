@@ -1601,10 +1601,9 @@ function renderInv() {
 
 function isStaleComps(r) {
   if (!r.psa10 || !r.gem_rate) return false;
-  // Check if card has a comps_updated_at field, otherwise use created_at
-  const lastUpdate = r.comps_updated_at || r.created_at;
-  if (!lastUpdate) return false;
-  const days = (Date.now() - new Date(lastUpdate).getTime()) / (1000*60*60*24);
+  // Only flag as stale if comps_updated_at exists and is old
+  if (!r.comps_updated_at) return false;
+  const days = (Date.now() - new Date(r.comps_updated_at).getTime()) / (1000*60*60*24);
   return days > 30;
 }
 
@@ -1664,7 +1663,9 @@ async function addCard() {
   if (c.gem_rate && c.psa10 && c.total_cost) {
     if (confirm('Comps detected — log this card to EV Buy Log automatically?')) {
       const entry = {user_id:CU.id, date_ran:new Date().toISOString().split('T')[0], player:c.player, year:c.year, set_name:c.set_name, card_no:c.card_no, source:c.source, gem_rate:c.gem_rate, psa10:c.psa10, psa9:c.psa9, total_cost:c.total_cost, notes:'Auto-logged from inventory'};
-      sb.from('ev_log').insert(entry).select().single().then(function(res){ if(res.data){BL.unshift(res.data);} });
+      sb.from('ev_log').insert(entry).select().single().then(function(res){ 
+        if(res.data){ BL.unshift(res.data); blF=[...BL]; renderBL(); toast('Logged to EV Buy Log!'); }
+      });
     }
   }
 }
@@ -1741,7 +1742,7 @@ function renderBatches() {
     const bid = b.batch_id;
     const chevStyle = isOpen ? 'display:inline-block;transform:rotate(90deg);transition:transform .2s;font-style:normal;font-size:11px;color:#777;margin-right:6px;' : 'display:inline-block;transition:transform .2s;font-style:normal;font-size:11px;color:#777;margin-right:6px;';
     const bodyStyle = isOpen ? 'padding:0 14px 14px;' : 'display:none;padding:0 14px 14px;';
-    const statBadge = '<select onchange="updateBatchStatus(' + JSON.stringify(b.id) + ',this.value)" style="background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;outline:none;">' +
+    const statBadge = '<select data-bid="' + b.id + '" onchange="handleBatchStatusChange(this)" style="background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;outline:none;">' +
     ['Sent','Received','Graded','Returned','Sold'].map(s => '<option value="'+s+'" '+(b.status===s?'selected':'')+'>'+s+'</option>').join('') +
     '</select>';
     const cardRows = cards.map(function(r){
@@ -1796,6 +1797,12 @@ function toggleBatch(el) {
   if (chev) chev.style.transform = isOpen ? '' : 'rotate(90deg)';
 }
 
+
+function handleBatchStatusChange(sel) {
+  const batchId = sel.dataset.bid;
+  const newStatus = sel.value;
+  updateBatchStatus(batchId, newStatus);
+}
 
 async function updateBatchStatus(batchId, newStatus) {
   // Find the batch
@@ -1881,6 +1888,13 @@ function renderSoldRows(sold) {
 }
 
 
+function evDecision(evp) {
+  if (evp === null || evp === undefined || isNaN(evp)) return '--';
+  if (evp >= 0.40) return 'BUY';
+  if (evp >= 0.35) return 'CAUTION';
+  return 'PASS';
+}
+
 function renderBL() {
   g('bl-cnt').textContent=blF.length+' entries';
   const tb=g('bl-tbody');
@@ -1908,7 +1922,7 @@ function renderBL() {
       <td class="mo ${ev!=null&&ev>0?'gn':ev!=null&&ev<0?'rd':''}">${ev!=null?f$(ev):'--'}</td>
       <td>${evp!=null?evBar(evp):'--'}</td>
       <td class="mo" style="color:var(--amber);">${mb!=null?f$(mb):'--'}</td>
-      <td><span class="bdg ${dec==='BUY'?'b-buy':dec==='PASS'?'b-pass':'b-raw'}">${dec}</span></td>
+      <td><span class="bdg ${dec==='BUY'?'b-buy':dec==='CAUTION'?'b-hold':dec==='PASS'?'b-pass':'b-raw'}">${dec}</span></td>
       <td style="font-size:11px;color:var(--text-muted);">${r.notes||'--'}</td>
     </tr>`;
   }).join('');
@@ -1989,11 +2003,11 @@ function qaCalcEV() {
   const n10=p10*0.865, n9=p9*0.865;
   const ev=gem*n10+(1-gem)*n9-cost;
   const evp=ev/cost;
-  const dec=evp>=0.40?'BUY':'PASS';
+  const dec=evDecision(evp);
   g('qa-ev-preview').style.display='';
   g('qa-ev-dollar').textContent=f$(ev); g('qa-ev-dollar').style.color=ev>=0?'var(--green)':'#F87171';
   g('qa-ev-pct').textContent=(evp*100).toFixed(1)+'%'; g('qa-ev-pct').style.color=evp>=0.40?'var(--green)':'#F87171';
-  g('qa-ev-dec').textContent=dec; g('qa-ev-dec').style.color=dec==='BUY'?'var(--green)':'#F87171';
+  g('qa-ev-dec').textContent=dec; g('qa-ev-dec').style.color=dec==='BUY'?'var(--green)':dec==='CAUTION'?'var(--amber)':'#F87171';
 }
 
 async function qaSave() {
@@ -2251,12 +2265,16 @@ function openEdit(id) {
   g('e-shipout').value = r.ship_out != null ? r.ship_out : '';
   toggleSoldFields();
   calcSoldPreview();
+  calcEditTotal();
   g('edit-modal').classList.add('open');
 }
 
 function toggleSoldFields() {
   const isSold = g('e-stat').value === 'Sold';
   g('sold-fields').style.display = isSold ? 'block' : 'none';
+  if (isSold && !g('e-datesold').value) {
+    g('e-datesold').value = new Date().toISOString().split('T')[0];
+  }
 }
 
 function calcEditTotal() {
@@ -2268,13 +2286,6 @@ function calcEditTotal() {
 }
 
 function onSalePriceEntered() {
-  // Auto-flip status to Sold if sale price is entered
-  const sp = parseFloat(g('e-saleprice')?.value)||0;
-  if (sp > 0 && g('e-stat').value !== 'Sold') {
-    g('e-stat').value = 'Sold';
-    toggleSoldFields();
-    if (!g('e-datesold').value) g('e-datesold').value = new Date().toISOString().split('T')[0];
-  }
   calcSoldPreview();
 }
 
