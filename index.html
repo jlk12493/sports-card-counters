@@ -1482,7 +1482,7 @@ function populateInvDropdowns() {
   const players = [...new Set(onHand.map(r => r.player).filter(Boolean))].sort();
   const sets = [...new Set(onHand.map(r => r.set_name).filter(Boolean))].sort();
   const years = [...new Set(onHand.map(r => r.year).filter(Boolean))].sort((a,b) => b - a);
-  const batches = [...new Set(INV.map(r => r.batch_id).filter(Boolean))].sort();
+  const batches = BATCHES.map(b => b.batch_id).filter(Boolean).sort();
   const playerSel=g('inv-player'), setSel=g('inv-set'), yearSel=g('inv-year'), batchSel=g('inv-batch-filter');
   if (!playerSel||!setSel||!yearSel) return;
   const curPlayer=playerSel.value, curSet=setSel.value, curYear=yearSel.value, curBatch=batchSel?batchSel.value:'';
