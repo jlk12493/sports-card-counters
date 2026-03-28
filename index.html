@@ -116,6 +116,18 @@ body.light-mode .batch-toggle:hover { background: rgba(0,0,0,.03); }
 /* THEME TOGGLE */
 .theme-toggle{background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px;}
 .theme-toggle:hover{border-color:var(--red);color:var(--red);}
+
+/* MOBILE NAV */
+.ham-btn{display:none;background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:5px 10px;border-radius:4px;font-size:18px;cursor:pointer;line-height:1;}
+.mobile-nav{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--near-black);z-index:200;flex-direction:column;padding:60px 20px 20px;gap:4px;}
+.mobile-nav.open{display:flex;}
+.mntab{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:14px 16px;border-radius:var(--r);font-size:14px;font-weight:600;cursor:pointer;text-align:left;}
+.mntab:hover{border-color:var(--red);color:var(--red);}
+.mob-close{position:absolute;top:16px;right:16px;background:transparent;border:none;color:var(--text-muted);font-size:24px;cursor:pointer;}
+@media(max-width:768px){
+  .hnav{display:none;}
+  .ham-btn{display:block;}
+}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--black);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;min-height:100vh;}
 
@@ -439,9 +451,20 @@ input.fi{flex:1;min-width:160px;}
         <button class="ntab" onclick="goSec('inventory',this)">Inventory</button>
         <button class="ntab" onclick="goSec('submissions',this)">Submissions</button>
         <button class="ntab" onclick="goSec('sold',this)">Sold</button>
-        <button class="ntab" onclick="goSec('buylog',this)">EV Buy Log</button>
+        <button class="ntab" onclick="goSec('buylog',this)">EV Log</button>
         <button class="ntab" onclick="goSec('financials',this)">Financials</button>
       </nav>
+      <button class="ham-btn" id="ham-btn" onclick="toggleMobileNav()">&#9776;</button>
+      <div class="mobile-nav" id="mobile-nav">
+        <button class="mob-close" onclick="toggleMobileNav()">&#10005;</button>
+        <button class="mntab" onclick="goSec('dashboard',null);toggleMobileNav()">Dashboard</button>
+        <button class="mntab" onclick="goSec('inventory',null);toggleMobileNav()">Inventory</button>
+        <button class="mntab" onclick="goSec('submissions',null);toggleMobileNav()">Submissions</button>
+        <button class="mntab" onclick="goSec('sold',null);toggleMobileNav()">Sold</button>
+        <button class="mntab" onclick="goSec('buylog',null);toggleMobileNav()">EV Buy Log</button>
+        <button class="mntab" onclick="goSec('financials',null);toggleMobileNav()">Financials</button>
+        <div id="mobile-admin-btn"></div>
+      </div>
       <div class="huser">
         <span class="uemail" id="u-email"></span>
         <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()">&#9790; Dark</button>
@@ -686,6 +709,11 @@ input.fi{flex:1;min-width:160px;}
 
     <!-- SOLD -->
     <div class="sec" id="sec-sold">
+      <div class="fbar" style="margin-bottom:12px;">
+        <input class="fi" type="text" id="sold-q" placeholder="Search player, set..." oninput="filterSold()" style="flex:1;min-width:160px;">
+        <select class="fi" id="sold-year" onchange="filterSold()"><option value="">All Years</option></select>
+        <button onclick="g('sold-q').value='';g('sold-year').value='';renderSold();" class="btn-s" style="font-size:10px;">Clear</button>
+      </div>
       <div class="kgrid" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px;">
         <div class="kcard"><div class="klbl">Cards Sold</div><div class="kval" id="s-cnt">0</div></div>
         <div class="kcard"><div class="klbl">Total Proceeds</div><div class="kval" id="s-proc">$0.00</div></div>
@@ -694,7 +722,7 @@ input.fi{flex:1;min-width:160px;}
       </div>
       <div class="twrap">
         <table class="dtbl">
-          <thead><tr><th></th><th>Card ID</th><th>Player</th><th>Year</th><th>Set</th><th>Sport</th><th>Total Cost</th><th>Sale Price</th><th>Fees</th><th>Ship Out</th><th>Net Proceeds</th><th>Profit</th></tr></thead>
+          <thead><tr><th></th><th>Card ID</th><th>Player</th><th>Year</th><th>Set</th><th>Sport</th><th>Date Sold</th><th>Total Cost</th><th>Sale Price</th><th>Fees</th><th>Ship Out</th><th>Net Proceeds</th><th>Profit</th></tr></thead>
           <tbody id="sold-tbody"></tbody>
         </table>
       </div>
@@ -1161,6 +1189,27 @@ async function doForgotPassword() {
   msg('fp-msg', 'Reset link sent! Check your email.', 'success');
 }
 
+function toggleMobileNav() {
+  const nav = g('mobile-nav');
+  nav.classList.toggle('open');
+}
+
+async function removeUser(userId, email) {
+  if (!confirm('Remove user ' + email + '? This will delete their account and all their data permanently.')) return;
+  // Delete user data first
+  await Promise.all([
+    sb.from('inventory').delete().eq('user_id', userId),
+    sb.from('batches').delete().eq('user_id', userId),
+    sb.from('ev_log').delete().eq('user_id', userId),
+    sb.from('expenses').delete().eq('user_id', userId),
+    sb.from('profiles').delete().eq('id', userId),
+  ]);
+  // Note: to fully delete auth user you need Supabase service key
+  // This removes their data and profile which effectively locks them out
+  loadAdmin();
+  toast('User ' + email + ' removed successfully');
+}
+
 async function doLogout() {
   await sb.auth.signOut();
   CU=null; INV=[]; BATCHES=[]; BL=[];
@@ -1483,6 +1532,9 @@ async function addCard() {
   const player=gv('f-player'),year=ni('f-year'),brand=gv('f-set'),setName=gv('f-setname'),parallel=gv('f-par'),cardNo=gv('f-cno');
   const fullSetName = [brand, setName].filter(Boolean).join(' ');
   if (!player) return toast('Player name is required',true);
+  // Duplicate detection
+  const dupCheck = INV.find(r => r.player?.toLowerCase() === player.toLowerCase() && String(r.year) === String(year) && r.set_name?.toLowerCase() === ([brand,setName].filter(Boolean).join(' ')).toLowerCase() && r.card_no === cardNo && r.parallel?.toLowerCase() === parallel.toLowerCase());
+  if (dupCheck && !confirm('A card matching this description already exists in your inventory (' + dupCheck.card_id + '). Add anyway?')) return;
   if (!year) return toast('Year is required',true);
   if (!brand) return toast('Brand is required',true);
   if (!setName) return toast('Set is required',true);
@@ -1605,61 +1657,49 @@ async function delBatch(id) {
 
 // - SOLD -
 function renderSold() {
-  const sold=INV.filter(r=>r.status==='Sold');
-  const tb=g('sold-tbody');
-  if (!sold.length){tb.innerHTML=`<tr><td colspan="11"><div class="empty"><div class="empty-icon">💰</div><div class="empty-title">No sold cards yet</div><div style="font-size:12px;">Mark cards as Sold in Inventory to track P&L</div></div></td></tr>`;return;}
-  tb.innerHTML=sold.map(r=>{
+  // Populate year filter
+  const soldAll = INV.filter(r => r.status === 'Sold');
+  const yearSel = g('sold-year');
+  if (yearSel) {
+    const years = [...new Set(soldAll.filter(r=>r.date_sold).map(r=>r.date_sold.substring(0,4)))].sort((a,b)=>b-a);
+    const cur = yearSel.value;
+    yearSel.innerHTML = '<option value="">All Years</option>' + years.map(y=>'<option value="'+y+'" '+(y===cur?'selected':'')+'>'+y+'</option>').join('');
+  }
+  renderSoldRows(soldAll);
+}
+
+function renderSoldRows(sold) {
+  const tb = g('sold-tbody');
+  if (!sold.length) {
+    tb.innerHTML = '<tr><td colspan="12"><div class="empty"><div class="empty-icon">&#128176;</div><div class="empty-title">No sold cards yet</div><div style="font-size:12px;">Mark cards as Sold in Inventory to track P&L</div></div></td></tr>';
+    const totals = ['s-cnt','s-proc','s-prof','s-avg'];
+    g('s-cnt').textContent='0'; g('s-proc').textContent='$0.00'; g('s-prof').textContent='$0.00'; g('s-avg').textContent='--';
+    return;
+  }
+  tb.innerHTML = sold.map(r => {
     const proc=(r.sale_price||0)-(r.fees||0)-(r.ship_out||0);
     const prof=proc-(r.price||0)-(r.ship||0);
-    return `<tr>
-      <td style="display:flex;gap:4px;">
-        <button style="background:transparent;border:none;color:#555;cursor:pointer;font-size:13px;padding:2px 5px;border-radius:3px;" onmouseover="this.style.color='#60A5FA'" onmouseout="this.style.color='#555'" onclick="openEdit('${r.id}')" title="Edit">Edit</button>
-      </td>
-      <td class="mo" style="font-size:10px;color:#555;">${r.card_id||'--'}</td>
-      <td class="pl">${r.player||'--'}</td>
-      <td class="mo">${r.year||'--'}</td>
-      <td>${r.set_name||'--'}</td>
-      <td>${r.sport||'--'}</td>
-      <td class="mo">${f$((r.price||0)+(r.ship||0)+(r.grading||0))}</td>
-      <td class="mo">${r.sale_price!=null?f$(r.sale_price):'--'}</td>
-      <td class="mo">${r.fees!=null?f$(r.fees):'--'}</td>
-      <td class="mo">${r.ship_out!=null?f$(r.ship_out):'--'}</td>
-      <td class="mo" style="font-weight:700;">${f$(proc)}</td>
-      <td class="mo ${prof>=0?'gn':'rd'}" style="font-weight:700;">${prof>=0?'+':''}${f$(prof)}</td>
-    </tr>`;
+    return '<tr>' +
+      '<td><button class="btn-s" style="font-size:10px;padding:3px 8px;" onclick="openEdit(\\\'' + r.id + '\\\')" >Edit</button></td>' +
+      '<td class="mo" style="font-size:10px;color:#555;">'+(r.card_id||'--')+'</td>' +
+      '<td class="pl">'+(r.player||'--')+'</td>' +
+      '<td class="mo">'+(r.year||'--')+'</td>' +
+      '<td>'+(r.set_name||'--')+'</td>' +
+      '<td>'+(r.sport||'--')+'</td>' +
+      '<td class="mo">'+(r.date_sold||'--')+'</td>' +
+      '<td class="mo">'+f$((r.price||0)+(r.ship||0)+(r.grading||0))+'</td>' +
+      '<td class="mo">'+(r.sale_price!=null?f$(r.sale_price):'--')+'</td>' +
+      '<td class="mo">'+(r.fees!=null?f$(r.fees):'--')+'</td>' +
+      '<td class="mo" style="font-weight:700;">'+f$(proc)+'</td>' +
+      '<td class="mo '+(prof>=0?'gn':'rd')+'" style="font-weight:700;">'+(prof>=0?'+':'')+f$(prof)+'</td>' +
+    '</tr>';
   }).join('');
-}
-
-// - BUY LOG -
-function blCalc() {
-  const gem=nf('bl-gem'),p10=nf('bl-p10'),p9=nf('bl-p9'),cost=nf('bl-cost');
-  if (!gem||!p10||!cost){g('bl-preview').style.display='none';return;}
-  const n10=p10*0.865,n9=(p9||0)*0.865;
-  const ev=gem*n10+(1-gem)*n9-cost;
-  const evp=ev/cost;
-  const dec=evp>=0.40?'BUY':'PASS';
-  g('bl-preview').style.display='block';
-  g('c-n10').textContent=f$(n10);
-  g('c-ev').textContent=f$(ev); g('c-ev').style.color=ev>=0?'var(--green)':'#F87171';
-  g('c-evp').textContent=(evp*100).toFixed(1)+'%'; g('c-evp').style.color=evp>=0.40?'var(--green)':'#F87171';
-  g('c-dec').textContent=dec; g('c-dec').style.color=dec==='BUY'?'var(--green)':'#F87171';
-}
-
-function filterBL() {
-  const q=g('bl-q').value.toLowerCase(),dec=g('bl-df').value;
-  blF=BL.filter(r=>{
-    const mq=!q||(r.player||'').toLowerCase().includes(q)||(r.set_name||'').toLowerCase().includes(q);
-    const dec2=blDec(r);
-    return mq&&(!dec||dec2===dec);
-  });
-  renderBL();
-}
-
-function blDec(r) {
-  if (!r.gem_rate||!r.psa10||!r.total_cost) return '--';
-  const n10=r.psa10*0.865,n9=(r.psa9||0)*0.865;
-  const ev=r.gem_rate*n10+(1-r.gem_rate)*n9-r.total_cost;
-  return (ev/r.total_cost)>=0.40?'BUY':'PASS';
+  const proc=sold.reduce((s,r)=>s+(r.sale_price||0)-(r.fees||0)-(r.ship_out||0),0);
+  const prof=sold.reduce((s,r)=>s+(r.sale_price||0)-(r.price||0)-(r.ship||0)-(r.fees||0)-(r.ship_out||0),0);
+  g('s-cnt').textContent=sold.length;
+  g('s-proc').textContent=f$(proc);
+  g('s-prof').textContent=f$(prof);
+  g('s-avg').textContent=sold.length?f$(prof/sold.length):'--';
 }
 
 
@@ -2299,9 +2339,12 @@ async function loadAdmin() {
     '</div>'
   ).join('') || '<div style="color:var(--text-muted);font-size:12px;">No codes yet</div>';
   if (usersEl) usersEl.innerHTML = users.map(u =>
-    '<div class="user-row">' +
-      '<div style="font-size:12px;font-weight:600;color:var(--text);">' + (u.email||'Unknown') + '</div>' +
-      '<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Joined ' + (u.created_at ? new Date(u.created_at).toLocaleDateString() : '--') + '</div>' +
+    '<div class="user-row" style="display:flex;align-items:center;justify-content:space-between;">' +
+      '<div>' +
+        '<div style="font-size:12px;font-weight:600;color:var(--text);">' + (u.email||'Unknown') + '</div>' +
+        '<div style="font-size:10px;color:var(--text-muted);margin-top:2px;">Joined ' + (u.created_at ? new Date(u.created_at).toLocaleDateString() : '--') + '</div>' +
+      '</div>' +
+      '<button class="btn-del" style="color:#F87171;" onclick="removeUser(' + JSON.stringify(u.id) + ',' + JSON.stringify(u.email||'') + ')">Remove</button>' +
     '</div>'
   ).join('') || '<div style="color:var(--text-muted);font-size:12px;">No users yet</div>';
 }
@@ -2420,6 +2463,49 @@ function openModal(id){g(id).classList.add('open');}
 function closeModal(id){g(id).classList.remove('open');}
 let toastT;
 function toast(txt,err=false){const t=g('toast');t.textContent=txt;t.className='show'+(err?' err':'');clearTimeout(toastT);toastT=setTimeout(()=>t.className='',3000);}
+
+
+// - BULK UPDATE BATCH -
+async function bulkUpdateBatch(batchId) {
+  const cards = INV.filter(r => r.batch_id === batchId);
+  if (!cards.length) return toast('No inventory cards linked to this batch', true);
+  const statuses = ['Raw','Submitted','Graded','Listed','Sold'];
+  const modal = document.createElement('div');
+  modal.className = 'modal-bg open';
+  modal.id = 'bulk-modal';
+  modal.innerHTML = '<div class="modal" style="max-width:360px;"><div class="modal-title">Bulk Update Batch #' + batchId + '<button class="modal-close" id="bulk-close-btn">x</button></div><div style="font-size:13px;color:var(--text-2);margin-bottom:14px;">Update all <strong>' + cards.length + ' cards</strong> to:</div><select id="bulk-stat" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:6px;font-size:14px;outline:none;margin-bottom:16px;">' + statuses.map(s => '<option value="' + s + '">' + s + '</option>').join('') + '</select><div class="factions"><button class="btn-a" id="bulk-confirm-btn">Update All Cards</button><button class="btn-c" id="bulk-cancel-btn">Cancel</button></div></div>';
+  document.body.appendChild(modal);
+  document.getElementById('bulk-close-btn').onclick = function(){ modal.remove(); };
+  document.getElementById('bulk-cancel-btn').onclick = function(){ modal.remove(); };
+  document.getElementById('bulk-confirm-btn').onclick = function(){ confirmBulkUpdate(batchId); };
+}
+
+async function confirmBulkUpdate(batchId) {
+  const newStatus = document.getElementById('bulk-stat').value;
+  const modal = document.getElementById('bulk-modal');
+  const cards = INV.filter(r => r.batch_id === batchId);
+  const ids = cards.map(r => r.id);
+  const {error} = await sb.from('inventory').update({status:newStatus}).in('id', ids);
+  if (error) return toast('Error: ' + error.message, true);
+  INV = INV.map(r => ids.includes(r.id) ? {...r, status:newStatus} : r);
+  if (modal) modal.remove();
+  renderAll();
+  toast(cards.length + ' cards updated to ' + newStatus + '!');
+}
+
+
+// - SOLD FILTERS -
+function filterSold() {
+  const q = (g('sold-q')?.value||'').toLowerCase();
+  const yr = g('sold-year')?.value||'';
+  const sold = INV.filter(r => r.status === 'Sold');
+  const filtered = sold.filter(r => {
+    const mq = !q || (r.player||'').toLowerCase().includes(q) || (r.set_name||'').toLowerCase().includes(q);
+    const my = !yr || (r.date_sold && r.date_sold.startsWith(yr));
+    return mq && my;
+  });
+  renderSoldRows(filtered);
+}
 
 function renderTopPerformers() {
   const graders = INV.filter(r => r.status !== 'Sold' && r.disposition === 'Grade' && r.gem_rate && r.psa10 && r.total_cost);
