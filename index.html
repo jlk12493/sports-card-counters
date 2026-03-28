@@ -1264,19 +1264,32 @@ function showAdminMsg(msg, isError=true) {
 }
 
 async function removeUser(userId, email) {
-  if (!confirm('Remove user ' + email + '? This will delete their account and all their data permanently.')) return;
-  // Delete user data first
-  await Promise.all([
+  if (!confirm('Remove user ' + email + '?\n\nThis will:\n- Delete all their inventory, batches, EV log, and expenses\n- Remove their profile\n\nYou will also need to delete them from Supabase Authentication to fully remove their login.')) return;
+  
+  // Delete all user data
+  const results = await Promise.all([
     sb.from('inventory').delete().eq('user_id', userId),
     sb.from('batches').delete().eq('user_id', userId),
     sb.from('ev_log').delete().eq('user_id', userId),
     sb.from('expenses').delete().eq('user_id', userId),
     sb.from('profiles').delete().eq('id', userId),
   ]);
-  // Note: to fully delete auth user you need Supabase service key
-  // This removes their data and profile which effectively locks them out
+  
+  const hasError = results.some(r => r.error);
+  if (hasError) {
+    toast('Some data could not be deleted. Check Supabase.', true);
+    return;
+  }
+
   loadAdmin();
-  toast('User ' + email + ' removed successfully');
+  toast('Data deleted for ' + email);
+  
+  // Show reminder to delete from Supabase auth
+  setTimeout(() => {
+    if (confirm('Data deleted! To fully remove their login access, go to Supabase → Authentication → Users and delete ' + email + ' there.\n\nOpen Supabase now?')) {
+      window.open('https://supabase.com/dashboard/project/lmwqizcflhikvtoqehzj/auth/users', '_blank');
+    }
+  }, 500);
 }
 
 async function doLogout() {
@@ -1741,15 +1754,14 @@ function renderSoldRows(sold) {
   const tb = g('sold-tbody');
   if (!sold.length) {
     tb.innerHTML = '<tr><td colspan="12"><div class="empty"><div class="empty-icon">&#128176;</div><div class="empty-title">No sold cards yet</div><div style="font-size:12px;">Mark cards as Sold in Inventory to track P&L</div></div></td></tr>';
-    const totals = ['s-cnt','s-proc','s-prof','s-avg'];
     g('s-cnt').textContent='0'; g('s-proc').textContent='$0.00'; g('s-prof').textContent='$0.00'; g('s-avg').textContent='--';
     return;
   }
-  tb.innerHTML = sold.map(r => {
+  tb.innerHTML = sold.map(function(r) {
     const proc=(r.sale_price||0)-(r.fees||0)-(r.ship_out||0);
     const prof=proc-(r.price||0)-(r.ship||0);
     return '<tr>' +
-      '<td><button class="btn-s" style="font-size:10px;padding:3px 8px;" onclick="openEdit(\\\'' + r.id + '\\\')" >Edit</button></td>' +
+      '<td><button class="btn-s" style="font-size:10px;padding:3px 8px;" data-edit-id="' + r.id + '">Edit</button></td>' +
       '<td class="mo" style="font-size:10px;color:#555;">'+(r.card_id||'--')+'</td>' +
       '<td class="pl">'+(r.player||'--')+'</td>' +
       '<td class="mo">'+(r.year||'--')+'</td>' +
@@ -1763,6 +1775,10 @@ function renderSoldRows(sold) {
       '<td class="mo '+(prof>=0?'gn':'rd')+'" style="font-weight:700;">'+(prof>=0?'+':'')+f$(prof)+'</td>' +
     '</tr>';
   }).join('');
+  // Attach edit handlers via data attributes
+  tb.querySelectorAll('[data-edit-id]').forEach(function(btn) {
+    btn.addEventListener('click', function() { openEdit(this.dataset.editId); });
+  });
   const proc=sold.reduce((s,r)=>s+(r.sale_price||0)-(r.fees||0)-(r.ship_out||0),0);
   const prof=sold.reduce((s,r)=>s+(r.sale_price||0)-(r.price||0)-(r.ship||0)-(r.fees||0)-(r.ship_out||0),0);
   g('s-cnt').textContent=sold.length;
