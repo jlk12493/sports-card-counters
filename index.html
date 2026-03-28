@@ -659,7 +659,7 @@ input.fi{flex:1;min-width:160px;}
           </div>
           <div>
             <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Batch ID</div>
-            <input class="fi" type="text" id="inv-batch-filter" placeholder="e.g. 14442636" oninput="filterInv()" style="width:100%;">
+            <select class="fi" id="inv-batch-filter" onchange="filterInv()" style="width:100%;"><option value="">All Batches</option></select>
           </div>
           <div>
             <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Sort By</div>
@@ -1482,12 +1482,14 @@ function populateInvDropdowns() {
   const players = [...new Set(onHand.map(r => r.player).filter(Boolean))].sort();
   const sets = [...new Set(onHand.map(r => r.set_name).filter(Boolean))].sort();
   const years = [...new Set(onHand.map(r => r.year).filter(Boolean))].sort((a,b) => b - a);
-  const playerSel = g('inv-player'), setSel = g('inv-set'), yearSel = g('inv-year');
-  if (!playerSel || !setSel || !yearSel) return;
-  const curPlayer = playerSel.value, curSet = setSel.value, curYear = yearSel.value;
-  playerSel.innerHTML = '<option value="">All Players</option>' + players.map(p => `<option value="${p}" ${p===curPlayer?'selected':''}>${p}</option>`).join('');
-  setSel.innerHTML = '<option value="">All Sets</option>' + sets.map(s => `<option value="${s}" ${s===curSet?'selected':''}>${s}</option>`).join('');
-  yearSel.innerHTML = '<option value="">All Years</option>' + years.map(y => `<option value="${y}" ${y==curYear?'selected':''}>${y}</option>`).join('');
+  const batches = [...new Set(INV.map(r => r.batch_id).filter(Boolean))].sort();
+  const playerSel=g('inv-player'), setSel=g('inv-set'), yearSel=g('inv-year'), batchSel=g('inv-batch-filter');
+  if (!playerSel||!setSel||!yearSel) return;
+  const curPlayer=playerSel.value, curSet=setSel.value, curYear=yearSel.value, curBatch=batchSel?batchSel.value:'';
+  playerSel.innerHTML = '<option value="">All Players</option>' + players.map(p => '<option value="'+p+'" '+(p===curPlayer?'selected':'')+'>'+p+'</option>').join('');
+  setSel.innerHTML = '<option value="">All Sets</option>' + sets.map(s => '<option value="'+s+'" '+(s===curSet?'selected':'')+'>'+s+'</option>').join('');
+  yearSel.innerHTML = '<option value="">All Years</option>' + years.map(y => '<option value="'+y+'" '+(y==curYear?'selected':'')+'>'+y+'</option>').join('');
+  if (batchSel) batchSel.innerHTML = '<option value="">All Batches</option>' + batches.map(b => '<option value="'+b+'" '+(b===curBatch?'selected':'')+'>Batch #'+b+'</option>').join('');
 }
 
 function filterInv() {
@@ -1495,12 +1497,12 @@ function filterInv() {
   const sp = g('inv-sport').value, st = g('inv-stat').value, dp = g('inv-disp').value;
   const pl = g('inv-player').value, se = g('inv-set').value, yr = g('inv-year').value;
   const cn = g('inv-cardno').value.toLowerCase();
-  const ba = g('inv-batch-filter').value.toLowerCase();
+  const ba = g('inv-batch-filter')?.value||'';
   const sort = g('inv-sort').value;
   invF = INV.filter(r => r.status !== 'Sold').filter(r => {
     const mq = !q || (r.card_id||'').toLowerCase().includes(q) || (r.player||'').toLowerCase().includes(q) || (r.set_name||'').toLowerCase().includes(q) || (r.parallel||'').toLowerCase().includes(q);
     const mcn = !cn || (r.card_no||'').toLowerCase().includes(cn);
-    const mba = !ba || (r.batch_id||'').toLowerCase().includes(ba);
+    const mba = !ba || r.batch_id === ba;
     return mq && mcn && mba && (!sp||r.sport===sp) && (!st||r.status===st) && (!dp||r.disposition===dp) && (!pl||r.player===pl) && (!se||r.set_name===se) && (!yr||String(r.year)===String(yr));
   });
   invF.sort((a,b) => {
@@ -1517,8 +1519,8 @@ function filterInv() {
 }
 
 function clearInvFilters() {
-  ['inv-q','inv-cardno','inv-batch-filter'].forEach(id=>{const el=g(id);if(el)el.value='';});
-  ['inv-player','inv-set','inv-year','inv-sport','inv-stat','inv-disp'].forEach(id=>{const el=g(id);if(el)el.value='';});
+  ['inv-q','inv-cardno'].forEach(id=>{const el=g(id);if(el)el.value='';});
+  ['inv-player','inv-set','inv-year','inv-sport','inv-stat','inv-disp','inv-batch-filter'].forEach(id=>{const el=g(id);if(el)el.value='';}); 
   g('inv-sort').value='newest';
   filterInv();
 }
