@@ -696,6 +696,14 @@ input.fi{flex:1;min-width:160px;}
             <div class="ff"><label>Service Level</label><input type="text" id="sf-svc" placeholder="Value Bulk"></div>
             <div class="ff"><label>Status</label><select id="sf-stat"><option>Sent</option><option>Received</option><option>Graded</option><option>Returned</option><option>Sold</option></select></div>
             <div class="ff"><label>Notes</label><input type="text" id="sf-notes" placeholder="Optional"></div>
+            <div class="ff"><label>Total Submission Cost $</label><input type="number" step="0.01" id="sf-total-cost" placeholder="0.00" oninput="calcPerCardCost()"></div>
+          </div>
+          <div id="per-card-preview" style="display:none;background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:6px;padding:12px;margin-bottom:12px;">
+            <div style="display:flex;align-items:center;gap:20px;">
+              <div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Cards in Batch</div><div style="font-size:16px;font-weight:700;color:var(--text);" id="pcc-cards">0</div></div>
+              <div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Cost Per Card</div><div style="font-size:16px;font-weight:700;color:var(--green);" id="pcc-cost">--</div></div>
+              <div style="font-size:11px;color:var(--text-muted);">Grading cost will be updated for all cards in this batch</div>
+            </div>
           </div>
           <div class="factions">
             <button class="btn-a" onclick="addBatch()">Save Batch</button>
@@ -1650,14 +1658,52 @@ async function delCard(id) {
 }
 
 // - BATCHES -
+function calcPerCardCost() {
+  const batchId = gv('sf-id');
+  const totalCost = parseFloat(g('sf-total-cost')?.value||0)||0;
+  if (!totalCost || !batchId) { g('per-card-preview').style.display='none'; return; }
+  const cards = INV.filter(r => r.batch_id === batchId);
+  if (!cards.length) { g('per-card-preview').style.display='none'; return; }
+  const perCard = totalCost / cards.length;
+  g('per-card-preview').style.display = '';
+  g('pcc-cards').textContent = cards.length;
+  g('pcc-cost').textContent = f$(perCard);
+}
+
 async function addBatch() {
   const b={user_id:CU.id,batch_id:gv('sf-id'),submit_date:gv('sf-date'),grader:gv('sf-grader'),service:gv('sf-svc'),status:gv('sf-stat'),notes:gv('sf-notes')};
   if (!b.batch_id) return toast('Batch ID required',true);
+  const totalCost = parseFloat(g('sf-total-cost')?.value||0)||0;
   const {data,error}=await sb.from('batches').insert(b).select().single();
   if (error) return toast('Error: '+error.message,true);
   BATCHES.unshift(data);
+
+  // If total cost entered, divide by cards in batch and update grading cost
+  if (totalCost > 0) {
+    const cards = INV.filter(r => r.batch_id === b.batch_id);
+    if (cards.length > 0) {
+      const perCard = parseFloat((totalCost / cards.length).toFixed(2));
+      const ids = cards.map(r => r.id);
+      await sb.from('inventory').update({grading: perCard}).in('id', ids);
+      // Update total_cost for each card
+      for (const card of cards) {
+        const newTotal = (card.price||0) + (card.ship||0) + perCard;
+        await sb.from('inventory').update({grading:perCard, total_cost:newTotal}).eq('id', card.id);
+        const idx = INV.findIndex(r => r.id === card.id);
+        if (idx !== -1) { INV[idx].grading = perCard; INV[idx].total_cost = newTotal; }
+      }
+      toast('Batch added! Grading cost updated to ' + f$(perCard) + '/card for ' + cards.length + ' cards.');
+    } else {
+      toast('Batch added! No inventory cards linked yet — add cards with this Batch ID to auto-split the cost.');
+    }
+  } else {
+    toast('Batch added!');
+  }
+
   toggleForm('sub-form',false);
-  renderBatches(); toast('Batch added!');
+  if (g('sf-total-cost')) g('sf-total-cost').value = '';
+  g('per-card-preview').style.display = 'none';
+  renderAll();
 }
 
 function renderBatches() {
@@ -2598,6 +2644,89 @@ function filterSold() {
     return mq && my;
   });
   renderSoldRows(filtered);
+}
+
+// - EV RECALC -
+function openEVRecalc() {
+  const cards = INV.filter(r => r.status !== 'Sold' && r.disposition === 'Grade');
+  if (!cards.length) return toast('No grade candidates in inventory', true);
+  const modal = document.createElement('div');
+  modal.className = 'modal-bg open';
+  modal.id = 'recalc-modal';
+  const rows = cards.map(function(r) {
+    return '<tr>' +
+      '<td class="pl" style="padding:6px 8px;">' + (r.player||'--') + '</td>' +
+      '<td style="padding:6px 8px;font-size:11px;color:var(--text-muted);">' + (r.set_name||'') + ' ' + (r.parallel||'') + '</td>' +
+      '<td style="padding:6px 8px;"><input type="number" step="0.01" id="rc-gem-' + r.id + '" placeholder="' + (r.gem_rate!=null?(r.gem_rate*100).toFixed(0)+'%':'') + '" style="width:65px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:4px;font-size:12px;outline:none;"></td>' +
+      '<td style="padding:6px 8px;"><input type="number" step="0.01" id="rc-p10-' + r.id + '" placeholder="' + (r.psa10!=null?'$'+r.psa10:'') + '" style="width:75px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:4px;font-size:12px;outline:none;"></td>' +
+      '<td style="padding:6px 8px;"><input type="number" step="0.01" id="rc-p9-' + r.id + '" placeholder="' + (r.psa9!=null?'$'+r.psa9:'') + '" style="width:75px;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:4px;font-size:12px;outline:none;"></td>' +
+    '</tr>';
+  }).join('');
+  modal.innerHTML = '<div class="modal" style="max-width:680px;">' +
+    '<div class="modal-title">Update Comps<button class="modal-close" id="recalc-close">x</button></div>' +
+    '<div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">Update PSA 10/9 comps and gem rates. Leave blank to keep existing values.</div>' +
+    '<div style="max-height:380px;overflow-y:auto;">' +
+    '<table style="width:100%;border-collapse:collapse;">' +
+    '<thead><tr>' +
+    '<th style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;padding:6px 8px;text-align:left;border-bottom:1px solid var(--border);">Player</th>' +
+    '<th style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;padding:6px 8px;text-align:left;border-bottom:1px solid var(--border);">Set</th>' +
+    '<th style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;padding:6px 8px;text-align:left;border-bottom:1px solid var(--border);">Gem Rate</th>' +
+    '<th style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;padding:6px 8px;text-align:left;border-bottom:1px solid var(--border);">New PSA 10</th>' +
+    '<th style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;padding:6px 8px;text-align:left;border-bottom:1px solid var(--border);">New PSA 9</th>' +
+    '</tr></thead><tbody>' + rows + '</tbody></table></div>' +
+    '<div class="factions" style="margin-top:14px;">' +
+    '<button class="btn-a" id="recalc-save">Save Updates</button>' +
+    '<button class="btn-c" id="recalc-cancel">Cancel</button>' +
+    '</div></div>';
+  document.body.appendChild(modal);
+  document.getElementById('recalc-close').onclick = function(){ modal.remove(); };
+  document.getElementById('recalc-cancel').onclick = function(){ modal.remove(); };
+  document.getElementById('recalc-save').onclick = function(){ saveEVRecalc(cards.map(r=>r.id)); };
+}
+
+async function saveEVRecalc(ids) {
+  let updated = 0;
+  for (const id of ids) {
+    const gemEl = document.getElementById('rc-gem-'+id);
+    const p10El = document.getElementById('rc-p10-'+id);
+    const p9El  = document.getElementById('rc-p9-'+id);
+    const updates = {};
+    if (gemEl && gemEl.value) updates.gem_rate = parseFloat(gemEl.value);
+    if (p10El && p10El.value) updates.psa10 = parseFloat(p10El.value);
+    if (p9El  && p9El.value)  updates.psa9  = parseFloat(p9El.value);
+    if (!Object.keys(updates).length) continue;
+    const {data,error} = await sb.from('inventory').update(updates).eq('id',id).select().single();
+    if (!error && data) { const idx=INV.findIndex(r=>r.id===id); if(idx!==-1) INV[idx]={...INV[idx],...updates}; updated++; }
+  }
+  const modal = document.getElementById('recalc-modal');
+  if (modal) modal.remove();
+  renderAll();
+  toast('Updated comps for ' + updated + ' card' + (updated!==1?'s':'') + '!');
+}
+
+// - EXPORT CSV -
+function exportCSV() {
+  const cards = invF.length ? invF : INV.filter(r => r.status !== 'Sold');
+  if (!cards.length) return toast('No cards to export', true);
+  const headers = ['Card ID','Player','Year','Set','Parallel','Card #','Sport','Date Acquired','Source','Purchase Price','Ship/Tax','Grading Cost','Total Cost','Gem Rate','PSA 10','PSA 9','EV$','EV%','Disposition','Status','Batch ID','Notes'];
+  const rows = cards.map(function(r) {
+    const ev = (r.gem_rate && r.psa10) ? calcEV(r) : null;
+    const evp = (ev !== null && r.total_cost) ? (ev/r.total_cost*100).toFixed(1)+'%' : '';
+    return [
+      r.card_id||'', r.player||'', r.year||'', r.set_name||'', r.parallel||'', r.card_no||'',
+      r.sport||'', r.date_acquired||'', r.source||'',
+      r.price!=null?r.price:'', r.ship!=null?r.ship:'', r.grading!=null?r.grading:'', r.total_cost!=null?r.total_cost:'',
+      r.gem_rate!=null?r.gem_rate:'', r.psa10!=null?r.psa10:'', r.psa9!=null?r.psa9:'',
+      ev!=null?ev.toFixed(2):'', evp, r.disposition||'', r.status||'', r.batch_id||'', r.notes||''
+    ].map(function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; }).join(',');
+  });
+  const csv = [headers.join(',')].concat(rows).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  a.download = 'scc-inventory-'+new Date().toISOString().split('T')[0]+'.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('CSV exported!');
 }
 
 function renderTopPerformers() {
