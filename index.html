@@ -1250,9 +1250,12 @@ async function handleWhopCallback() {
   try {
     // Call our Cloudflare Worker to handle token exchange (avoids CORS)
     msg('re-msg', 'Verifying Whop membership...', 'success');
-    const workerRes = await fetch('/api/whop-exchange', {
+    const workerRes = await fetch('https://lmwqizcflhikvtoqehzj.supabase.co/functions/v1/clever-task', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.95XMeRWGeCcD_KxN40ciJi_QjB9GG4sVJexzBEhJ9NM'
+      },
       body: JSON.stringify({ code })
     });
 
