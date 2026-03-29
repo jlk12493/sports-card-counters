@@ -1217,15 +1217,30 @@ const WHOP_SECRET = 'apik_zxuQziDVJqDPh_A2033124_C_6dd4375ca3bec0f0803c10a501b6b
 const WHOP_EXP_ID = 'exp_U0aGTG8Sis05pg';
 const WHOP_REDIRECT_URI = 'https://sports-card-counters.jlk12493.workers.dev/';
 
-function loginWithWhop() {
+async function generatePKCE() {
+  const verifier = Array.from(crypto.getRandomValues(new Uint8Array(32)))
+    .map(b => b.toString(16).padStart(2, '0')).join('');
+  const encoder = new TextEncoder();
+  const data = encoder.encode(verifier);
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  const challenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  return { verifier, challenge };
+}
+
+async function loginWithWhop() {
   const state = Math.random().toString(36).substring(2);
+  const { verifier, challenge } = await generatePKCE();
   sessionStorage.setItem('whop_state', state);
+  sessionStorage.setItem('whop_verifier', verifier);
   const params = new URLSearchParams({
     client_id: WHOP_CLIENT_ID,
     redirect_uri: WHOP_REDIRECT_URI,
     response_type: 'code',
     scope: 'openid email profile',
-    state: state
+    state: state,
+    code_challenge: challenge,
+    code_challenge_method: 'S256'
   });
   window.location.href = 'https://whop.com/oauth?' + params.toString();
 }
@@ -1250,13 +1265,15 @@ async function handleWhopCallback() {
   try {
     // Call our Cloudflare Worker to handle token exchange (avoids CORS)
     msg('re-msg', 'Verifying Whop membership...', 'success');
-    const workerRes = await fetch('https://lmwqizcflhikvtoqehzj.supabase.co/functions/v1/quick-worker', {
+    const codeVerifier = sessionStorage.getItem('whop_verifier');
+    sessionStorage.removeItem('whop_verifier');
+    const workerRes = await fetch('https://lmwqizcflhikvtoqehzj.supabase.co/functions/v1/smart-action', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.95XMeRWGeCcD_KxN40ciJi_QjB9GG4sVJexzBEhJ9NM'
       },
-      body: JSON.stringify({ code })
+      body: JSON.stringify({ code, code_verifier: codeVerifier })
     });
 
     let result;
