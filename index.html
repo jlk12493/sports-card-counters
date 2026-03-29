@@ -1244,12 +1244,12 @@ async function handleWhopCallback() {
   // Switch to register tab to show messages
   switchTab('register');
   g('auth-screen').style.display = 'flex';
-  showMsg('re-msg', 'Verifying Whop membership...', '');
+  msg('re-msg', 'Verifying Whop membership...', 'success');
   console.log('Whop callback received, code:', code ? 'present' : 'missing');
 
   try {
     // Call our Cloudflare Worker to handle token exchange (avoids CORS)
-    showMsg('re-msg', 'Verifying Whop membership...', '');
+    msg('re-msg', 'Verifying Whop membership...', 'success');
     const workerRes = await fetch('https://whop-auth.jlk12493.workers.dev/exchange', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -1259,13 +1259,13 @@ async function handleWhopCallback() {
     const result = await workerRes.json();
 
     if (result.error) {
-      showMsg('re-msg', 'Whop error: ' + result.error, 'error');
+      msg('re-msg', 'Whop error: ' + result.error, 'error');
       switchTab('register');
       return true;
     }
 
     if (!result.has_access) {
-      showMsg('re-msg', 'No active Whop membership found. Purchase access to continue.', 'error');
+      msg('re-msg', 'No active Whop membership found. Purchase access to continue.', 'error');
       setTimeout(() => {
         window.open('https://whop.com/sports-card-counters', '_blank');
       }, 1500);
@@ -1289,7 +1289,7 @@ async function handleWhopCallback() {
     }
 
     // Create new account
-    showMsg('re-msg', 'Creating your account...', '');
+    msg('re-msg', 'Creating your account...', 'success');
     const tempPassword = 'WhopSCC_' + whopEmail.split('@')[0] + '_' + Math.random().toString(36).substring(2, 8);
     const {data: authData, error: authErr} = await sb.auth.signUp({
       email: whopEmail,
@@ -1298,7 +1298,7 @@ async function handleWhopCallback() {
 
     if (authErr) {
       // Account exists but password is different - tell them to sign in
-      showMsg('re-msg', 'Account already exists. Click Sign In and use Forgot Password to access it.', 'error');
+      msg('re-msg', 'Account already exists. Click Sign In and use Forgot Password to access it.', 'error');
       switchTab('login');
       g('li-email').value = whopEmail;
       return true;
@@ -1318,7 +1318,7 @@ async function handleWhopCallback() {
 
   } catch(err) {
     console.error('Whop OAuth error:', err);
-    showMsg('re-msg', 'Something went wrong. Please try again or use an invite code.', 'error');
+    msg('re-msg', 'Something went wrong. Please try again or use an invite code.', 'error');
     switchTab('register');
     return true;
   }
