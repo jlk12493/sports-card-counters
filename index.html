@@ -1256,10 +1256,19 @@ async function handleWhopCallback() {
       body: JSON.stringify({ code })
     });
 
-    const result = await workerRes.json();
+    let result;
+    try {
+      result = await workerRes.json();
+    } catch(e) {
+      msg('re-msg', 'Worker error (status ' + workerRes.status + '): could not parse response', 'error');
+      switchTab('register');
+      return true;
+    }
+
+    console.log('Worker result:', JSON.stringify(result));
 
     if (result.error) {
-      msg('re-msg', 'Whop error: ' + result.error, 'error');
+      msg('re-msg', 'Whop error: ' + result.error + (result.detail ? ' — ' + JSON.stringify(result.detail) : ''), 'error');
       switchTab('register');
       return true;
     }
