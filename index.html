@@ -1217,20 +1217,15 @@ const WHOP_SECRET = 'apik_1ZcBLWHbJHLEH_A2033232_C_a7f7955aeaf3c465a897782fa409a
 const WHOP_EXP_ID = 'exp_U0aGTG8Sis05pg';
 const WHOP_REDIRECT_URI = 'https://sports-card-counters.jlk12493.workers.dev/';
 
-async function generatePKCE() {
-  const verifier = Array.from(crypto.getRandomValues(new Uint8Array(32)))
-    .map(b => b.toString(16).padStart(2, '0')).join('');
-  const encoder = new TextEncoder();
-  const data = encoder.encode(verifier);
-  const digest = await crypto.subtle.digest('SHA-256', data);
-  const challenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
-    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-  return { verifier, challenge };
+function generateVerifier() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+  const arr = crypto.getRandomValues(new Uint8Array(64));
+  return Array.from(arr).map(b => chars[b % chars.length]).join('');
 }
 
 async function loginWithWhop() {
   const state = Math.random().toString(36).substring(2);
-  const { verifier, challenge } = await generatePKCE();
+  const verifier = generateVerifier();
   localStorage.setItem('whop_state', state);
   localStorage.setItem('whop_verifier', verifier);
   const params = new URLSearchParams({
@@ -1239,8 +1234,8 @@ async function loginWithWhop() {
     response_type: 'code',
     scope: 'openid email profile',
     state: state,
-    code_challenge: challenge,
-    code_challenge_method: 'S256'
+    code_challenge: verifier,
+    code_challenge_method: 'plain'
   });
   window.location.href = 'https://whop.com/oauth?' + params.toString();
 }
