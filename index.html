@@ -1231,8 +1231,8 @@ async function generatePKCE() {
 async function loginWithWhop() {
   const state = Math.random().toString(36).substring(2);
   const { verifier, challenge } = await generatePKCE();
-  sessionStorage.setItem('whop_state', state);
-  sessionStorage.setItem('whop_verifier', verifier);
+  localStorage.setItem('whop_state', state);
+  localStorage.setItem('whop_verifier', verifier);
   const params = new URLSearchParams({
     client_id: WHOP_CLIENT_ID,
     redirect_uri: WHOP_REDIRECT_URI,
@@ -1249,7 +1249,7 @@ async function handleWhopCallback() {
   const params = new URLSearchParams(window.location.search);
   const code = params.get('code');
   const state = params.get('state');
-  const savedState = sessionStorage.getItem('whop_state');
+  const savedState = localStorage.getItem('whop_state');
 
   if (!code) return false;
 
@@ -1265,8 +1265,10 @@ async function handleWhopCallback() {
   try {
     // Call our Cloudflare Worker to handle token exchange (avoids CORS)
     msg('re-msg', 'Verifying Whop membership...', 'success');
-    const codeVerifier = sessionStorage.getItem('whop_verifier');
-    sessionStorage.removeItem('whop_verifier');
+    const codeVerifier = localStorage.getItem('whop_verifier');
+    localStorage.removeItem('whop_verifier');
+    localStorage.removeItem('whop_state');
+    console.log('Code verifier found:', codeVerifier ? 'yes (length '+codeVerifier.length+')' : 'MISSING');
     const workerRes = await fetch('https://lmwqizcflhikvtoqehzj.supabase.co/functions/v1/quick-responder', {
       method: 'POST',
       headers: {
