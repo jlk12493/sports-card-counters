@@ -405,12 +405,25 @@ input.fi{flex:1;min-width:160px;}
       </div>
 
       <div id="tab-register" style="display:none;">
+
+        <!-- WHOP LOGIN -->
+        <button onclick="loginWithWhop()" style="width:100%;background:#8B5CF6;color:#fff;border:none;padding:12px;border-radius:6px;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          Continue with Whop
+        </button>
+
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <div style="flex:1;height:1px;background:var(--border);"></div>
+          <span style="font-size:11px;color:var(--text-muted);">or use invite code</span>
+          <div style="flex:1;height:1px;background:var(--border);"></div>
+        </div>
+
         <div class="afield"><label>Email</label><input type="email" id="re-email" placeholder="your@email.com"></div>
         <div class="afield"><label>Password</label><input type="password" id="re-pw" placeholder="Min 6 characters"></div>
         <div class="afield"><label>Invite Code</label><input type="text" id="re-code" placeholder="SCC-2024-001" style="font-family:'Courier New',monospace;letter-spacing:1px;text-transform:uppercase;"></div>
         <button class="btn-p" id="btn-re" onclick="doRegister()">Create Account</button>
         <div class="amsg" id="re-msg"></div>
-        <div class="auth-note">Premium Discord members only</div>
+        <div class="auth-note">Premium Discord members only · <a href="https://whop.com/sports-card-counters" target="_blank" style="color:var(--red);">Get access on Whop</a></div>
       </div>
     </div>
   </div>
@@ -1198,7 +1211,137 @@ function switchTab(t) {
   document.getElementById('tab-register').style.display = t==='register'?'':'none';
 }
 
+// ══════════ WHOP OAUTH ══════════
+const WHOP_CLIENT_ID = 'app_1Es2LxCfU8Efjy';
+const WHOP_SECRET = 'apik_zxuQziDVJqDPh_A2033124_C_6dd4375ca3bec0f0803c10a501b6bd9aed41227247efa30c5eb50fce58c640';
+const WHOP_EXP_ID = 'exp_U0aGTG8Sis05pg';
+const WHOP_REDIRECT_URI = 'https://sports-card-counters.jlk12493.workers.dev/';
+
+function loginWithWhop() {
+  const state = Math.random().toString(36).substring(2);
+  sessionStorage.setItem('whop_state', state);
+  const params = new URLSearchParams({
+    client_id: WHOP_CLIENT_ID,
+    redirect_uri: WHOP_REDIRECT_URI,
+    response_type: 'code',
+    scope: 'openid email profile',
+    state: state
+  });
+  window.location.href = 'https://whop.com/oauth?' + params.toString();
+}
+
+async function handleWhopCallback() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  const state = params.get('state');
+  const savedState = sessionStorage.getItem('whop_state');
+
+  if (!code) return false;
+
+  // Clear the URL params
+  history.replaceState(null, '', window.location.pathname);
+
+  // Show loading state
+  g('auth-screen').style.display = 'flex';
+  showMsg('re-msg', 'Verifying Whop membership...', '');
+
+  try {
+    // Exchange code for token
+    const tokenRes = await fetch('https://api.whop.com/v5/oauth/token', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        code,
+        client_id: WHOP_CLIENT_ID,
+        client_secret: WHOP_SECRET,
+        redirect_uri: WHOP_REDIRECT_URI,
+        grant_type: 'authorization_code'
+      })
+    });
+    const tokenData = await tokenRes.json();
+    if (!tokenData.access_token) {
+      showMsg('re-msg', 'Failed to connect with Whop. Please try again.', 'error');
+      switchTab('register');
+      return true;
+    }
+
+    // Get user info from Whop
+    const userRes = await fetch('https://api.whop.com/v5/me', {
+      headers: {'Authorization': 'Bearer ' + tokenData.access_token}
+    });
+    const userData = await userRes.json();
+    const whopEmail = userData.email;
+
+    if (!whopEmail) {
+      showMsg('re-msg', 'Could not get your email from Whop. Please try again.', 'error');
+      switchTab('register');
+      return true;
+    }
+
+    // Check if they have a valid membership
+    const accessRes = await fetch('https://api.whop.com/v5/me/has_access/' + WHOP_EXP_ID, {
+      headers: {'Authorization': 'Bearer ' + tokenData.access_token}
+    });
+    const accessData = await accessRes.json();
+
+    if (!accessData.has_access) {
+      showMsg('re-msg', 'No active membership found. Please purchase access on Whop first.', 'error');
+      setTimeout(() => {
+        window.open('https://whop.com/sports-card-counters', '_blank');
+      }, 1500);
+      switchTab('register');
+      return true;
+    }
+
+    // Check if user already exists in Supabase
+    const {data: existingUser} = await sb.auth.signInWithPassword({
+      email: whopEmail,
+      password: 'whop_' + tokenData.access_token.substring(0, 20)
+    });
+
+    if (existingUser?.user) {
+      CU = existingUser.user;
+      await loadApp();
+      return true;
+    }
+
+    // Create new account automatically
+    showMsg('re-msg', 'Creating your account...', '');
+    const tempPassword = 'WhopSCC_' + Math.random().toString(36).substring(2, 12);
+    const {data: authData, error: authErr} = await sb.auth.signUp({
+      email: whopEmail,
+      password: tempPassword
+    });
+
+    if (authErr) {
+      // User might already exist with different password - show manual register
+      showMsg('re-msg', 'Account already exists. Please sign in instead.', 'error');
+      switchTab('login');
+      g('li-email').value = whopEmail;
+      return true;
+    }
+
+    // Save profile
+    await sb.from('profiles').upsert({id: authData.user.id, email: whopEmail, last_active: new Date().toISOString()});
+
+    // Sign them in
+    CU = authData.user;
+    await loadApp();
+    toast('Welcome! Your account has been created via Whop.');
+    return true;
+
+  } catch(err) {
+    console.error('Whop OAuth error:', err);
+    showMsg('re-msg', 'Something went wrong. Please try again or use an invite code.', 'error');
+    switchTab('register');
+    return true;
+  }
+}
+
 async function initAuth() {
+  // Check for Whop OAuth callback first
+  const isWhopCallback = await handleWhopCallback();
+  if (isWhopCallback) return;
   const isReset = await checkResetToken();
   if (!isReset) {
     g('auth-screen').style.display = 'flex';
