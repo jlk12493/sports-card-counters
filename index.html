@@ -1241,12 +1241,15 @@ async function handleWhopCallback() {
   // Clear the URL params
   history.replaceState(null, '', window.location.pathname);
 
-  // Show loading state
+  // Switch to register tab to show messages
+  switchTab('register');
   g('auth-screen').style.display = 'flex';
   showMsg('re-msg', 'Verifying Whop membership...', '');
+  console.log('Whop callback received, code:', code ? 'present' : 'missing');
 
   try {
     // Exchange code for token
+    console.log('Attempting token exchange...');
     const tokenRes = await fetch('https://api.whop.com/v5/oauth/token', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -1259,8 +1262,9 @@ async function handleWhopCallback() {
       })
     });
     const tokenData = await tokenRes.json();
+    console.log('Token response:', JSON.stringify(tokenData));
     if (!tokenData.access_token) {
-      showMsg('re-msg', 'Failed to connect with Whop. Please try again.', 'error');
+      showMsg('re-msg', 'Failed to connect with Whop: ' + (tokenData.error || tokenData.message || 'Unknown error'), 'error');
       switchTab('register');
       return true;
     }
@@ -1284,6 +1288,7 @@ async function handleWhopCallback() {
     });
     const accessData = await accessRes.json();
 
+    console.log('Access check response:', JSON.stringify(accessData));
     if (!accessData.has_access) {
       showMsg('re-msg', 'No active membership found. Please purchase access on Whop first.', 'error');
       setTimeout(() => {
