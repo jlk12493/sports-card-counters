@@ -1248,49 +1248,24 @@ async function handleWhopCallback() {
   console.log('Whop callback received, code:', code ? 'present' : 'missing');
 
   try {
-    // Exchange code for token
-    console.log('Attempting token exchange...');
-    const tokenRes = await fetch('https://api.whop.com/v5/oauth/token', {
+    // Call our Cloudflare Worker to handle token exchange (avoids CORS)
+    showMsg('re-msg', 'Verifying Whop membership...', '');
+    const workerRes = await fetch('https://whop-auth.jlk12493.workers.dev/exchange', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        code,
-        client_id: WHOP_CLIENT_ID,
-        client_secret: WHOP_SECRET,
-        redirect_uri: WHOP_REDIRECT_URI,
-        grant_type: 'authorization_code'
-      })
+      body: JSON.stringify({ code })
     });
-    const tokenData = await tokenRes.json();
-    console.log('Token response:', JSON.stringify(tokenData));
-    if (!tokenData.access_token) {
-      showMsg('re-msg', 'Failed to connect with Whop: ' + (tokenData.error || tokenData.message || 'Unknown error'), 'error');
+
+    const result = await workerRes.json();
+
+    if (result.error) {
+      showMsg('re-msg', 'Whop error: ' + result.error, 'error');
       switchTab('register');
       return true;
     }
 
-    // Get user info from Whop
-    const userRes = await fetch('https://api.whop.com/v5/me', {
-      headers: {'Authorization': 'Bearer ' + tokenData.access_token}
-    });
-    const userData = await userRes.json();
-    const whopEmail = userData.email;
-
-    if (!whopEmail) {
-      showMsg('re-msg', 'Could not get your email from Whop. Please try again.', 'error');
-      switchTab('register');
-      return true;
-    }
-
-    // Check if they have a valid membership
-    const accessRes = await fetch('https://api.whop.com/v5/me/has_access/' + WHOP_EXP_ID, {
-      headers: {'Authorization': 'Bearer ' + tokenData.access_token}
-    });
-    const accessData = await accessRes.json();
-
-    console.log('Access check response:', JSON.stringify(accessData));
-    if (!accessData.has_access) {
-      showMsg('re-msg', 'No active membership found. Please purchase access on Whop first.', 'error');
+    if (!result.has_access) {
+      showMsg('re-msg', 'No active Whop membership found. Purchase access to continue.', 'error');
       setTimeout(() => {
         window.open('https://whop.com/sports-card-counters', '_blank');
       }, 1500);
@@ -1298,41 +1273,47 @@ async function handleWhopCallback() {
       return true;
     }
 
-    // Check if user already exists in Supabase
-    const {data: existingUser} = await sb.auth.signInWithPassword({
+    const whopEmail = result.email;
+
+    // Try signing in if account already exists
+    const {data: existingData} = await sb.auth.signInWithPassword({
       email: whopEmail,
-      password: 'whop_' + tokenData.access_token.substring(0, 20)
+      password: 'whop_scc_' + whopEmail.split('@')[0]
     });
 
-    if (existingUser?.user) {
-      CU = existingUser.user;
+    if (existingData?.user) {
+      CU = existingData.user;
       await loadApp();
+      toast('Welcome back!');
       return true;
     }
 
-    // Create new account automatically
+    // Create new account
     showMsg('re-msg', 'Creating your account...', '');
-    const tempPassword = 'WhopSCC_' + Math.random().toString(36).substring(2, 12);
+    const tempPassword = 'WhopSCC_' + whopEmail.split('@')[0] + '_' + Math.random().toString(36).substring(2, 8);
     const {data: authData, error: authErr} = await sb.auth.signUp({
       email: whopEmail,
       password: tempPassword
     });
 
     if (authErr) {
-      // User might already exist with different password - show manual register
-      showMsg('re-msg', 'Account already exists. Please sign in instead.', 'error');
+      // Account exists but password is different - tell them to sign in
+      showMsg('re-msg', 'Account already exists. Click Sign In and use Forgot Password to access it.', 'error');
       switchTab('login');
       g('li-email').value = whopEmail;
       return true;
     }
 
     // Save profile
-    await sb.from('profiles').upsert({id: authData.user.id, email: whopEmail, last_active: new Date().toISOString()});
+    await sb.from('profiles').upsert({
+      id: authData.user.id,
+      email: whopEmail,
+      last_active: new Date().toISOString()
+    });
 
-    // Sign them in
     CU = authData.user;
     await loadApp();
-    toast('Welcome! Your account has been created via Whop.');
+    toast('Welcome! Account created via Whop — you are all set!');
     return true;
 
   } catch(err) {
