@@ -406,24 +406,15 @@ input.fi{flex:1;min-width:160px;}
 
       <div id="tab-register" style="display:none;">
 
-        <!-- WHOP LOGIN -->
-        <button onclick="loginWithWhop()" style="width:100%;background:#8B5CF6;color:#fff;border:none;padding:12px;border-radius:6px;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-          Continue with Whop
-        </button>
-
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-          <div style="flex:1;height:1px;background:var(--border);"></div>
-          <span style="font-size:11px;color:var(--text-muted);">or use invite code</span>
-          <div style="flex:1;height:1px;background:var(--border);"></div>
+        <div style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.3);border-radius:6px;padding:10px 12px;margin-bottom:14px;font-size:11px;color:#C4B5FD;display:flex;align-items:center;gap:8px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#C4B5FD"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          Use the same email as your Whop account
         </div>
-
         <div class="afield"><label>Email</label><input type="email" id="re-email" placeholder="your@email.com"></div>
         <div class="afield"><label>Password</label><input type="password" id="re-pw" placeholder="Min 6 characters"></div>
-        <div class="afield"><label>Invite Code</label><input type="text" id="re-code" placeholder="SCC-2024-001" style="font-family:'Courier New',monospace;letter-spacing:1px;text-transform:uppercase;"></div>
         <button class="btn-p" id="btn-re" onclick="doRegister()">Create Account</button>
         <div class="amsg" id="re-msg"></div>
-        <div class="auth-note">Premium Discord members only · <a href="https://whop.com/sports-card-counters" target="_blank" style="color:var(--red);">Get access on Whop</a></div>
+        <div class="auth-note">Active Whop membership required · <a href="https://whop.com/sports-card-counters" target="_blank" style="color:var(--red);">Get access on Whop</a></div>
       </div>
     </div>
   </div>
@@ -1375,17 +1366,34 @@ async function doLogin() {
 async function doRegister() {
   const email = g('re-email').value.trim();
   const pw = g('re-pw').value;
-  const code = g('re-code').value.trim().toUpperCase();
-  if (!email||!pw||!code) return msg('re-msg','Please fill in all fields','error');
+  if (!email||!pw) return msg('re-msg','Please fill in all fields','error');
   if (pw.length<6) return msg('re-msg','Password must be at least 6 characters','error');
-  g('btn-re').disabled=true; g('btn-re').textContent='Checking code...';
-  const {data:cr,error:ce} = await sb.from('invite_codes').select('*').eq('code',code).eq('used',false).single();
-  if (ce||!cr) { g('btn-re').disabled=false; g('btn-re').textContent='Create Account'; return msg('re-msg','Invalid or already-used invite code','error'); }
+  g('btn-re').disabled=true; g('btn-re').textContent='Checking membership...';
+
+  // Check Whop membership
+  try {
+    const res = await fetch('https://lmwqizcflhikvtoqehzj.supabase.co/functions/v1/quick-responder', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.95XMeRWGeCcD_KxN40ciJi_QjB9GG4sVJexzBEhJ9NM'
+      },
+      body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    if (!data.has_access) {
+      g('btn-re').disabled=false; g('btn-re').textContent='Create Account';
+      return msg('re-msg','No active Whop membership found for this email. <a href="https://whop.com/sports-card-counters" target="_blank" style="color:var(--red);">Get access here</a>','error');
+    }
+  } catch(e) {
+    g('btn-re').disabled=false; g('btn-re').textContent='Create Account';
+    return msg('re-msg','Could not verify membership. Please try again.','error');
+  }
+
   g('btn-re').textContent='Creating account...';
   const {data:ad,error:ae} = await sb.auth.signUp({email,password:pw});
   if (ae) { g('btn-re').disabled=false; g('btn-re').textContent='Create Account'; return msg('re-msg',ae.message,'error'); }
-  await sb.from('profiles').upsert({id:ad.user.id,email});
-  await sb.from('invite_codes').update({used:true,used_by:ad.user.id}).eq('code',code);
+  await sb.from('profiles').upsert({id:ad.user.id,email,last_active:new Date().toISOString()});
   g('btn-re').disabled=false; g('btn-re').textContent='Create Account';
   msg('re-msg','Account created! You can now sign in.','success');
 }
