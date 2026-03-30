@@ -385,6 +385,9 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
 .help-player-close:hover{border-color:#fff;color:#fff;}
 .help-player-frame{position:relative;padding-bottom:56.25%;height:0;border-radius:var(--r);overflow:hidden;background:#000;}
 .help-player-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:none;}
+
+.btn-sold{background:transparent;border:1px solid var(--green);color:var(--green);padding:6px 14px;border-radius:5px;font-size:11px;font-weight:700;letter-spacing:.5px;cursor:pointer;}
+.btn-sold:hover{background:var(--green);color:#fff;}
 </style>
 </head>
 <body>
@@ -1854,6 +1857,7 @@ function renderInv() {
         (r.notes ? '<div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;padding:8px 10px;background:var(--surface-2);border-radius:5px;">&#128221; ' + r.notes + '</div>' : '') +
         '<div style="display:flex;gap:8px;">' +
           '<button class="btn-a" style="font-size:11px;padding:6px 14px;" onclick="openEdit(\'' + r.id + '\')" >Edit</button>' +
+          '<button class="btn-sold" data-sid="' + r.id + '" onclick="openMarkSold(this.dataset.sid)" >Mark as Sold</button>' +
           '<button class="btn-c" style="font-size:11px;padding:6px 14px;color:#F87171;border-color:#F87171;" onclick="delCard(\'' + r.id + '\')" >Delete</button>' +
         '</div>' +
       '</div>' +
@@ -3411,6 +3415,78 @@ function closeHelpPlayer(){
 }
 document.addEventListener('click',function(e){var modal=g('help-player-modal');if(modal&&modal.classList.contains('open')&&e.target===modal)closeHelpPlayer();});
 
+
+function openMarkSold(id){
+  var r=INV.find(function(c){return c.id===id;});
+  if(!r)return;
+  g('sold-modal-id').value=id;
+  g('sold-modal-card-info').innerHTML='<strong style="color:var(--text);">'+(r.player||'--')+'</strong> &nbsp;·&nbsp; '+(r.year||'')+(r.set_name?' '+r.set_name:'')+(r.parallel?' · '+r.parallel:'')+(r.card_no?' #'+r.card_no:'')+'<br><span style="margin-top:4px;display:inline-block;">Cost basis: <strong style="color:var(--text);">'+f$(r.total_cost)+'</strong></span>';
+  g('sm-date').value=new Date().toISOString().split('T')[0];
+  g('sm-price').value='';g('sm-fees').value='';g('sm-ship').value='';
+  g('sm-preview').style.display='none';
+  g('sold-modal').classList.add('open');
+  setTimeout(function(){g('sm-price').focus();},100);
+}
+
+function calcSoldModal(){
+  var id=g('sold-modal-id').value;
+  var r=INV.find(function(c){return c.id===id;});
+  if(!r)return;
+  var sp=parseFloat(g('sm-price').value)||0;
+  var fees=parseFloat(g('sm-fees').value)||0;
+  var ship=parseFloat(g('sm-ship').value)||0;
+  if(!sp){g('sm-preview').style.display='none';return;}
+  var proc=sp-fees-ship;
+  var basis=(r.price||0)+(r.ship||0)+(r.grading||0);
+  var prof=proc-basis;
+  var roi=basis>0?(prof/basis*100):0;
+  g('sm-preview').style.display='';
+  g('sm-proc').textContent=f$(proc);
+  g('sm-prof').textContent=(prof>=0?'+':'')+f$(prof);
+  g('sm-prof').style.color=prof>=0?'var(--green)':'#F87171';
+  g('sm-roi').textContent=roi.toFixed(1)+'%';
+  g('sm-roi').style.color=roi>=0?'var(--green)':'#F87171';
+}
+
+async function saveMarkSold(){
+  var id=g('sold-modal-id').value;
+  var r=INV.find(function(c){return c.id===id;});
+  if(!r)return;
+  var sp=parseFloat(g('sm-price').value)||0;
+  if(!sp)return toast('Sale price is required',true);
+  var dateSold=g('sm-date').value;
+  if(!dateSold)return toast('Date sold is required',true);
+  var fees=parseFloat(g('sm-fees').value)||0;
+  var ship=parseFloat(g('sm-ship').value)||0;
+  var proc=sp-fees-ship;
+  var basis=(r.price||0)+(r.ship||0)+(r.grading||0);
+  var prof=proc-basis;
+  var updates={
+    status:'Sold',sale_price:sp,fees:fees,ship_out:ship,
+    date_sold:dateSold,net_proceeds:proc,realized_profit:prof
+  };
+  var evRet=calcEVReturned({...r,...updates});
+  if(evRet!==null){
+    updates.ev_pct_returned=evRet;
+    var reinvestPct=getReinvestPct(evRet);
+    if(reinvestPct!==null){
+      updates.reinvest_amount=parseFloat((prof*reinvestPct).toFixed(2));
+      updates.takehome_amount=parseFloat((prof*(1-reinvestPct)).toFixed(2));
+    }
+  }
+  var res=await sb.from('inventory').update(updates).eq('id',id).select().single();
+  if(res.error)return toast('Error: '+res.error.message,true);
+  var idx=INV.findIndex(function(c){return c.id===id;});
+  if(idx!==-1)INV[idx]=res.data;
+  closeModal('sold-modal');
+  renderAll();
+  if(evRet!==null&&updates.reinvest_amount!=null){
+    showSaleSummary(res.data,(evRet*100).toFixed(0),f$(updates.reinvest_amount),f$(updates.takehome_amount));
+  } else {
+    toast('Card marked as sold!');
+  }
+}
+
 loadTheme();
 initAuth();
 
@@ -3486,5 +3562,35 @@ function blCalc() {
   const mb35=g('c-maxbuy35'); if(mb35) mb35.textContent=f$(maxBuy35);
 }
 </script>
+
+<!-- MARK AS SOLD MODAL -->
+<div class="modal-bg" id="sold-modal">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-title">
+      Mark as Sold
+      <button class="modal-close" onclick="closeModal('sold-modal')">&#10005;</button>
+    </div>
+    <div id="sold-modal-card-info" style="background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-bottom:16px;font-size:12px;color:var(--text-muted);"></div>
+    <input type="hidden" id="sold-modal-id">
+    <div class="fgrid" style="margin-bottom:14px;">
+      <div class="ff"><label>Date Sold</label><input type="date" id="sm-date" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;"></div>
+      <div class="ff"><label>Sale Price $</label><input type="number" step="0.01" id="sm-price" placeholder="0.00" oninput="calcSoldModal()" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;"></div>
+      <div class="ff"><label>Platform Fees $</label><input type="number" step="0.01" id="sm-fees" placeholder="0.00" oninput="calcSoldModal()" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;"></div>
+      <div class="ff"><label>Shipping Out $</label><input type="number" step="0.01" id="sm-ship" placeholder="0.00" oninput="calcSoldModal()" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;"></div>
+    </div>
+    <div id="sm-preview" style="display:none;background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:6px;padding:12px;margin-bottom:16px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+        <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Net Proceeds</div><div style="font-size:15px;font-weight:700;color:var(--text);" id="sm-proc">--</div></div>
+        <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Profit</div><div style="font-size:15px;font-weight:700;" id="sm-prof">--</div></div>
+        <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">ROI</div><div style="font-size:15px;font-weight:700;" id="sm-roi">--</div></div>
+      </div>
+    </div>
+    <div class="factions">
+      <button class="btn-a" style="background:var(--green);border-color:var(--green);" onclick="saveMarkSold()">Confirm Sale</button>
+      <button class="btn-c" onclick="closeModal('sold-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
