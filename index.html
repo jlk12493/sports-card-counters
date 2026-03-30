@@ -2238,30 +2238,51 @@ function toggleBLDetails() {
   if (btn) btn.textContent = isOpen ? '+ Card Details' : '- Card Details';
 }
 
-function markBLPurchased(id) {
-  const entry = BL.find(r => r.id === id);
-  if (!entry) return;
-  // Pre-fill Quick Add form with BL data
+function markBLPurchased(id){
+  const entry=BL.find(r=>r.id===id);
+  if(!entry)return;
   openQuickAdd();
-  setTimeout(() => {
-    if (entry.player) g('qa-player').value = entry.player;
-    if (entry.year) g('qa-year').value = entry.year;
-    if (entry.set_name) {
-      const parts = entry.set_name.split(' ');
-      if (g('qa-brand')) g('qa-brand').value = parts[0] || '';
-      if (g('qa-set')) g('qa-set').value = parts.slice(1).join(' ') || '';
+  setTimeout(()=>{
+    if(entry.player)g('qa-player').value=entry.player;
+    if(entry.year)g('qa-year').value=entry.year;
+    if(entry.set_name){
+      const parts=entry.set_name.split(' ');
+      if(g('qa-brand'))g('qa-brand').value=parts[0]||'';
+      if(g('qa-set'))g('qa-set').value=parts.slice(1).join(' ')||'';
     }
-    if (entry.parallel && g('qa-parallel')) g('qa-parallel').value = entry.parallel;
-    if (entry.card_no) g('qa-cno').value = entry.card_no;
-    if (entry.gem_rate) g('qa-gem').value = entry.gem_rate;
-    if (entry.psa10) g('qa-p10').value = entry.psa10;
-    if (entry.psa9) g('qa-p9').value = entry.psa9;
-    if (entry.total_cost) g('qa-price').value = entry.total_cost;
-    qaCalcCost();
-    qaCalcEV();
+    if(entry.parallel&&g('qa-parallel'))g('qa-parallel').value=entry.parallel;
+    if(entry.card_no)g('qa-cno').value=entry.card_no;
+    if(entry.gem_rate)g('qa-gem').value=entry.gem_rate;
+    if(entry.psa10)g('qa-p10').value=entry.psa10;
+    if(entry.psa9)g('qa-p9').value=entry.psa9;
+    if(entry.total_cost)g('qa-price').value=entry.total_cost;
+    qaCalcCost();qaCalcEV();
     qaShowStep(1);
-    toast('Card details pre-filled from EV Log — complete and save!');
-  }, 200);
+    toast('Card details pre-filled — verify and save!');
+  },250);
+}
+
+function filterBL(){
+  const playerSel=g('bl-player-filter');
+  if(playerSel){
+    const players=[...new Set(BL.map(r=>r.player).filter(Boolean))].sort();
+    const curP=playerSel.value;
+    playerSel.innerHTML='<option value="">All Players</option>'+players.map(p=>'<option value="'+p+'" '+(p===curP?'selected':'')+'>'+p+'</option>').join('');
+  }
+  const q=g('bl-q').value.toLowerCase();
+  const df=g('bl-df').value;
+  const pf=playerSel?playerSel.value:'';
+  blF=BL.filter(r=>{
+    const mq=!q||(r.player||'').toLowerCase().includes(q)||(r.set_name||'').toLowerCase().includes(q);
+    const mp=!pf||r.player===pf;
+    const n10=r.psa10?r.psa10*0.865:null,n9=r.psa9?r.psa9*0.865:null;
+    const ev=(n10&&r.gem_rate&&r.total_cost)?(r.gem_rate*n10+(1-r.gem_rate)*(n9||0)-r.total_cost):null;
+    const evp=(ev!==null&&r.total_cost)?ev/r.total_cost:null;
+    const dec=evp!==null?(evp>=0.40?'BUY':evp>=0.35?'CAUTION':'PASS'):'--';
+    const md=!df||dec===df;
+    return mq&&mp&&md;
+  });
+  renderBL();
 }
 
 async function delBL(id) {
