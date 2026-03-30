@@ -2044,6 +2044,7 @@ function renderBatches() {
         '</div>' +
         '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;" onclick="event.stopPropagation()">' +
           statBadge +
+          '<button class="bulk-btn" style="background:rgba(59,130,246,.15);color:#60A5FA;border-color:rgba(59,130,246,.3);" data-ebid="' + b.id + '" data-batchid="' + bid + '" onclick="openEditBatch(this.dataset.ebid,this.dataset.batchid)" >Edit</button>' +
           '<button class="bulk-btn" onclick="bulkUpdateBatch(\'' + bid + '\')" >Bulk Update</button>' +
           '<button class="btn-del" onclick="delBatch(\'' + b.id + '\')" >x</button>' +
         '</div>' +
@@ -3487,6 +3488,77 @@ async function saveMarkSold(){
   }
 }
 
+
+function openEditBatch(bId, batchId){
+  var b = BATCHES.find(function(x){ return x.id === bId; });
+  if(!b) return;
+  g('eb-id').value = bId;
+  g('eb-batch-id').value = batchId;
+  g('eb-bid').value = b.batch_id || '';
+  g('eb-date').value = b.submit_date || '';
+  g('eb-grader').value = b.grader || 'PSA';
+  g('eb-svc').value = b.service || '';
+  g('eb-stat').value = b.status || 'Sent';
+  g('eb-notes').value = b.notes || '';
+  g('eb-cost').value = '';
+  g('eb-cost-preview').style.display = 'none';
+  g('edit-batch-modal').classList.add('open');
+}
+
+function calcEditBatchCost(){
+  var batchId = g('eb-batch-id').value;
+  var totalCost = parseFloat(g('eb-cost').value) || 0;
+  if(!totalCost || !batchId){ g('eb-cost-preview').style.display='none'; return; }
+  var cards = INV.filter(function(r){ return r.batch_id === batchId; });
+  if(!cards.length){ g('eb-cost-preview').style.display='none'; return; }
+  var perCard = totalCost / cards.length;
+  g('eb-cost-preview').style.display = '';
+  g('eb-card-count').textContent = cards.length;
+  g('eb-per-card').textContent = f$(perCard);
+}
+
+async function saveEditBatch(){
+  var bId = g('eb-id').value;
+  var batchId = g('eb-batch-id').value;
+  var updates = {
+    batch_id: g('eb-bid').value.trim(),
+    submit_date: g('eb-date').value || null,
+    grader: g('eb-grader').value,
+    service: g('eb-svc').value.trim(),
+    status: g('eb-stat').value,
+    notes: g('eb-notes').value.trim() || null
+  };
+  if(!updates.batch_id) return toast('Batch ID is required', true);
+  var res = await sb.from('batches').update(updates).eq('id', bId).select().single();
+  if(res.error) return toast('Error: ' + res.error.message, true);
+  var idx = BATCHES.findIndex(function(b){ return b.id === bId; });
+  if(idx !== -1) BATCHES[idx] = res.data;
+
+  // If total cost entered, re-split across cards
+  var totalCost = parseFloat(g('eb-cost').value) || 0;
+  if(totalCost > 0){
+    var cards = INV.filter(function(r){ return r.batch_id === batchId; });
+    if(cards.length > 0){
+      var perCard = parseFloat((totalCost / cards.length).toFixed(2));
+      for(var i=0; i<cards.length; i++){
+        var card = cards[i];
+        var newTotal = (card.price||0) + (card.ship||0) + perCard;
+        await sb.from('inventory').update({grading: perCard, total_cost: newTotal}).eq('id', card.id);
+        var cidx = INV.findIndex(function(r){ return r.id === card.id; });
+        if(cidx !== -1){ INV[cidx].grading = perCard; INV[cidx].total_cost = newTotal; }
+      }
+      toast('Batch updated! Grading cost set to ' + f$(perCard) + '/card for ' + cards.length + ' cards.');
+    } else {
+      toast('Batch updated!');
+    }
+  } else {
+    toast('Batch updated!');
+  }
+
+  closeModal('edit-batch-modal');
+  renderAll();
+}
+
 loadTheme();
 initAuth();
 
@@ -3588,6 +3660,49 @@ function blCalc() {
     <div class="factions">
       <button class="btn-a" style="background:var(--green);border-color:var(--green);" onclick="saveMarkSold()">Confirm Sale</button>
       <button class="btn-c" onclick="closeModal('sold-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- EDIT BATCH MODAL -->
+<div class="modal-bg" id="edit-batch-modal">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-title">
+      Edit Batch
+      <button class="modal-close" onclick="closeModal('edit-batch-modal')">&#10005;</button>
+    </div>
+    <input type="hidden" id="eb-id">
+    <input type="hidden" id="eb-batch-id">
+    <div class="fgrid" style="margin-bottom:14px;">
+      <div class="ff"><label>Batch ID</label><input type="text" id="eb-bid" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;"></div>
+      <div class="ff"><label>Submit Date</label><input type="date" id="eb-date" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;"></div>
+      <div class="ff"><label>Grader</label>
+        <select id="eb-grader" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;">
+          <option>PSA</option><option>BGS</option><option>SGC</option><option>CGC</option>
+        </select>
+      </div>
+      <div class="ff"><label>Service Level</label><input type="text" id="eb-svc" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;"></div>
+      <div class="ff"><label>Status</label>
+        <select id="eb-stat" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;">
+          <option>Sent</option><option>Received</option><option>Graded</option><option>Returned</option><option>Sold</option>
+        </select>
+      </div>
+      <div class="ff"><label>Notes</label><input type="text" id="eb-notes" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;"></div>
+      <div class="ff" style="grid-column:1/-1;">
+        <label>Total Submission Cost $ <span style="font-size:9px;color:var(--text-muted);">(will re-split across all cards in batch)</span></label>
+        <input type="number" step="0.01" id="eb-cost" placeholder="0.00" oninput="calcEditBatchCost()" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;">
+      </div>
+    </div>
+    <div id="eb-cost-preview" style="display:none;background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:6px;padding:12px;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:20px;">
+        <div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Cards in Batch</div><div style="font-size:16px;font-weight:700;color:var(--text);" id="eb-card-count">0</div></div>
+        <div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Cost Per Card</div><div style="font-size:16px;font-weight:700;color:var(--green);" id="eb-per-card">--</div></div>
+      </div>
+    </div>
+    <div class="factions">
+      <button class="btn-a" onclick="saveEditBatch()">Save Changes</button>
+      <button class="btn-c" onclick="closeModal('edit-batch-modal')">Cancel</button>
     </div>
   </div>
 </div>
