@@ -3376,14 +3376,27 @@ const HELP_VIDEOS=[
 ];
 function renderHelp(){
   var grid=g('help-grid');if(!grid)return;
-  grid.innerHTML=HELP_VIDEOS.map(function(v){
+  var out='';
+  for(var i=0;i<HELP_VIDEOS.length;i++){
+    var v=HELP_VIDEOS[i];
     var thumb='https://cdn.loom.com/sessions/thumbnails/'+v.loom+'-with-play.gif';
-    var card='<div class="help-vcard" onclick="openHelpPlayer(\'' + v.loom + '\',\'' + v.title.replace(/'/g,"\\\\'") + '\')">';
-    card+='<div class="help-thumb"><img src="'+thumb+'" alt="Thumbnail" loading="lazy" onerror="this.style.display=\'none\'"><div class="help-thumb-overlay"><div class="help-play-btn">&#9654;</div></div></div>';
-    card+='<div class="help-vcard-body"><div class="help-vnum">Video '+v.num+' of '+HELP_VIDEOS.length+'</div><div class="help-vtitle">'+v.title+'</div><div class="help-vdesc">'+v.desc+'</div></div>';
-    card+='</div>';
-    return card;
-  }).join('');
+    out+='<div class="help-vcard" data-loom="'+v.loom+'" data-title="'+v.title+'">';
+    out+='<div class="help-thumb">';
+    out+='<img src="'+thumb+'" alt="Thumbnail" loading="lazy" onerror="this.style.display=\'none\'">';
+    out+='<div class="help-thumb-overlay"><div class="help-play-btn">&#9654;</div></div>';
+    out+='</div>';
+    out+='<div class="help-vcard-body">';
+    out+='<div class="help-vnum">Video '+v.num+' of '+HELP_VIDEOS.length+'</div>';
+    out+='<div class="help-vtitle">'+v.title+'</div>';
+    out+='<div class="help-vdesc">'+v.desc+'</div>';
+    out+='</div></div>';
+  }
+  grid.innerHTML=out;
+  grid.querySelectorAll('.help-vcard').forEach(function(el){
+    el.addEventListener('click',function(){
+      openHelpPlayer(this.dataset.loom,this.dataset.title);
+    });
+  });
 }
 function openHelpPlayer(loomId,title){
   var modal=g('help-player-modal'),iframe=g('help-player-iframe'),titleEl=g('help-player-title');
