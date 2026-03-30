@@ -1582,7 +1582,7 @@ async function loadApp() {
   g('auth-screen').style.display='none';
   g('u-email').textContent = CU.email;
   // Record last active timestamp
-  sb.from('profiles').update({last_active: new Date().toISOString()}).eq('id', CU.id);
+  await sb.from('profiles').upsert({id: CU.id, email: CU.email, last_active: new Date().toISOString()});
   if (CU.email===ADMIN) {
     const nav = g('main-nav');
     if (!nav.querySelector('.atab')) {
