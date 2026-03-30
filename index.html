@@ -3378,10 +3378,11 @@ function renderHelp(){
   var grid=g('help-grid');if(!grid)return;
   grid.innerHTML=HELP_VIDEOS.map(function(v){
     var thumb='https://cdn.loom.com/sessions/thumbnails/'+v.loom+'-with-play.gif';
-    return '<div class="help-vcard" onclick="openHelpPlayer(''+v.loom+'',''+v.title+'')">'+
-      '<div class="help-thumb"><img src="'+thumb+'" alt="'+v.title+'" loading="lazy" onerror="this.style.display='none'"><div class="help-thumb-overlay"><div class="help-play-btn">&#9654;</div></div></div>'+
-      '<div class="help-vcard-body"><div class="help-vnum">Video '+v.num+' of '+HELP_VIDEOS.length+'</div><div class="help-vtitle">'+v.title+'</div><div class="help-vdesc">'+v.desc+'</div></div>'+
-    '</div>';
+    var card='<div class="help-vcard" onclick="openHelpPlayer(\'' + v.loom + '\',\'' + v.title.replace(/'/g,"\\\\'") + '\')">';
+    card+='<div class="help-thumb"><img src="'+thumb+'" alt="Thumbnail" loading="lazy" onerror="this.style.display=\'none\'"><div class="help-thumb-overlay"><div class="help-play-btn">&#9654;</div></div></div>';
+    card+='<div class="help-vcard-body"><div class="help-vnum">Video '+v.num+' of '+HELP_VIDEOS.length+'</div><div class="help-vtitle">'+v.title+'</div><div class="help-vdesc">'+v.desc+'</div></div>';
+    card+='</div>';
+    return card;
   }).join('');
 }
 function openHelpPlayer(loomId,title){
