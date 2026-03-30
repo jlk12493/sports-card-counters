@@ -361,6 +361,30 @@ input.fi{flex:1;min-width:160px;}
 /* EXPORT BTN */
 .btn-export{background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:6px 12px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.5px;cursor:pointer;}
 .btn-export:hover{border-color:var(--green);color:var(--green);}
+
+.ntab.htab{color:#3B82F6;}.ntab.htab.active{color:#3B82F6;border-bottom-color:#3B82F6;}
+.help-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}
+.help-vcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:border-color .2s,transform .15s;}
+.help-vcard:hover{border-color:var(--red);transform:translateY(-2px);}
+.help-thumb{position:relative;width:100%;padding-bottom:56.25%;background:var(--near-black);overflow:hidden;}
+.help-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.help-thumb-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.4);}
+.help-vcard:hover .help-thumb-overlay{background:rgba(204,0,0,.3);}
+.help-play-btn{width:52px;height:52px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;}
+.help-vcard-body{padding:14px;}
+.help-vnum{font-size:9px;font-weight:700;color:var(--red);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+.help-vtitle{font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.help-vdesc{font-size:12px;color:var(--text-muted);line-height:1.5;}
+body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
+.help-player-modal{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:600;display:none;align-items:center;justify-content:center;padding:20px;}
+.help-player-modal.open{display:flex;}
+.help-player-wrap{width:100%;max-width:900px;}
+.help-player-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.help-player-title{font-size:16px;font-weight:700;color:#fff;}
+.help-player-close{background:transparent;border:1px solid #555;color:#aaa;font-size:16px;cursor:pointer;padding:4px 10px;border-radius:4px;}
+.help-player-close:hover{border-color:#fff;color:#fff;}
+.help-player-frame{position:relative;padding-bottom:56.25%;height:0;border-radius:var(--r);overflow:hidden;background:#000;}
+.help-player-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:none;}
 </style>
 </head>
 <body>
@@ -458,6 +482,7 @@ input.fi{flex:1;min-width:160px;}
         <button class="ntab" onclick="goSec('sold',this)">Sold</button>
         <button class="ntab" onclick="goSec('buylog',this)">EV Log</button>
         <button class="ntab" onclick="goSec('financials',this)">Financials</button>
+        <button class="ntab htab" onclick="goSec('help',this)">&#127916; Help</button>
       </nav>
       <button class="ham-btn" id="ham-btn" onclick="toggleMobileNav()">&#9776;</button>
       <div class="mobile-nav" id="mobile-nav">
@@ -468,6 +493,7 @@ input.fi{flex:1;min-width:160px;}
         <button class="mntab" onclick="goSec('sold',null);toggleMobileNav()">Sold</button>
         <button class="mntab" onclick="goSec('buylog',null);toggleMobileNav()">EV Buy Log</button>
         <button class="mntab" onclick="goSec('financials',null);toggleMobileNav()">Financials</button>
+        <button class="mntab" style="border-color:#3B82F6;color:#3B82F6;" onclick="goSec('help',null);toggleMobileNav()">&#127916; Help &amp; Tutorials</button>
         <div id="mobile-admin-btn"></div>
       </div>
       <div class="huser">
@@ -915,6 +941,16 @@ input.fi{flex:1;min-width:160px;}
 
     </div>
 
+
+    <!-- HELP -->
+    <div class="sec" id="sec-help">
+      <div style="margin-bottom:24px;">
+        <h2 style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:6px;">&#127916; Tutorial Videos</h2>
+        <p style="font-size:13px;color:var(--text-muted);line-height:1.6;">Short walkthroughs for every feature. Click any video to watch it right here without leaving the page.</p>
+      </div>
+      <div class="help-grid" id="help-grid"></div>
+    </div>
+
     <!-- ADMIN -->
     <div class="sec" id="sec-admin">
       <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:5px;padding:8px 12px;margin-bottom:16px;font-size:11px;color:#FCD34D;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
@@ -1187,6 +1223,19 @@ input.fi{flex:1;min-width:160px;}
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- HELP PLAYER MODAL -->
+<div class="help-player-modal" id="help-player-modal">
+  <div class="help-player-wrap">
+    <div class="help-player-header">
+      <div class="help-player-title" id="help-player-title"></div>
+      <button class="help-player-close" onclick="closeHelpPlayer()">&#10005; Close</button>
+    </div>
+    <div class="help-player-frame">
+      <iframe id="help-player-iframe" allowfullscreen allow="autoplay; fullscreen"></iframe>
+    </div>
   </div>
 </div>
 
@@ -1593,7 +1642,7 @@ async function loadApp() {
     const nav = g('main-nav');
     if (!nav.querySelector('.atab')) {
       const btn = document.createElement('button');
-      btn.className='ntab atab'; btn.textContent='Admin Admin';
+      btn.className='ntab atab'; btn.textContent='Admin';
       btn.onclick=function(){goSec('admin',this);};
       nav.appendChild(btn);
     }
@@ -1608,7 +1657,7 @@ async function loadApp() {
   invF=[...INV]; blF=[...BL];
   await loadExpenses();
   await loadUserSettings();
-  renderAll();
+  renderAll();renderHelp();
   g('app-screen').style.display='block';
   migrateCardIDs();
 }
@@ -3314,6 +3363,39 @@ function renderProfitChart() {
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#777',font:{size:10}},grid:{color:'#222'}},y:{ticks:{color:'#777',font:{size:10},callback:v=>'$'+v},grid:{color:'#222'}}}}
   });
 }
+
+
+const HELP_VIDEOS=[
+  {num:1,title:'Getting Started',desc:'A full tour of the tool — every tab explained and what to expect on your first visit.',loom:'ab03cf3c5e1c475abba03ec398a726be'},
+  {num:2,title:'Importing & Adding Cards',desc:'Import your existing spreadsheet (any format) and add new cards one at a time with Quick Add.',loom:'120a032a3cac47fa910180d579b785c5'},
+  {num:3,title:'Managing Your Inventory',desc:'Filter, search, expand cards for full details, edit info, and navigate a large collection.',loom:'7294b9e171d24885b47d9ddf779586e3'},
+  {num:4,title:'Submission Tracking',desc:'Create batches, auto-split costs, and bulk update all cards when your submission returns.',loom:'701bcf4920e54cdbaf8bd2d06db4a01c'},
+  {num:5,title:'Understanding EV & The Buy Log',desc:'What Expected Value means, how to run a quick eval, and how to log and review buy decisions.',loom:'d9ecc645c2f04a14a53e56f2363e5547'},
+  {num:6,title:'Selling Cards & Tracking Profit',desc:'Mark cards sold, see EV% Returned, and understand the reinvestment recommendation.',loom:'aad70c7da6c04fe5a37ab0dcac9f509e'},
+  {num:7,title:'Dashboard & Financials',desc:'Read your KPIs, inventory status, profit chart, and use the Financials tab for tax reporting.',loom:'3eba075ab44c41a0a6b2814b63397f61'},
+];
+function renderHelp(){
+  var grid=g('help-grid');if(!grid)return;
+  grid.innerHTML=HELP_VIDEOS.map(function(v){
+    var thumb='https://cdn.loom.com/sessions/thumbnails/'+v.loom+'-with-play.gif';
+    return '<div class="help-vcard" onclick="openHelpPlayer(''+v.loom+'',''+v.title+'')">'+
+      '<div class="help-thumb"><img src="'+thumb+'" alt="'+v.title+'" loading="lazy" onerror="this.style.display='none'"><div class="help-thumb-overlay"><div class="help-play-btn">&#9654;</div></div></div>'+
+      '<div class="help-vcard-body"><div class="help-vnum">Video '+v.num+' of '+HELP_VIDEOS.length+'</div><div class="help-vtitle">'+v.title+'</div><div class="help-vdesc">'+v.desc+'</div></div>'+
+    '</div>';
+  }).join('');
+}
+function openHelpPlayer(loomId,title){
+  var modal=g('help-player-modal'),iframe=g('help-player-iframe'),titleEl=g('help-player-title');
+  if(!modal||!iframe||!titleEl)return;
+  titleEl.textContent=title;
+  iframe.src='https://www.loom.com/embed/'+loomId+'?autoplay=1&hide_owner=true&hide_share=true&hide_title=true&hideEmbedTopBar=true';
+  modal.classList.add('open');
+}
+function closeHelpPlayer(){
+  var modal=g('help-player-modal'),iframe=g('help-player-iframe');
+  if(iframe)iframe.src='';if(modal)modal.classList.remove('open');
+}
+document.addEventListener('click',function(e){var modal=g('help-player-modal');if(modal&&modal.classList.contains('open')&&e.target===modal)closeHelpPlayer();});
 
 loadTheme();
 initAuth();
