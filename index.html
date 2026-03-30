@@ -735,7 +735,7 @@ input.fi{flex:1;min-width:160px;}
       </div>
       <div class="twrap">
         <table class="dtbl">
-          <thead><tr><th></th><th>Card ID</th><th>Player</th><th>Year</th><th>Set</th><th>Sport</th><th>Date Sold</th><th>Total Cost</th><th>Sale Price</th><th>Fees</th><th>Ship Out</th><th>Net Proceeds</th><th>Profit</th></tr></thead>
+          <thead><tr><th></th><th>Card ID</th><th>Player</th><th>Year</th><th>Set</th><th>Sport</th><th>Date Sold</th><th>Total Cost</th><th>Sale Price</th><th>Fees</th><th>Ship Out</th><th>Net Proceeds</th><th>Profit</th><th>EV% Returned</th><th>Reinvest</th><th>Take Home</th></tr></thead>
           <tbody id="sold-tbody"></tbody>
         </table>
       </div>
@@ -905,6 +905,12 @@ input.fi{flex:1;min-width:160px;}
           </div>
           <div id="exp-list" style="max-height:300px;overflow-y:auto;"></div>
         </div>
+      </div>
+
+      <!-- REINVESTMENT TRACKER -->
+      <div class="panel" style="margin-top:16px;">
+        <div class="ptitle">Reinvestment Tracker</div>
+        <div id="reinvest-tracker"></div>
       </div>
 
     </div>
@@ -1601,6 +1607,7 @@ async function loadApp() {
   INV=ir.data||[]; BATCHES=br.data||[]; BL=lr.data||[];
   invF=[...INV]; blF=[...BL];
   await loadExpenses();
+  await loadUserSettings();
   renderAll();
   g('app-screen').style.display='block';
   migrateCardIDs();
@@ -2082,6 +2089,13 @@ function renderSoldRows(sold) {
       '<td class="mo">'+(r.fees!=null?f$(r.fees):'--')+'</td>' +
       '<td class="mo" style="font-weight:700;">'+f$(proc)+'</td>' +
       '<td class="mo '+(prof>=0?'gn':'rd')+'" style="font-weight:700;">'+(prof>=0?'+':'')+f$(prof)+'</td>' +
+      (function(){
+        const evr = r.ev_pct_returned;
+        const evColor = evr!=null?(evr>=1.01?'var(--green)':evr>=0.61?'var(--amber)':'var(--text-2)'):'var(--text-muted)';
+        return '<td class="mo" style="font-weight:700;color:'+evColor+';">'+(evr!=null?((evr*100).toFixed(0)+'%'):'--')+'</td>' +
+               '<td class="mo" style="color:var(--green);">'+(r.reinvest_amount!=null?f$(r.reinvest_amount):'--')+'</td>' +
+               '<td class="mo" style="color:#3B82F6;">'+(r.takehome_amount!=null?f$(r.takehome_amount):'--')+'</td>';
+      })() +
     '</tr>';
   }).join('');
   // Attach edit handlers via data attributes
@@ -2595,20 +2609,88 @@ async function saveEdit() {
     const proc = (updates.sale_price || 0) - (updates.fees || 0) - (updates.ship_out || 0);
     updates.net_proceeds = proc;
     updates.realized_profit = proc - price - ship;
+    // Calculate EV% Returned and reinvestment
+    const tempCard = {...(INV.find(c=>c.id===id)||{}), ...updates};
+    const evRet = calcEVReturned(tempCard);
+    if (evRet !== null) {
+      updates.ev_pct_returned = evRet;
+      const reinvestPct = getReinvestPct(evRet);
+      if (reinvestPct !== null) {
+        updates.reinvest_amount = parseFloat((updates.realized_profit * reinvestPct).toFixed(2));
+        updates.takehome_amount = parseFloat((updates.realized_profit * (1 - reinvestPct)).toFixed(2));
+      }
+    }
   }
   const { data, error } = await sb.from('inventory').update(updates).eq('id', id).select().single();
   if (error) return toast('Error saving: ' + error.message, true);
   const idx = INV.findIndex(c => c.id === id);
   if (idx !== -1) INV[idx] = data;
   closeModal('edit-modal');
-  // Re-apply current filters instead of resetting
   populateInvDropdowns();
   filterInv();
   renderDash();
   renderSold();
   renderBatches();
   renderBL();
-  toast('Card updated!');
+  // Show reinvestment summary if sold
+  if (data.status === 'Sold' && data.ev_pct_returned !== null && data.ev_pct_returned !== undefined) {
+    const evp = (data.ev_pct_returned * 100).toFixed(0);
+    const ri = data.reinvest_amount != null ? f$(data.reinvest_amount) : '--';
+    const th = data.takehome_amount != null ? f$(data.takehome_amount) : '--';
+    showSaleSummary(data, evp, ri, th);
+  } else {
+    toast('Card updated!');
+  }
+}
+
+// - SALE SUMMARY MODAL -
+function closeSaleSummary(){const m=document.getElementById('sale-summary-modal');if(m)m.remove();toast('Card updated!');}
+
+function showSaleSummary(card, evPct, reinvest, takehome) {
+  const modal = document.createElement('div');
+  modal.className = 'modal-bg open';
+  modal.id = 'sale-summary-modal';
+  const evColor = evPct >= 101 ? 'var(--green)' : evPct >= 61 ? 'var(--amber)' : 'var(--text)';
+  const tierLabel = getReinvestTierLabel(card.ev_pct_returned);
+  const modeNote = USER_SETTINGS.reinvest_mode === 'flat' ? 'Flat ' + USER_SETTINGS.reinvest_flat_pct + '%' :
+                   USER_SETTINGS.reinvest_mode === 'manual' ? 'Manual mode — set your own split' : tierLabel;
+  modal.innerHTML = '<div class="modal" style="max-width:420px;">' +
+    '<div class="modal-title">Sale Summary <button class="modal-close" onclick="closeSaleSummary()">✕</button></div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">' +
+      '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);padding:12px;">' +
+        '<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Sale Price</div>' +
+        '<div style="font-size:18px;font-weight:800;color:var(--text);">' + f$(card.sale_price) + '</div>' +
+      '</div>' +
+      '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);padding:12px;">' +
+        '<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Realized Profit</div>' +
+        '<div style="font-size:18px;font-weight:800;color:' + (card.realized_profit >= 0 ? 'var(--green)' : '#F87171') + ';">' + f$(card.realized_profit) + '</div>' +
+      '</div>' +
+      '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);padding:12px;">' +
+        '<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">EV% Returned</div>' +
+        '<div style="font-size:18px;font-weight:800;color:' + evColor + ';">' + evPct + '%</div>' +
+      '</div>' +
+      '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);padding:12px;">' +
+        '<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Tier</div>' +
+        '<div style="font-size:11px;font-weight:700;color:' + evColor + ';margin-top:4px;">' + modeNote + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--r);padding:14px;margin-bottom:16px;">' +
+      '<div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Recommended Allocation</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">' +
+        '<div>' +
+          '<div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Reinvest</div>' +
+          '<div style="font-size:20px;font-weight:800;color:var(--green);">' + reinvest + '</div>' +
+        '</div>' +
+        '<div>' +
+          '<div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Take Home</div>' +
+          '<div style="font-size:20px;font-weight:800;color:#3B82F6;">' + takehome + '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="font-size:11px;color:var(--text-muted);margin-bottom:14px;text-align:center;">Adjust your reinvestment settings in the Financials tab</div>' +
+    '<button class="btn-a" style="width:100%;" onclick="closeSaleSummary()">Got it</button>' +
+  '</div>';
+  document.body.appendChild(modal);
 }
 
 // - FINANCIALS -
@@ -2678,6 +2760,74 @@ function renderFinancials() {
 
   // Expense list
   renderExpenseList(expenses);
+
+  // Reinvestment tracker
+  renderReinvestTracker(sold);
+}
+
+function renderReinvestTracker(sold) {
+  let el = g('reinvest-tracker');
+  if (!el) return;
+  const withData = sold.filter(r => r.ev_pct_returned != null && r.reinvest_amount != null);
+  const totalReinvest = withData.reduce((s,r) => s+(r.reinvest_amount||0), 0);
+  const totalTakehome = withData.reduce((s,r) => s+(r.takehome_amount||0), 0);
+  const totalProfit = sold.reduce((s,r) => s+(r.realized_profit||0), 0);
+
+  el.innerHTML =
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">' +
+      '<div class="kcard" style="border-top-color:var(--green);">' +
+        '<div class="klbl">Total Profit</div>' +
+        '<div class="kval g">' + f$(totalProfit) + '</div>' +
+        '<div class="ksub">This year</div>' +
+      '</div>' +
+      '<div class="kcard" style="border-top-color:#22C55E;">' +
+        '<div class="klbl">Reinvest Pool</div>' +
+        '<div class="kval" style="color:#22C55E;">' + f$(totalReinvest) + '</div>' +
+        '<div class="ksub">Back into cards</div>' +
+      '</div>' +
+      '<div class="kcard" style="border-top-color:#3B82F6;">' +
+        '<div class="klbl">Take Home</div>' +
+        '<div class="kval" style="color:#3B82F6;">' + f$(totalTakehome) + '</div>' +
+        '<div class="ksub">Your earnings</div>' +
+      '</div>' +
+    '</div>' +
+
+    '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:14px;">' +
+      '<div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">Reinvestment Mode</div>' +
+      '<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">' +
+        '<button onclick="setReinvestMode(\'ev_based\')" class="pbtn' + (USER_SETTINGS.reinvest_mode==='ev_based'?' active':'') + '" style="font-size:11px;padding:6px 14px;">EV-Based Tiers</button>' +
+        '<button onclick="setReinvestMode(\'flat\')" class="pbtn' + (USER_SETTINGS.reinvest_mode==='flat'?' active':'') + '" style="font-size:11px;padding:6px 14px;">Flat %</button>' +
+        '<button onclick="setReinvestMode(\'manual\')" class="pbtn' + (USER_SETTINGS.reinvest_mode==='manual'?' active':'') + '" style="font-size:11px;padding:6px 14px;">Manual</button>' +
+      '</div>' +
+      '<div id="flat-pct-wrap" style="display:' + (USER_SETTINGS.reinvest_mode==='flat'?'block':'none') + ';margin-bottom:10px;">' +
+        '<div style="display:flex;align-items:center;gap:12px;">' +
+          '<label style="font-size:11px;color:var(--text-muted);">Reinvest %</label>' +
+          '<input type="range" min="0" max="100" step="5" value="' + (USER_SETTINGS.reinvest_flat_pct||65) + '" id="flat-pct-slider" oninput="updateFlatPct(this.value)" style="flex:1;">' +
+          '<span style="font-size:13px;font-weight:700;color:var(--text);min-width:40px;" id="flat-pct-val">' + (USER_SETTINGS.reinvest_flat_pct||65) + '%</span>' +
+        '</div>' +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--text-muted);">' +
+        (USER_SETTINGS.reinvest_mode==='ev_based' ? '40–60% EV → 50/50 · 61–100% → 65/35 · 101–150% → 75/25 · 151%+ → 80/20' :
+         USER_SETTINGS.reinvest_mode==='flat' ? 'Same split applied to every sale regardless of EV performance.' :
+         'No automatic recommendation — decide manually for each card.') +
+      '</div>' +
+    '</div>' +
+
+    (withData.length === 0 ? '<div style="font-size:12px;color:var(--text-muted);">No sold cards with EV data yet for this year</div>' :
+    '<div style="font-size:11px;color:var(--text-muted);">Based on ' + withData.length + ' of ' + sold.length + ' sold cards with EV data</div>');
+}
+
+async function setReinvestMode(mode) {
+  USER_SETTINGS.reinvest_mode = mode;
+  await saveUserSettings();
+  renderFinancials();
+}
+
+function updateFlatPct(val) {
+  USER_SETTINGS.reinvest_flat_pct = parseInt(val);
+  g('flat-pct-val').textContent = val + '%';
+  clearTimeout(window._fpTimer);
+  window._fpTimer = setTimeout(() => saveUserSettings(), 800);
 }
 
 function renderExpenseList(expenses) {
@@ -3167,6 +3317,54 @@ function renderProfitChart() {
 
 loadTheme();
 initAuth();
+
+// ══════════ REINVESTMENT LOGIC ══════════
+let USER_SETTINGS = { reinvest_mode: 'ev_based', reinvest_flat_pct: 65 };
+
+async function loadUserSettings() {
+  if (!CU) return;
+  const { data } = await sb.from('user_settings').select('*').eq('id', CU.id).single();
+  if (data) USER_SETTINGS = data;
+}
+
+async function saveUserSettings() {
+  await sb.from('user_settings').upsert({
+    id: CU.id,
+    reinvest_mode: USER_SETTINGS.reinvest_mode,
+    reinvest_flat_pct: USER_SETTINGS.reinvest_flat_pct,
+    updated_at: new Date().toISOString()
+  });
+}
+
+function getReinvestPct(evPctReturned) {
+  if (USER_SETTINGS.reinvest_mode === 'flat') {
+    return USER_SETTINGS.reinvest_flat_pct / 100;
+  }
+  if (USER_SETTINGS.reinvest_mode === 'manual') return null;
+  // EV-based tiers
+  const pct = evPctReturned * 100;
+  if (pct >= 151) return 0.80;
+  if (pct >= 101) return 0.75;
+  if (pct >= 61)  return 0.65;
+  return 0.50;
+}
+
+function calcEVReturned(card) {
+  // Use original gem rate + PSA 9, substitute actual sale price for PSA 10
+  if (!card.gem_rate || !card.sale_price || !card.total_cost) return null;
+  const n10 = card.sale_price * 0.865;
+  const n9  = (card.psa9 || 0) * 0.865;
+  const ev  = card.gem_rate * n10 + (1 - card.gem_rate) * n9 - card.total_cost;
+  return ev / card.total_cost;
+}
+
+function getReinvestTierLabel(evPct) {
+  const p = evPct * 100;
+  if (p >= 151) return '151%+ — Max Reinvest';
+  if (p >= 101) return '101–150% — Strong';
+  if (p >= 61)  return '61–100% — Solid';
+  return '40–60% — Threshold';
+}
 
 function blCalc() {
   const gem=nf('bl-gem'),p10=nf('bl-p10'),p9=nf('bl-p9'),cost=nf('bl-cost');
