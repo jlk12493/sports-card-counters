@@ -763,8 +763,8 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
         <div class="kcard"><div class="klbl">Avg Profit/Card</div><div class="kval g" id="s-avg">—</div></div>
       </div>
       <div class="twrap">
-        <table class="dtbl">
-          <thead><tr><th></th><th>Card ID</th><th>Player</th><th>Year</th><th>Set</th><th>Sport</th><th>Date Sold</th><th>Total Cost</th><th>Sale Price</th><th>Fees</th><th>Ship Out</th><th>Net Proceeds</th><th>Profit</th><th>EV% Returned</th><th>Reinvest</th><th>Take Home</th></tr></thead>
+        <table class="dtbl" style="min-width:0;">
+          <thead><tr><th></th><th>Player</th><th>Set</th><th>Date Sold</th><th>Profit</th><th>EV% Returned</th></tr></thead>
           <tbody id="sold-tbody"></tbody>
         </table>
       </div>
@@ -2120,43 +2120,61 @@ function renderSold() {
   renderSoldRows(soldAll);
 }
 
-function renderSoldRows(sold) {
-  const tb = g('sold-tbody');
-  if (!sold.length) {
-    tb.innerHTML = '<tr><td colspan="12"><div class="empty"><div class="empty-icon">&#128176;</div><div class="empty-title">No sold cards yet</div><div style="font-size:12px;">Mark cards as Sold in Inventory to track P&L</div></div></td></tr>';
-    g('s-cnt').textContent='0'; g('s-proc').textContent='$0.00'; g('s-prof').textContent='$0.00'; g('s-avg').textContent='--';
+function renderSoldRows(sold){
+  const tb=g('sold-tbody');
+  if(!sold.length){
+    tb.innerHTML='<tr><td colspan="3"><div class="empty"><div class="empty-icon">&#128176;</div><div class="empty-title">No sold cards yet</div><div style="font-size:12px;">Mark cards as Sold in Inventory to track P&L</div></div></td></tr>';
+    g('s-cnt').textContent='0';g('s-proc').textContent='$0.00';g('s-prof').textContent='$0.00';g('s-avg').textContent='--';
     return;
   }
-  tb.innerHTML = sold.map(function(r) {
+  const openIds=new Set();
+  const wrap=tb.closest('table')?.parentElement;
+  if(wrap) wrap.querySelectorAll('.sold-body.open').forEach(el=>openIds.add(el.dataset.sid));
+
+  tb.innerHTML=sold.map(function(r){
     const proc=(r.sale_price||0)-(r.fees||0)-(r.ship_out||0);
     const prof=proc-(r.price||0)-(r.ship||0);
-    return '<tr>' +
-      '<td><button class="btn-s" style="font-size:10px;padding:3px 8px;" data-edit-id="' + r.id + '">Edit</button></td>' +
-      '<td class="mo" style="font-size:10px;color:#555;">'+(r.card_id||'--')+'</td>' +
-      '<td class="pl">'+(r.player||'--')+'</td>' +
-      '<td class="mo">'+(r.year||'--')+'</td>' +
-      '<td>'+(r.set_name||'--')+'</td>' +
-      '<td>'+(r.sport||'--')+'</td>' +
-      '<td class="mo">'+(r.date_sold||'--')+'</td>' +
-      '<td class="mo">'+f$((r.price||0)+(r.ship||0)+(r.grading||0))+'</td>' +
-      '<td class="mo">'+(r.sale_price!=null?f$(r.sale_price):'--')+'</td>' +
-      '<td class="mo">'+(r.fees!=null?f$(r.fees):'--')+'</td>' +
-      '<td class="mo">'+(r.ship_out!=null?f$(r.ship_out):'--')+'</td>' +
-      '<td class="mo" style="font-weight:700;">'+f$(proc)+'</td>' +
-      '<td class="mo '+(prof>=0?'gn':'rd')+'" style="font-weight:700;">'+(prof>=0?'+':'')+f$(prof)+'</td>' +
-      (function(){
-        const evr = r.ev_pct_returned;
-        const evColor = evr!=null?(evr>=1.01?'var(--green)':evr>=0.61?'var(--amber)':'var(--text-2)'):'var(--text-muted)';
-        return '<td class="mo" style="font-weight:700;color:'+evColor+';">'+(evr!=null?((evr*100).toFixed(0)+'%'):'--')+'</td>' +
-               '<td class="mo" style="color:var(--green);">'+(r.reinvest_amount!=null?f$(r.reinvest_amount):'--')+'</td>' +
-               '<td class="mo" style="color:#3B82F6;">'+(r.takehome_amount!=null?f$(r.takehome_amount):'--')+'</td>';
-      })() +
-    '</tr>';
+    const evr=r.ev_pct_returned;
+    const evColor=evr!=null?(evr>=1.01?'var(--green)':evr>=0.61?'var(--amber)':'var(--text-2)'):'var(--text-muted)';
+    const isOpen=openIds.has(r.id);
+    const profColor=prof>=0?'var(--green)':'#F87171';
+
+    // collapsed row
+    let html='<tr style="cursor:pointer;" onclick="toggleSoldRow(this)" data-sid="'+r.id+'">';
+    html+='<td><i id="soldchev-'+r.id+'" style="font-style:normal;font-size:10px;color:var(--text-muted);transition:transform .2s;'+(isOpen?'transform:rotate(90deg)':'')+'">&#9658;</i></td>';
+    html+='<td class="pl">'+(r.player||'--')+'</td>';
+    html+='<td class="mo" style="font-size:11px;color:var(--text-muted);">'+(r.year||'')+(r.set_name?' · '+r.set_name:'')+'</td>';
+    html+='<td class="mo">'+(r.date_sold||'--')+'</td>';
+    html+='<td class="mo" style="font-weight:700;color:'+profColor+';">'+(prof>=0?'+':'')+f$(prof)+'</td>';
+    html+='<td class="mo" style="font-weight:700;color:'+evColor+';">'+(evr!=null?((evr*100).toFixed(0)+'%'):'--')+'</td>';
+    html+='</tr>';
+
+    // expanded row
+    html+='<tr class="sold-body'+(isOpen?' open':'')+'" data-sid="'+r.id+'" style="'+(isOpen?'':'display:none;')+'">';
+    html+='<td colspan="6" style="padding:0;">';
+    html+='<div style="padding:12px 14px;background:var(--surface-2);border-top:1px solid var(--border);">';
+    html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:12px;">';
+    html+=soldDCell('Card ID',r.card_id);
+    html+=soldDCell('Sport',r.sport);
+    html+=soldDCell('Total Cost',f$((r.price||0)+(r.ship||0)+(r.grading||0)));
+    html+=soldDCell('Sale Price',r.sale_price!=null?f$(r.sale_price):null);
+    html+=soldDCell('Platform Fees',r.fees!=null?f$(r.fees):null);
+    html+=soldDCell('Ship Out',r.ship_out!=null?f$(r.ship_out):null);
+    html+=soldDCell('Net Proceeds',f$(proc));
+    html+=soldDCell('Realized Profit',f$(prof),profColor);
+    html+=soldDCell('EV% Returned',evr!=null?((evr*100).toFixed(0)+'%'):null,evColor);
+    html+=soldDCell('Reinvest',r.reinvest_amount!=null?f$(r.reinvest_amount):null,'var(--green)');
+    html+=soldDCell('Take Home',r.takehome_amount!=null?f$(r.takehome_amount):null,'#3B82F6');
+    html+='</div>';
+    html+='<button class="btn-s" style="font-size:10px;padding:3px 10px;" data-edit-id="'+r.id+'">Edit</button>';
+    html+='</div></td></tr>';
+    return html;
   }).join('');
-  // Attach edit handlers via data attributes
-  tb.querySelectorAll('[data-edit-id]').forEach(function(btn) {
-    btn.addEventListener('click', function() { openEdit(this.dataset.editId); });
+
+  tb.querySelectorAll('[data-edit-id]').forEach(function(btn){
+    btn.addEventListener('click',function(e){e.stopPropagation();openEdit(this.dataset.editId);});
   });
+
   const proc=sold.reduce((s,r)=>s+(r.sale_price||0)-(r.fees||0)-(r.ship_out||0),0);
   const prof=sold.reduce((s,r)=>s+(r.sale_price||0)-(r.price||0)-(r.ship||0)-(r.fees||0)-(r.ship_out||0),0);
   g('s-cnt').textContent=sold.length;
@@ -2164,6 +2182,23 @@ function renderSoldRows(sold) {
   g('s-prof').textContent=f$(prof);
   g('s-avg').textContent=sold.length?f$(prof/sold.length):'--';
 }
+
+function soldDCell(label,value,color){
+  if(!value&&value!==0)return'';
+  return'<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">'+label+'</div><div style="font-size:13px;font-weight:600;color:'+(color||'var(--text)')+';">'+value+'</div></div>';
+}
+
+function toggleSoldRow(el){
+  const id=el.dataset.sid;
+  const body=document.querySelector('.sold-body[data-sid="'+id+'"]');
+  const chev=document.getElementById('soldchev-'+id);
+  if(!body)return;
+  const isOpen=body.style.display!=='none';
+  body.style.display=isOpen?'none':'';
+  body.classList.toggle('open',!isOpen);
+  if(chev)chev.style.transform=isOpen?'':'rotate(90deg)';
+}
+
 
 
 function evDecision(evp) {
