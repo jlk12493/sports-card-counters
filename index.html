@@ -841,16 +841,12 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
 
       <div class="fbar">
         <button class="btn-s" onclick="toggleForm('bl-form',true)">+ Log Evaluation</button>
-        <input class="fi" type="text" id="bl-q" placeholder="Search player, set..." oninput="filterBL()">
-        <select class="fi" id="bl-df" onchange="filterBL()"><option value="">All Decisions</option><option>BUY</option><option>PASS</option></select>
+        <input class="fi" type="text" id="bl-q" placeholder="Search player, set..." oninput="filterBL()" style="flex:1;min-width:140px;">
+        <select class="fi" id="bl-player-filter" onchange="filterBL()" style="min-width:130px;"><option value="">All Players</option></select>
+        <select class="fi" id="bl-df" onchange="filterBL()"><option value="">All Decisions</option><option>BUY</option><option>CAUTION</option><option>PASS</option></select>
         <span class="fcnt" id="bl-cnt"></span>
       </div>
-      <div class="twrap">
-        <table class="dtbl">
-          <thead><tr><th></th><th>Date</th><th>Player</th><th>Year</th><th>Set</th><th>#</th><th>Gem %</th><th>PSA 10</th><th>PSA 9</th><th>Net 10</th><th>Net 9</th><th>Cost</th><th>EV$</th><th>EV%</th><th>Max @40%</th><th>Max @35%</th><th>Decision</th><th>Notes</th><th></th></tr></thead>
-          <tbody id="bl-tbody"></tbody>
-        </table>
-      </div>
+      <div id="bl-list"></div>
     </div>
 
     <!-- FINANCIALS -->
@@ -2172,37 +2168,98 @@ function evDecision(evp) {
   return 'PASS';
 }
 
-function renderBL() {
-  const el=g('bl-cnt'); if(el) el.textContent=blF.length+' entr'+(blF.length===1?'y':'ies');
-  const tb=g('bl-tbody');
-  if (!blF.length){tb.innerHTML=`<tr><td colspan="18"><div class="empty"><div class="empty-icon">📊</div><div class="empty-title">No evaluations yet</div><div style="font-size:12px;">Click + Log Evaluation</div></div></td></tr>`;return;}
-  tb.innerHTML=blF.map(r=>{
+function renderBL(){
+  const el=g('bl-cnt');if(el)el.textContent=blF.length+' entr'+(blF.length===1?'y':'ies');
+  const wrap=g('bl-list');if(!wrap)return;
+  if(!blF.length){wrap.innerHTML='<div class="empty"><div class="empty-icon">&#128202;</div><div class="empty-title">No evaluations yet</div><div style="font-size:12px;">Click + Log Evaluation</div></div>';return;}
+  const openIds=new Set();
+  wrap.querySelectorAll('.bl-body.open').forEach(el=>openIds.add(el.dataset.blid));
+  wrap.innerHTML=blF.map(r=>{
     const n10=r.psa10?r.psa10*0.865:null,n9=r.psa9?r.psa9*0.865:null;
     const ev=(n10&&r.gem_rate&&r.total_cost)?(r.gem_rate*n10+(1-r.gem_rate)*(n9||0)-r.total_cost):null;
     const evp=(ev!==null&&r.total_cost)?ev/r.total_cost:null;
     const mb=(n10&&r.gem_rate)?((r.gem_rate*n10+(1-r.gem_rate)*(n9||0))/1.40):null;
-    const dec=evp!==null?(evp>=0.40?'BUY':'PASS'):'--';
-    return `<tr>
-      <td><button class="btn-del" onclick="delBL('${r.id}')">x</button></td>
-      <td class="mo">${r.date_ran||'--'}</td>
-      <td class="pl">${r.player||'--'}</td>
-      <td class="mo">${r.year||'--'}</td>
-      <td>${r.set_name||'--'}</td>
-      <td class="mo">${r.card_no||'--'}</td>
-      <td class="mo">${r.gem_rate!=null?((r.gem_rate*100).toFixed(0)+'%'):'--'}</td>
-      <td class="mo">${r.psa10!=null?f$(r.psa10):'--'}</td>
-      <td class="mo">${r.psa9!=null?f$(r.psa9):'--'}</td>
-      <td class="mo">${n10!=null?f$(n10):'--'}</td>
-      <td class="mo">${n9!=null?f$(n9):'--'}</td>
-      <td class="mo" style="font-weight:700;">${r.total_cost!=null?f$(r.total_cost):'--'}</td>
-      <td class="mo ${ev!=null&&ev>0?'gn':ev!=null&&ev<0?'rd':''}">${ev!=null?f$(ev):'--'}</td>
-      <td>${evp!=null?evBar(evp):'--'}</td>
-      <td class="mo" style="color:var(--amber);">${mb!=null?f$(mb):'--'}</td>
-      <td><span class="bdg ${dec==='BUY'?'b-buy':dec==='CAUTION'?'b-hold':dec==='PASS'?'b-pass':'b-raw'}">${dec}</span></td>
-      <td style="font-size:11px;color:var(--text-muted);">${r.notes||'--'}</td>
-    </tr>`;
+    const mb35=(n10&&r.gem_rate)?((r.gem_rate*n10+(1-r.gem_rate)*(n9||0))/1.35):null;
+    const dec=evp!==null?(evp>=0.40?'BUY':evp>=0.35?'CAUTION':'PASS'):'--';
+    const decBadge=dec==='BUY'?'b-buy':dec==='CAUTION'?'b-hold':'b-pass';
+    const evColor=evp!==null?(evp>=0.40?'var(--green)':evp>=0.35?'var(--amber)':'#F87171'):'var(--text-muted)';
+    const isOpen=openIds.has(r.id);
+    let row='<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;overflow:hidden;">';
+    row+='<div style="padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;" onclick="toggleBLCard(this)" data-blid="'+r.id+'">';
+    row+='<i id="blchev-'+r.id+'" style="font-style:normal;font-size:10px;color:var(--text-muted);transition:transform .2s;flex-shrink:0;'+(isOpen?'transform:rotate(90deg)':'')+'">&#9658;</i>';
+    row+='<div style="flex:1;min-width:0;">';
+    row+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">';
+    row+='<span style="font-size:13px;font-weight:700;color:var(--text);">'+(r.player||'--')+'</span>';
+    row+='<span style="font-size:11px;color:var(--text-muted);">'+(r.year||'')+(r.set_name?' · '+r.set_name:'')+(r.parallel?' · '+r.parallel:'')+(r.card_no?' #'+r.card_no:'')+'</span>';
+    row+='</div>';
+    row+='<div style="display:flex;align-items:center;gap:10px;margin-top:4px;flex-wrap:wrap;">';
+    row+='<span class="bdg '+decBadge+'">'+dec+'</span>';
+    row+=(evp!==null?'<span style="font-size:11px;font-weight:700;color:'+evColor+';">EV: '+(evp*100).toFixed(1)+'%</span>':'');
+    row+=(mb!==null?'<span style="font-size:11px;color:var(--text-muted);">Max Buy: <strong style="color:var(--text);">'+f$(mb)+'</strong></span>':'');
+    row+='<span style="font-size:10px;color:var(--text-muted);">'+(r.date_ran||'')+'</span>';
+    row+='</div></div></div>';
+    row+='<div class="bl-body'+(isOpen?' open':'')+'" data-blid="'+r.id+'" style="'+(isOpen?'':'display:none;')+'border-top:1px solid var(--border);padding:14px;">';
+    row+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:14px;">';
+    if(r.gem_rate!=null)row+=blDCell('Gem Rate',(r.gem_rate*100).toFixed(0)+'%');
+    if(r.psa10!=null)row+=blDCell('Gross PSA 10',f$(r.psa10));
+    if(r.psa9!=null)row+=blDCell('Gross PSA 9',f$(r.psa9));
+    if(n10!=null)row+=blDCell('Net PSA 10',f$(n10));
+    if(n9!=null)row+=blDCell('Net PSA 9',f$(n9));
+    if(r.total_cost!=null)row+=blDCell('Your Cost',f$(r.total_cost));
+    if(ev!=null)row+=blDCell('EV$',f$(ev),ev>=0?'var(--green)':'#F87171');
+    if(evp!=null)row+=blDCell('EV%',(evp*100).toFixed(1)+'%',evColor);
+    if(mb!=null)row+=blDCell('Max Buy @40%',f$(mb),'var(--amber)');
+    if(mb35!=null)row+=blDCell('Max Buy @35%',f$(mb35),'var(--amber)');
+    row+='</div>';
+    if(r.notes)row+='<div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;padding:8px 10px;background:var(--surface-2);border-radius:5px;">&#128221; '+r.notes+'</div>';
+    row+='<div style="display:flex;gap:8px;">';
+    if(dec==='BUY'||dec==='CAUTION')row+='<button class="btn-a" style="font-size:11px;padding:6px 14px;background:var(--green);" data-blbuy="'+r.id+'">&#9654; Buy</button>';
+    row+='<button class="btn-c" style="font-size:11px;padding:6px 14px;color:#F87171;border-color:#F87171;" data-bldel="'+r.id+'">Delete</button>';
+    row+='</div></div></div>';
+    return row;
   }).join('');
+  wrap.querySelectorAll('[data-blbuy]').forEach(btn=>btn.addEventListener('click',function(e){e.stopPropagation();markBLPurchased(this.dataset.blbuy);}));
+  wrap.querySelectorAll('[data-bldel]').forEach(btn=>btn.addEventListener('click',function(e){e.stopPropagation();delBL(this.dataset.bldel);}));
 }
+
+function blDCell(label,value,color){
+  return '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">'+label+'</div><div style="font-size:13px;font-weight:600;color:'+(color||'var(--text)')+';">'+value+'</div></div>';
+}
+
+function toggleBLCard(el){
+  const id=el.dataset.blid;
+  const body=document.querySelector('.bl-body[data-blid="'+id+'"]');
+  const chev=document.getElementById('blchev-'+id);
+  if(!body)return;
+  const isOpen=body.style.display!=='none';
+  body.style.display=isOpen?'none':'';
+  body.classList.toggle('open',!isOpen);
+  if(chev)chev.style.transform=isOpen?'':'rotate(90deg)';
+}
+
+function filterBL(){
+  const playerSel=g('bl-player-filter');
+  if(playerSel){
+    const players=[...new Set(BL.map(r=>r.player).filter(Boolean))].sort();
+    const curP=playerSel.value;
+    playerSel.innerHTML='<option value="">All Players</option>'+players.map(p=>'<option value="'+p+'" '+(p===curP?'selected':'')+'>'+p+'</option>').join('');
+  }
+  const q=g('bl-q').value.toLowerCase();
+  const df=g('bl-df').value;
+  const pf=playerSel?playerSel.value:'';
+  blF=BL.filter(r=>{
+    const mq=!q||(r.player||'').toLowerCase().includes(q)||(r.set_name||'').toLowerCase().includes(q);
+    const mp=!pf||r.player===pf;
+    const n10=r.psa10?r.psa10*0.865:null,n9=r.psa9?r.psa9*0.865:null;
+    const ev=(n10&&r.gem_rate&&r.total_cost)?(r.gem_rate*n10+(1-r.gem_rate)*(n9||0)-r.total_cost):null;
+    const evp=(ev!==null&&r.total_cost)?ev/r.total_cost:null;
+    const dec=evp!==null?(evp>=0.40?'BUY':evp>=0.35?'CAUTION':'PASS'):'--';
+    const md=!df||dec===df;
+    return mq&&mp&&md;
+  });
+  renderBL();
+}
+
 
 async function addBL() {
   const gem=nf('bl-gem'), p10=nf('bl-p10'), cost=nf('bl-cost');
@@ -2260,29 +2317,6 @@ function markBLPurchased(id){
     qaShowStep(1);
     toast('Card details pre-filled — verify and save!');
   },250);
-}
-
-function filterBL(){
-  const playerSel=g('bl-player-filter');
-  if(playerSel){
-    const players=[...new Set(BL.map(r=>r.player).filter(Boolean))].sort();
-    const curP=playerSel.value;
-    playerSel.innerHTML='<option value="">All Players</option>'+players.map(p=>'<option value="'+p+'" '+(p===curP?'selected':'')+'>'+p+'</option>').join('');
-  }
-  const q=g('bl-q').value.toLowerCase();
-  const df=g('bl-df').value;
-  const pf=playerSel?playerSel.value:'';
-  blF=BL.filter(r=>{
-    const mq=!q||(r.player||'').toLowerCase().includes(q)||(r.set_name||'').toLowerCase().includes(q);
-    const mp=!pf||r.player===pf;
-    const n10=r.psa10?r.psa10*0.865:null,n9=r.psa9?r.psa9*0.865:null;
-    const ev=(n10&&r.gem_rate&&r.total_cost)?(r.gem_rate*n10+(1-r.gem_rate)*(n9||0)-r.total_cost):null;
-    const evp=(ev!==null&&r.total_cost)?ev/r.total_cost:null;
-    const dec=evp!==null?(evp>=0.40?'BUY':evp>=0.35?'CAUTION':'PASS'):'--';
-    const md=!df||dec===df;
-    return mq&&mp&&md;
-  });
-  renderBL();
 }
 
 async function delBL(id) {
