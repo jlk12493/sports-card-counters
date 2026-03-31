@@ -763,8 +763,8 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
         <div class="kcard"><div class="klbl">Avg Profit/Card</div><div class="kval g" id="s-avg">—</div></div>
       </div>
       <div class="twrap">
-        <table class="dtbl" style="min-width:0;">
-          <thead><tr><th></th><th>Player</th><th>Set</th><th>Date Sold</th><th>Profit</th><th>EV% Returned</th></tr></thead>
+        <table class="dtbl">
+          <thead><tr><th></th><th>Card ID</th><th>Player</th><th>Year</th><th>Set</th><th>Sport</th><th>Date Sold</th><th>Total Cost</th><th>Sale Price</th><th>Fees</th><th>Ship Out</th><th>Net Proceeds</th><th>Profit</th><th>EV% Returned</th><th>Reinvest</th><th>Take Home</th></tr></thead>
           <tbody id="sold-tbody"></tbody>
         </table>
       </div>
@@ -841,17 +841,12 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
 
       <div class="fbar">
         <button class="btn-s" onclick="toggleForm('bl-form',true)">+ Log Evaluation</button>
-        <input class="fi" type="text" id="bl-q" placeholder="Search player, set..." oninput="filterBL()">
-        <select class="fi" id="bl-df" onchange="filterBL()"><option value="">All Decisions</option><option>BUY</option><option>PASS</option></select>
+        <input class="fi" type="text" id="bl-q" placeholder="Search player, set..." oninput="filterBL()" style="flex:1;min-width:140px;">
+        <select class="fi" id="bl-player-filter" onchange="filterBL()" style="min-width:130px;"><option value="">All Players</option></select>
+        <select class="fi" id="bl-df" onchange="filterBL()"><option value="">All Decisions</option><option>BUY</option><option>CAUTION</option><option>PASS</option></select>
         <span class="fcnt" id="bl-cnt"></span>
       </div>
-      <div class="twrap">
-        <table class="dtbl">
-          <thead><tr><th></th><th>Date</th><th>Player</th><th>Year</th><th>Set</th><th>#</th><th>Gem %</th><th>PSA 10</th><th>PSA 9</th><th>Net 10</th><th>Net 9</th><th>Cost</th><th>EV$</th><th>EV%</th><th>Max @40%</th><th>Max @35%</th><th>Decision</th><th>Notes</th><th></th></tr></thead>
-          <tbody id="bl-tbody"></tbody>
-        </table>
-      </div>
-    </div>
+      <div id="bl-list"></div>
 
     <!-- FINANCIALS -->
     <div class="sec" id="sec-financials">
@@ -2120,61 +2115,43 @@ function renderSold() {
   renderSoldRows(soldAll);
 }
 
-function renderSoldRows(sold){
-  const tb=g('sold-tbody');
-  if(!sold.length){
-    tb.innerHTML='<tr><td colspan="3"><div class="empty"><div class="empty-icon">&#128176;</div><div class="empty-title">No sold cards yet</div><div style="font-size:12px;">Mark cards as Sold in Inventory to track P&L</div></div></td></tr>';
-    g('s-cnt').textContent='0';g('s-proc').textContent='$0.00';g('s-prof').textContent='$0.00';g('s-avg').textContent='--';
+function renderSoldRows(sold) {
+  const tb = g('sold-tbody');
+  if (!sold.length) {
+    tb.innerHTML = '<tr><td colspan="12"><div class="empty"><div class="empty-icon">&#128176;</div><div class="empty-title">No sold cards yet</div><div style="font-size:12px;">Mark cards as Sold in Inventory to track P&L</div></div></td></tr>';
+    g('s-cnt').textContent='0'; g('s-proc').textContent='$0.00'; g('s-prof').textContent='$0.00'; g('s-avg').textContent='--';
     return;
   }
-  const openIds=new Set();
-  const wrap=tb.closest('table')?.parentElement;
-  if(wrap) wrap.querySelectorAll('.sold-body.open').forEach(el=>openIds.add(el.dataset.sid));
-
-  tb.innerHTML=sold.map(function(r){
+  tb.innerHTML = sold.map(function(r) {
     const proc=(r.sale_price||0)-(r.fees||0)-(r.ship_out||0);
     const prof=proc-(r.price||0)-(r.ship||0);
-    const evr=r.ev_pct_returned;
-    const evColor=evr!=null?(evr>=1.01?'var(--green)':evr>=0.61?'var(--amber)':'var(--text-2)'):'var(--text-muted)';
-    const isOpen=openIds.has(r.id);
-    const profColor=prof>=0?'var(--green)':'#F87171';
-
-    // collapsed row
-    let html='<tr style="cursor:pointer;" onclick="toggleSoldRow(this)" data-sid="'+r.id+'">';
-    html+='<td><i id="soldchev-'+r.id+'" style="font-style:normal;font-size:10px;color:var(--text-muted);transition:transform .2s;'+(isOpen?'transform:rotate(90deg)':'')+'">&#9658;</i></td>';
-    html+='<td class="pl">'+(r.player||'--')+'</td>';
-    html+='<td class="mo" style="font-size:11px;color:var(--text-muted);">'+(r.year||'')+(r.set_name?' · '+r.set_name:'')+'</td>';
-    html+='<td class="mo">'+(r.date_sold||'--')+'</td>';
-    html+='<td class="mo" style="font-weight:700;color:'+profColor+';">'+(prof>=0?'+':'')+f$(prof)+'</td>';
-    html+='<td class="mo" style="font-weight:700;color:'+evColor+';">'+(evr!=null?((evr*100).toFixed(0)+'%'):'--')+'</td>';
-    html+='</tr>';
-
-    // expanded row
-    html+='<tr class="sold-body'+(isOpen?' open':'')+'" data-sid="'+r.id+'" style="'+(isOpen?'':'display:none;')+'">';
-    html+='<td colspan="6" style="padding:0;">';
-    html+='<div style="padding:12px 14px;background:var(--surface-2);border-top:1px solid var(--border);">';
-    html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:12px;">';
-    html+=soldDCell('Card ID',r.card_id);
-    html+=soldDCell('Sport',r.sport);
-    html+=soldDCell('Total Cost',f$((r.price||0)+(r.ship||0)+(r.grading||0)));
-    html+=soldDCell('Sale Price',r.sale_price!=null?f$(r.sale_price):null);
-    html+=soldDCell('Platform Fees',r.fees!=null?f$(r.fees):null);
-    html+=soldDCell('Ship Out',r.ship_out!=null?f$(r.ship_out):null);
-    html+=soldDCell('Net Proceeds',f$(proc));
-    html+=soldDCell('Realized Profit',f$(prof),profColor);
-    html+=soldDCell('EV% Returned',evr!=null?((evr*100).toFixed(0)+'%'):null,evColor);
-    html+=soldDCell('Reinvest',r.reinvest_amount!=null?f$(r.reinvest_amount):null,'var(--green)');
-    html+=soldDCell('Take Home',r.takehome_amount!=null?f$(r.takehome_amount):null,'#3B82F6');
-    html+='</div>';
-    html+='<button class="btn-s" style="font-size:10px;padding:3px 10px;" data-edit-id="'+r.id+'">Edit</button>';
-    html+='</div></td></tr>';
-    return html;
+    return '<tr>' +
+      '<td><button class="btn-s" style="font-size:10px;padding:3px 8px;" data-edit-id="' + r.id + '">Edit</button></td>' +
+      '<td class="mo" style="font-size:10px;color:#555;">'+(r.card_id||'--')+'</td>' +
+      '<td class="pl">'+(r.player||'--')+'</td>' +
+      '<td class="mo">'+(r.year||'--')+'</td>' +
+      '<td>'+(r.set_name||'--')+'</td>' +
+      '<td>'+(r.sport||'--')+'</td>' +
+      '<td class="mo">'+(r.date_sold||'--')+'</td>' +
+      '<td class="mo">'+f$((r.price||0)+(r.ship||0)+(r.grading||0))+'</td>' +
+      '<td class="mo">'+(r.sale_price!=null?f$(r.sale_price):'--')+'</td>' +
+      '<td class="mo">'+(r.fees!=null?f$(r.fees):'--')+'</td>' +
+      '<td class="mo">'+(r.ship_out!=null?f$(r.ship_out):'--')+'</td>' +
+      '<td class="mo" style="font-weight:700;">'+f$(proc)+'</td>' +
+      '<td class="mo '+(prof>=0?'gn':'rd')+'" style="font-weight:700;">'+(prof>=0?'+':'')+f$(prof)+'</td>' +
+      (function(){
+        const evr = r.ev_pct_returned;
+        const evColor = evr!=null?(evr>=1.01?'var(--green)':evr>=0.61?'var(--amber)':'var(--text-2)'):'var(--text-muted)';
+        return '<td class="mo" style="font-weight:700;color:'+evColor+';">'+(evr!=null?((evr*100).toFixed(0)+'%'):'--')+'</td>' +
+               '<td class="mo" style="color:var(--green);">'+(r.reinvest_amount!=null?f$(r.reinvest_amount):'--')+'</td>' +
+               '<td class="mo" style="color:#3B82F6;">'+(r.takehome_amount!=null?f$(r.takehome_amount):'--')+'</td>';
+      })() +
+    '</tr>';
   }).join('');
-
-  tb.querySelectorAll('[data-edit-id]').forEach(function(btn){
-    btn.addEventListener('click',function(e){e.stopPropagation();openEdit(this.dataset.editId);});
+  // Attach edit handlers via data attributes
+  tb.querySelectorAll('[data-edit-id]').forEach(function(btn) {
+    btn.addEventListener('click', function() { openEdit(this.dataset.editId); });
   });
-
   const proc=sold.reduce((s,r)=>s+(r.sale_price||0)-(r.fees||0)-(r.ship_out||0),0);
   const prof=sold.reduce((s,r)=>s+(r.sale_price||0)-(r.price||0)-(r.ship||0)-(r.fees||0)-(r.ship_out||0),0);
   g('s-cnt').textContent=sold.length;
@@ -2182,23 +2159,6 @@ function renderSoldRows(sold){
   g('s-prof').textContent=f$(prof);
   g('s-avg').textContent=sold.length?f$(prof/sold.length):'--';
 }
-
-function soldDCell(label,value,color){
-  if(!value&&value!==0)return'';
-  return'<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">'+label+'</div><div style="font-size:13px;font-weight:600;color:'+(color||'var(--text)')+';">'+value+'</div></div>';
-}
-
-function toggleSoldRow(el){
-  const id=el.dataset.sid;
-  const body=document.querySelector('.sold-body[data-sid="'+id+'"]');
-  const chev=document.getElementById('soldchev-'+id);
-  if(!body)return;
-  const isOpen=body.style.display!=='none';
-  body.style.display=isOpen?'none':'';
-  body.classList.toggle('open',!isOpen);
-  if(chev)chev.style.transform=isOpen?'':'rotate(90deg)';
-}
-
 
 
 function evDecision(evp) {
@@ -2208,37 +2168,100 @@ function evDecision(evp) {
   return 'PASS';
 }
 
-function renderBL() {
-  const el=g('bl-cnt'); if(el) el.textContent=blF.length+' entr'+(blF.length===1?'y':'ies');
-  const tb=g('bl-tbody');
-  if (!blF.length){tb.innerHTML=`<tr><td colspan="18"><div class="empty"><div class="empty-icon">📊</div><div class="empty-title">No evaluations yet</div><div style="font-size:12px;">Click + Log Evaluation</div></div></td></tr>`;return;}
-  tb.innerHTML=blF.map(r=>{
+function renderBL(){
+  const el=g('bl-cnt');if(el)el.textContent=blF.length+' entr'+(blF.length===1?'y':'ies');
+  const wrap=g('bl-list');if(!wrap)return;
+  if(!blF.length){wrap.innerHTML='<div class="empty"><div class="empty-icon">&#128202;</div><div class="empty-title">No evaluations yet</div><div style="font-size:12px;">Click + Log Evaluation</div></div>';return;}
+  const openIds=new Set();
+  wrap.querySelectorAll('.bl-body.open').forEach(el=>openIds.add(el.dataset.blid));
+  wrap.innerHTML=blF.map(r=>{
     const n10=r.psa10?r.psa10*0.865:null,n9=r.psa9?r.psa9*0.865:null;
     const ev=(n10&&r.gem_rate&&r.total_cost)?(r.gem_rate*n10+(1-r.gem_rate)*(n9||0)-r.total_cost):null;
     const evp=(ev!==null&&r.total_cost)?ev/r.total_cost:null;
     const mb=(n10&&r.gem_rate)?((r.gem_rate*n10+(1-r.gem_rate)*(n9||0))/1.40):null;
-    const dec=evp!==null?(evp>=0.40?'BUY':'PASS'):'--';
-    return `<tr>
-      <td><button class="btn-del" onclick="delBL('${r.id}')">x</button></td>
-      <td class="mo">${r.date_ran||'--'}</td>
-      <td class="pl">${r.player||'--'}</td>
-      <td class="mo">${r.year||'--'}</td>
-      <td>${r.set_name||'--'}</td>
-      <td class="mo">${r.card_no||'--'}</td>
-      <td class="mo">${r.gem_rate!=null?((r.gem_rate*100).toFixed(0)+'%'):'--'}</td>
-      <td class="mo">${r.psa10!=null?f$(r.psa10):'--'}</td>
-      <td class="mo">${r.psa9!=null?f$(r.psa9):'--'}</td>
-      <td class="mo">${n10!=null?f$(n10):'--'}</td>
-      <td class="mo">${n9!=null?f$(n9):'--'}</td>
-      <td class="mo" style="font-weight:700;">${r.total_cost!=null?f$(r.total_cost):'--'}</td>
-      <td class="mo ${ev!=null&&ev>0?'gn':ev!=null&&ev<0?'rd':''}">${ev!=null?f$(ev):'--'}</td>
-      <td>${evp!=null?evBar(evp):'--'}</td>
-      <td class="mo" style="color:var(--amber);">${mb!=null?f$(mb):'--'}</td>
-      <td><span class="bdg ${dec==='BUY'?'b-buy':dec==='CAUTION'?'b-hold':dec==='PASS'?'b-pass':'b-raw'}">${dec}</span></td>
-      <td style="font-size:11px;color:var(--text-muted);">${r.notes||'--'}</td>
-    </tr>`;
+    const mb35=(n10&&r.gem_rate)?((r.gem_rate*n10+(1-r.gem_rate)*(n9||0))/1.35):null;
+    const dec=evp!==null?(evp>=0.40?'BUY':evp>=0.35?'CAUTION':'PASS'):'--';
+    const decBadge=dec==='BUY'?'b-buy':dec==='CAUTION'?'b-hold':'b-pass';
+    const evColor=evp!==null?(evp>=0.40?'var(--green)':evp>=0.35?'var(--amber)':'#F87171'):'var(--text-muted)';
+    const isOpen=openIds.has(r.id);
+    let row='<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;overflow:hidden;">';
+    row+='<div style="padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;" onclick="toggleBLCard(this)" data-blid="'+r.id+'">';
+    row+='<i id="blchev-'+r.id+'" style="font-style:normal;font-size:10px;color:var(--text-muted);transition:transform .2s;flex-shrink:0;'+(isOpen?'transform:rotate(90deg)':'')+'">&#9658;</i>';
+    row+='<div style="flex:1;min-width:0;">';
+    row+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">';
+    row+='<span style="font-size:13px;font-weight:700;color:var(--text);">'+(r.player||'--')+'</span>';
+    row+='<span style="font-size:11px;color:var(--text-muted);">'+(r.year||'')+(r.set_name?' · '+r.set_name:'')+(r.parallel?' · '+r.parallel:'')+(r.card_no?' #'+r.card_no:'')+'</span>';
+    row+='</div>';
+    row+='<div style="display:flex;align-items:center;gap:10px;margin-top:4px;flex-wrap:wrap;">';
+    row+='<span class="bdg '+decBadge+'">'+dec+'</span>';
+    row+=(evp!==null?'<span style="font-size:11px;font-weight:700;color:'+evColor+';">EV: '+(evp*100).toFixed(1)+'%</span>':'');
+    row+=(mb!==null?'<span style="font-size:11px;color:var(--text-muted);">Max Buy: <strong style="color:var(--text);">'+f$(mb)+'</strong></span>':'');
+    row+='<span style="font-size:10px;color:var(--text-muted);">'+(r.date_ran||'')+'</span>';
+    row+='</div></div></div>';
+    row+='<div class="bl-body'+(isOpen?' open':'')+'" data-blid="'+r.id+'" style="'+(isOpen?'':'display:none;')+'border-top:1px solid var(--border);padding:14px;">';
+    row+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:14px;">';
+    if(r.gem_rate!=null)row+=blDCell('Gem Rate',(r.gem_rate*100).toFixed(0)+'%');
+    if(r.psa10!=null)row+=blDCell('Gross PSA 10',f$(r.psa10));
+    if(r.psa9!=null)row+=blDCell('Gross PSA 9',f$(r.psa9));
+    if(n10!=null)row+=blDCell('Net PSA 10',f$(n10));
+    if(n9!=null)row+=blDCell('Net PSA 9',f$(n9));
+    if(r.total_cost!=null)row+=blDCell('Your Cost',f$(r.total_cost));
+    if(ev!=null)row+=blDCell('EV$',f$(ev),ev>=0?'var(--green)':'#F87171');
+    if(evp!=null)row+=blDCell('EV%',(evp*100).toFixed(1)+'%',evColor);
+    if(mb!=null)row+=blDCell('Max Buy @40%',f$(mb),'var(--amber)');
+    if(mb35!=null)row+=blDCell('Max Buy @35%',f$(mb35),'var(--amber)');
+    row+='</div>';
+    if(r.notes)row+='<div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;padding:8px 10px;background:var(--surface-2);border-radius:5px;">&#128221; '+r.notes+'</div>';
+    row+='<div style="display:flex;gap:8px;">';
+    if(dec==='BUY'||dec==='CAUTION')row+='<button class="btn-a" style="font-size:11px;padding:6px 14px;background:var(--green);" data-blbuy="'+r.id+'">&#9654; Buy</button>';
+    row+='<button class="btn-a" style="font-size:11px;padding:6px 14px;" data-bledit="'+r.id+'">Edit</button>';
+    row+='<button class="btn-c" style="font-size:11px;padding:6px 14px;color:#F87171;border-color:#F87171;" data-bldel="'+r.id+'">Delete</button>';
+    row+='</div></div></div>';
+    return row;
   }).join('');
+  wrap.querySelectorAll('[data-blbuy]').forEach(btn=>btn.addEventListener('click',function(e){e.stopPropagation();markBLPurchased(this.dataset.blbuy);}));
+  wrap.querySelectorAll('[data-bledit]').forEach(btn=>btn.addEventListener('click',function(e){e.stopPropagation();openEditBL(this.dataset.bledit);}));
+  wrap.querySelectorAll('[data-bldel]').forEach(btn=>btn.addEventListener('click',function(e){e.stopPropagation();delBL(this.dataset.bldel);}));
 }
+
+function blDCell(label,value,color){
+  return '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">'+label+'</div><div style="font-size:13px;font-weight:600;color:'+(color||'var(--text)')+';">'+value+'</div></div>';
+}
+
+function toggleBLCard(el){
+  const id=el.dataset.blid;
+  const body=document.querySelector('.bl-body[data-blid="'+id+'"]');
+  const chev=document.getElementById('blchev-'+id);
+  if(!body)return;
+  const isOpen=body.style.display!=='none';
+  body.style.display=isOpen?'none':'';
+  body.classList.toggle('open',!isOpen);
+  if(chev)chev.style.transform=isOpen?'':'rotate(90deg)';
+}
+
+function filterBL(){
+  const playerSel=g('bl-player-filter');
+  if(playerSel){
+    const players=[...new Set(BL.map(r=>r.player).filter(Boolean))].sort();
+    const curP=playerSel.value;
+    playerSel.innerHTML='<option value="">All Players</option>'+players.map(p=>'<option value="'+p+'" '+(p===curP?'selected':'')+'>'+p+'</option>').join('');
+  }
+  const q=g('bl-q').value.toLowerCase();
+  const df=g('bl-df').value;
+  const pf=playerSel?playerSel.value:'';
+  blF=BL.filter(r=>{
+    const mq=!q||(r.player||'').toLowerCase().includes(q)||(r.set_name||'').toLowerCase().includes(q);
+    const mp=!pf||r.player===pf;
+    const n10=r.psa10?r.psa10*0.865:null,n9=r.psa9?r.psa9*0.865:null;
+    const ev=(n10&&r.gem_rate&&r.total_cost)?(r.gem_rate*n10+(1-r.gem_rate)*(n9||0)-r.total_cost):null;
+    const evp=(ev!==null&&r.total_cost)?ev/r.total_cost:null;
+    const dec=evp!==null?(evp>=0.40?'BUY':evp>=0.35?'CAUTION':'PASS'):'--';
+    const md=!df||dec===df;
+    return mq&&mp&&md;
+  });
+  renderBL();
+}
+
 
 async function addBL() {
   const gem=nf('bl-gem'), p10=nf('bl-p10'), cost=nf('bl-cost');
@@ -2274,30 +2297,27 @@ function toggleBLDetails() {
   if (btn) btn.textContent = isOpen ? '+ Card Details' : '- Card Details';
 }
 
-function markBLPurchased(id) {
-  const entry = BL.find(r => r.id === id);
-  if (!entry) return;
-  // Pre-fill Quick Add form with BL data
+function markBLPurchased(id){
+  const entry=BL.find(r=>r.id===id);
+  if(!entry)return;
   openQuickAdd();
-  setTimeout(() => {
-    if (entry.player) g('qa-player').value = entry.player;
-    if (entry.year) g('qa-year').value = entry.year;
-    if (entry.set_name) {
-      const parts = entry.set_name.split(' ');
-      if (g('qa-brand')) g('qa-brand').value = parts[0] || '';
-      if (g('qa-set')) g('qa-set').value = parts.slice(1).join(' ') || '';
+  setTimeout(()=>{
+    if(entry.player)g('qa-player').value=entry.player;
+    if(entry.year)g('qa-year').value=entry.year;
+    if(entry.set_name){
+      const parts=entry.set_name.split(' ');
+      if(g('qa-brand'))g('qa-brand').value=parts[0]||'';
+      if(g('qa-set'))g('qa-set').value=parts.slice(1).join(' ')||'';
     }
-    if (entry.parallel && g('qa-parallel')) g('qa-parallel').value = entry.parallel;
-    if (entry.card_no) g('qa-cno').value = entry.card_no;
-    if (entry.gem_rate) g('qa-gem').value = entry.gem_rate;
-    if (entry.psa10) g('qa-p10').value = entry.psa10;
-    if (entry.psa9) g('qa-p9').value = entry.psa9;
-    if (entry.total_cost) g('qa-price').value = entry.total_cost;
-    qaCalcCost();
-    qaCalcEV();
-    qaShowStep(1);
-    toast('Card details pre-filled from EV Log — complete and save!');
-  }, 200);
+    if(entry.parallel&&g('qa-parallel'))g('qa-parallel').value=entry.parallel;
+    if(entry.card_no)g('qa-cno').value=entry.card_no;
+    if(entry.gem_rate)g('qa-gem').value=entry.gem_rate;
+    if(entry.psa10)g('qa-p10').value=entry.psa10;
+    if(entry.psa9)g('qa-p9').value=entry.psa9;
+    if(entry.total_cost)g('qa-price').value=entry.total_cost;
+    qaCalcCost();qaCalcEV();qaShowStep(1);
+    toast('Card details pre-filled — verify and save!');
+  },250);
 }
 
 async function delBL(id) {
@@ -3595,6 +3615,68 @@ async function saveEditBatch(){
   renderAll();
 }
 
+
+function openEditBL(id){
+  const r=BL.find(x=>x.id===id);if(!r)return;
+  g('ebl-id').value=id;
+  g('ebl-gem').value=r.gem_rate!=null?r.gem_rate:'';
+  g('ebl-p10').value=r.psa10!=null?r.psa10:'';
+  g('ebl-p9').value=r.psa9!=null?r.psa9:'';
+  g('ebl-cost').value=r.total_cost!=null?r.total_cost:'';
+  g('ebl-player').value=r.player||'';
+  g('ebl-year').value=r.year||'';
+  const parts=(r.set_name||'').split(' ');
+  g('ebl-brand').value=parts[0]||'';
+  g('ebl-set').value=parts.slice(1).join(' ')||'';
+  g('ebl-parallel').value=r.parallel||'';
+  g('ebl-cno').value=r.card_no||'';
+  g('ebl-notes').value=r.notes||'';
+  eblCalc();
+  g('edit-bl-modal').classList.add('open');
+}
+
+function eblCalc(){
+  const gem=parseFloat(g('ebl-gem').value),p10=parseFloat(g('ebl-p10').value),p9=parseFloat(g('ebl-p9').value)||0,cost=parseFloat(g('ebl-cost').value);
+  if(!gem||!p10||!cost){g('ebl-preview').style.display='none';return;}
+  const n10=p10*0.865,n9=p9*0.865;
+  const ev=gem*n10+(1-gem)*n9-cost;
+  const evp=ev/cost;
+  const dec=evDecision(evp);
+  const mb=(gem*n10+(1-gem)*n9)/1.40;
+  const decColor=dec==='BUY'?'var(--green)':dec==='CAUTION'?'var(--amber)':'#F87171';
+  g('ebl-preview').style.display='';
+  g('ebl-ev').textContent=f$(ev);g('ebl-ev').style.color=ev>=0?'var(--green)':'#F87171';
+  g('ebl-evp').textContent=(evp*100).toFixed(1)+'%';g('ebl-evp').style.color=decColor;
+  g('ebl-mb').textContent=f$(mb);
+  g('ebl-dec').textContent=dec;g('ebl-dec').style.color='#fff';g('ebl-dec').style.background=decColor;
+}
+
+async function saveEditBL(){
+  const id=g('ebl-id').value;
+  const brand=g('ebl-brand').value.trim();
+  const set=g('ebl-set').value.trim();
+  const updates={
+    gem_rate:parseFloat(g('ebl-gem').value)||null,
+    psa10:parseFloat(g('ebl-p10').value)||null,
+    psa9:parseFloat(g('ebl-p9').value)||null,
+    total_cost:parseFloat(g('ebl-cost').value)||null,
+    player:g('ebl-player').value.trim()||null,
+    year:parseInt(g('ebl-year').value)||null,
+    set_name:[brand,set].filter(Boolean).join(' ')||null,
+    parallel:g('ebl-parallel').value.trim()||null,
+    card_no:g('ebl-cno').value.trim()||null,
+    notes:g('ebl-notes').value.trim()||null,
+  };
+  const {data,error}=await sb.from('ev_log').update(updates).eq('id',id).select().single();
+  if(error)return toast('Error: '+error.message,true);
+  const idx=BL.findIndex(r=>r.id===id);
+  if(idx!==-1)BL[idx]=data;
+  blF=[...BL];
+  closeModal('edit-bl-modal');
+  filterBL();
+  toast('Entry updated!');
+}
+
 loadTheme();
 initAuth();
 
@@ -3739,6 +3821,45 @@ function blCalc() {
     <div class="factions">
       <button class="btn-a" onclick="saveEditBatch()">Save Changes</button>
       <button class="btn-c" onclick="closeModal('edit-batch-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- EDIT BL MODAL -->
+<div class="modal-bg" id="edit-bl-modal">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-title">Edit Evaluation<button class="modal-close" onclick="closeModal('edit-bl-modal')">&#10005;</button></div>
+    <input type="hidden" id="ebl-id">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;">
+      <div class="ff"><label>Gem Rate</label><input type="number" step="0.01" id="ebl-gem" oninput="eblCalc()" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:5px;font-size:14px;outline:none;"></div>
+      <div class="ff"><label>PSA 10 $</label><input type="number" step="0.01" id="ebl-p10" oninput="eblCalc()" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:5px;font-size:14px;outline:none;"></div>
+      <div class="ff"><label>PSA 9 $</label><input type="number" step="0.01" id="ebl-p9" oninput="eblCalc()" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:5px;font-size:14px;outline:none;"></div>
+      <div class="ff"><label>Your Cost $</label><input type="number" step="0.01" id="ebl-cost" oninput="eblCalc()" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:5px;font-size:14px;outline:none;"></div>
+    </div>
+    <div id="ebl-preview" style="display:none;background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--red);border-radius:6px;padding:12px;margin-bottom:14px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;align-items:center;">
+        <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">EV$</div><div style="font-size:15px;font-weight:700;" id="ebl-ev">--</div></div>
+        <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">EV%</div><div style="font-size:15px;font-weight:700;" id="ebl-evp">--</div></div>
+        <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Max @40%</div><div style="font-size:14px;font-weight:700;color:var(--amber);" id="ebl-mb">--</div></div>
+        <div style="text-align:center;"><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">Decision</div><div style="font-size:18px;font-weight:900;padding:4px 10px;border-radius:6px;" id="ebl-dec">--</div></div>
+      </div>
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:14px;">
+      <div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Card Details</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div class="ff"><label>Player</label><input type="text" id="ebl-player" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:5px;font-size:13px;outline:none;"></div>
+        <div class="ff"><label>Year</label><input type="number" id="ebl-year" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:5px;font-size:13px;outline:none;"></div>
+        <div class="ff"><label>Brand</label><input type="text" id="ebl-brand" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:5px;font-size:13px;outline:none;"></div>
+        <div class="ff"><label>Set</label><input type="text" id="ebl-set" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:5px;font-size:13px;outline:none;"></div>
+        <div class="ff"><label>Parallel</label><input type="text" id="ebl-parallel" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:5px;font-size:13px;outline:none;"></div>
+        <div class="ff"><label>Card #</label><input type="text" id="ebl-cno" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:5px;font-size:13px;outline:none;"></div>
+        <div class="ff" style="grid-column:1/-1;"><label>Notes</label><input type="text" id="ebl-notes" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:5px;font-size:13px;outline:none;"></div>
+      </div>
+    </div>
+    <div class="factions">
+      <button class="btn-a" onclick="saveEditBL()">Save Changes</button>
+      <button class="btn-c" onclick="closeModal('edit-bl-modal')">Cancel</button>
     </div>
   </div>
 </div>
