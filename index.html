@@ -1155,19 +1155,21 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
         </div>
         <div class="ff"><label>Card # *</label><input type="text" id="qa-cno" placeholder="e.g. 264" style="font-size:16px;padding:12px;"></div>
       </div>
+      </div>
       <div style="font-size:11px;color:var(--text-muted);margin-bottom:14px;">* Required fields</div>
       <button class="btn-a" style="width:100%;padding:13px;font-size:13px;" onclick="qaNext(1)">Next: Purchase Info</button>
     </div>
 
+    <!-- STEP 2: Purchase Info -->
     <div id="qa-step-2" style="display:none;">
       <div style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;">Step 2 of 3 - Purchase Details</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-        <div class="ff" style="grid-column:1/-1;"><label>Date Acquired</label><input type="date" id="qa-date" style="font-size:16px;padding:12px;"></div>
-        <div class="ff"><label>Purchase Price $</label><input type="number" step="0.01" id="qa-price" placeholder="0.00" style="font-size:16px;padding:12px;" oninput="qaCalcCost()"></div>
+        <div class="ff"><label>Date Acquired</label><input type="date" id="qa-date" style="font-size:16px;padding:12px;"></div>
         <div class="ff"><label>Source</label>
           <input type="text" id="qa-src" placeholder="e.g. eBay" style="font-size:16px;padding:12px;" list="qa-src-list" autocomplete="off">
           <datalist id="qa-src-list"><option>eBay</option><option>Facebook</option><option>WhatNot</option><option>COMC</option><option>LCS</option><option>TikTok</option><option>Show</option><option>Trade</option></datalist>
         </div>
+        <div class="ff"><label>Purchase Price $</label><input type="number" step="0.01" id="qa-price" placeholder="0.00" style="font-size:16px;padding:12px;" oninput="qaCalcCost()"></div>
         <div class="ff"><label>Ship / Tax $</label><input type="number" step="0.01" id="qa-ship" placeholder="0.00" style="font-size:16px;padding:12px;" oninput="qaCalcCost()"></div>
         <div class="ff"><label>Grading Cost $</label><input type="number" step="0.01" id="qa-grade" placeholder="0.00" style="font-size:16px;padding:12px;" oninput="qaCalcCost()"></div>
         <div class="ff"><label>Total Cost</label><div id="qa-total" style="background:var(--surface-3);border:1px solid var(--border);border-radius:5px;padding:12px;font-size:16px;font-weight:700;color:var(--green);">$0.00</div></div>
@@ -1183,7 +1185,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
     <div id="qa-step-3" style="display:none;">
       <div style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;">Step 3 of 3 - EV Data</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-        <div class="ff" style="grid-column:1/-1;"><label>Gem Rate (0-1)</label><input type="number" step="0.01" id="qa-gem" placeholder="0.75" style="font-size:16px;padding:12px;" oninput="qaCalcEV()"></div>
+        <div class="ff"><label>Gem Rate (0-1)</label><input type="number" step="0.01" id="qa-gem" placeholder="0.75" style="font-size:16px;padding:12px;" oninput="qaCalcEV()"></div>
         <div class="ff"><label>PSA 10 $</label><input type="number" step="0.01" id="qa-p10" placeholder="0.00" style="font-size:16px;padding:12px;" oninput="qaCalcEV()"></div>
         <div class="ff"><label>PSA 9 $</label><input type="number" step="0.01" id="qa-p9" placeholder="0.00" style="font-size:16px;padding:12px;" oninput="qaCalcEV()"></div>
         <div class="ff"><label>Disposition</label>
@@ -1205,7 +1207,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
           <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;">DECISION</div><div style="font-size:16px;font-weight:700;" id="qa-ev-dec">--</div></div>
         </div>
       </div>
-      <div style="font-size:11px;color:var(--text-muted);margin-bottom:14px;">EV fields are optional - fill in later</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:14px;">EV fields are optional - you can fill them in later</div>
       <div style="display:flex;gap:8px;">
         <button class="btn-c" style="flex:1;padding:13px;" onclick="qaBack(3)">Back</button>
         <button class="btn-a" style="flex:2;padding:13px;font-size:13px;" id="qa-save-btn" onclick="qaSave()">Save Card</button>
