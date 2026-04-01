@@ -388,6 +388,11 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
 
 .btn-sold{background:transparent;border:1px solid var(--green);color:var(--green);padding:6px 14px;border-radius:5px;font-size:11px;font-weight:700;letter-spacing:.5px;cursor:pointer;}
 .btn-sold:hover{background:var(--green);color:#fff;}
+
+.inv-check{width:16px;height:16px;cursor:pointer;accent-color:var(--red);}
+.inv-select-bar{display:none;background:var(--surface);border:1px solid var(--red);border-radius:var(--r);padding:10px 14px;margin-bottom:10px;align-items:center;gap:12px;flex-wrap:wrap;}
+.inv-select-bar.visible{display:flex;}
+.sel-count{font-size:12px;font-weight:700;color:var(--red);}
 </style>
 </head>
 <body>
@@ -654,6 +659,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
         <button class="btn-s" onclick="toggleForm('inv-form',true)" id="btn-add-inv">+ Add Card</button>
         <button class="btn-export" onclick="exportCSV()">Export CSV</button>
         <button class="btn-export" style="color:var(--amber);border-color:var(--amber);" onclick="openEVRecalc()">Update Comps</button>
+        <button class="btn-s" id="btn-select-mode" onclick="toggleSelectMode()">&#9745; Select</button>
       </div>
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:12px;">
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
@@ -713,6 +719,29 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
           <span class="fcnt" id="inv-cnt"></span>
           <button onclick="clearInvFilters()" style="background:transparent;border:none;color:var(--text-muted);font-size:11px;cursor:pointer;padding:0;">Clear all filters</button>
         </div>
+      </div>
+      <div class="inv-select-bar" id="inv-select-bar">
+        <span class="sel-count" id="sel-count">0 selected</span>
+        <button class="btn-s" onclick="selAll()">Select All</button>
+        <button class="btn-s" onclick="selNone()">Clear</button>
+        <select id="bulk-stat-sel" class="fi" style="min-width:140px;">
+          <option value="">Change Status...</option>
+          <option value="Awaiting Item">Awaiting Item</option>
+          <option value="Raw">Raw</option>
+          <option value="Submitted">Submitted</option>
+          <option value="Graded">Graded</option>
+          <option value="Listed">Listed</option>
+          <option value="Sold">Sold</option>
+        </select>
+        <select id="bulk-disp-sel" class="fi" style="min-width:140px;">
+          <option value="">Change Disposition...</option>
+          <option value="Grade">Grade</option>
+          <option value="Sell Raw">Sell Raw</option>
+          <option value="Hold">Hold</option>
+        </select>
+        <input type="text" id="bulk-batch-inp" class="fi" placeholder="Assign Batch ID..." style="min-width:140px;">
+        <button class="btn-a" style="font-size:11px;padding:6px 14px;" onclick="applyBulkChanges()">Apply</button>
+        <button class="btn-c" style="font-size:11px;padding:6px 14px;" onclick="selNone()">Cancel</button>
       </div>
       <div id="inv-list"></div>
       <div class="pag" id="inv-pag"></div>
@@ -1816,7 +1845,9 @@ function renderInv() {
     return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;overflow:hidden;">' +
 
       // COLLAPSED HEADER ROW
-      '<div style="padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;" onclick="toggleInvCard(this)" data-id="' + r.id + '">' +
+      '<div style="padding:10px 14px;display:flex;align-items:center;gap:10px;">' +
+        '<input type="checkbox" class="inv-check" data-cid="' + r.id + '" style="display:' + (SEL_MODE?"block":"none") + ';flex-shrink:0;">' +
+        '<div style="flex:1;cursor:pointer;display:flex;align-items:center;gap:10px;" onclick="toggleInvCard(this)" data-id="' + r.id + '">' +
         '<i id="ichev-' + r.id + '" style="font-style:normal;font-size:10px;color:var(--text-muted);transition:transform .2s;flex-shrink:0;' + (isOpen?'transform:rotate(90deg)':'') + '">&#9658;</i>' +
         '<div style="flex:1;min-width:0;">' +
           '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' +
@@ -1855,6 +1886,7 @@ function renderInv() {
         (r.notes ? '<div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;padding:8px 10px;background:var(--surface-2);border-radius:5px;">&#128221; ' + r.notes + '</div>' : '') +
         '<div style="display:flex;gap:8px;">' +
           '<button class="btn-a" style="font-size:11px;padding:6px 14px;" onclick="openEdit(\'' + r.id + '\')" >Edit</button>' +
+          '<button class="btn-s" style="font-size:11px;padding:6px 14px;" data-copyid="' + r.id + '" >Copy</button>' +
           '<button class="btn-sold" data-sid="' + r.id + '" onclick="openMarkSold(this.dataset.sid)" >Mark as Sold</button>' +
           '<button class="btn-c" style="font-size:11px;padding:6px 14px;color:#F87171;border-color:#F87171;" onclick="delCard(\'' + r.id + '\')" >Delete</button>' +
         '</div>' +
@@ -1960,6 +1992,8 @@ function calcPerCardCost() {
 async function addBatch() {
   const b={user_id:CU.id,batch_id:gv('sf-id'),submit_date:gv('sf-date'),grader:gv('sf-grader'),service:gv('sf-svc'),status:gv('sf-stat'),notes:gv('sf-notes')};
   if (!b.batch_id) return toast('Batch ID required',true);
+  const dupBatch=BATCHES.find(x=>x.batch_id===b.batch_id);
+  if(dupBatch&&!confirm('Batch #'+b.batch_id+' already exists. Add anyway?'))return;
   const totalCost = parseFloat(g('sf-total-cost')?.value||0)||0;
   const {data,error}=await sb.from('batches').insert(b).select().single();
   if (error) return toast('Error: '+error.message,true);
@@ -3707,6 +3741,143 @@ async function saveEditBL(){
   toast('Entry updated!');
 }
 
+
+// ── COPY CARD ──
+async function copyCard(id){
+  const r=INV.find(function(c){return c.id===id;});
+  if(!r)return;
+  if(!confirm('Copy "'+r.player+'" card? A duplicate entry will be created.'))return;
+  const existingIDs=INV.map(function(x){return x.card_id;}).filter(Boolean);
+  const newID=generateCardID(r.player,r.year,r.set_name,r.parallel,r.card_no,existingIDs);
+  const copy=Object.assign({},r);
+  delete copy.id;
+  delete copy.created_at;
+  copy.card_id=newID;
+  copy.user_id=CU.id;
+  copy.status='Awaiting Item';
+  copy.date_acquired=null;
+  copy.sale_price=null;copy.fees=null;copy.ship_out=null;
+  copy.net_proceeds=null;copy.realized_profit=null;copy.date_sold=null;
+  copy.ev_pct_returned=null;copy.reinvest_amount=null;copy.takehome_amount=null;
+  const res=await sb.from('inventory').insert(copy).select().single();
+  if(res.error)return toast('Error: '+res.error.message,true);
+  INV.unshift(res.data);
+  renderAll();
+  toast('Card copied! New ID: '+newID);
+}
+
+// ── BULK ASSIGN BATCH ──
+function openBulkBatch(){
+  const cards=invF.length?invF:INV.filter(function(r){return r.status!=='Sold';});
+  if(!cards.length)return toast('No cards in current view',true);
+  const modal=document.createElement('div');
+  modal.className='modal-bg open';
+  modal.id='bulk-batch-modal';
+  const batchOptions=BATCHES.map(function(b){return '<option value="'+b.batch_id+'">Batch #'+b.batch_id+' ('+b.grader+' · '+b.service+')</option>';}).join('');
+  modal.innerHTML='<div class="modal" style="max-width:460px;">'+
+    '<div class="modal-title">Bulk Assign to Batch<button class="modal-close" id="bb-close-btn">&#10005;</button></div>'+
+    '<div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">Assign <strong style="color:var(--text);">'+cards.length+' cards</strong> from your current inventory view to a batch.</div>'+
+    '<div class="ff" style="margin-bottom:14px;"><label>Select Batch</label>'+
+    '<select id="bb-batch-sel" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:9px 10px;border-radius:5px;font-size:13px;outline:none;">'+
+    '<option value="">Choose a batch...</option>'+batchOptions+
+    '</select></div>'+
+    '<div style="font-size:11px;color:var(--amber);margin-bottom:14px;">&#9888; This will overwrite the existing Batch ID on all selected cards.</div>'+
+    '<div class="factions">'+
+    '<button class="btn-a" id="bb-confirm-btn">Assign Cards</button>'+
+    '<button class="btn-c" id="bb-cancel-btn">Cancel</button>'+
+    '</div></div>';
+  document.body.appendChild(modal);
+  document.getElementById('bb-close-btn').onclick=function(){modal.remove();};
+  document.getElementById('bb-cancel-btn').onclick=function(){modal.remove();};
+  document.getElementById('bb-confirm-btn').onclick=function(){confirmBulkBatch(cards.map(function(r){return r.id;}));};
+}
+
+async function confirmBulkBatch(ids){
+  const batchId=document.getElementById('bb-batch-sel').value;
+  if(!batchId)return toast('Please select a batch',true);
+  const modal=document.getElementById('bulk-batch-modal');
+  const res=await sb.from('inventory').update({batch_id:batchId,status:'Submitted'}).in('id',ids);
+  if(res.error)return toast('Error: '+res.error.message,true);
+  INV=INV.map(function(r){return ids.includes(r.id)?Object.assign({},r,{batch_id:batchId,status:'Submitted'}):r;});
+  if(modal)modal.remove();
+  renderAll();
+  toast(ids.length+' cards assigned to Batch #'+batchId+'!');
+}
+
+
+var SEL_MODE = false;
+var SEL_IDS = new Set();
+
+function toggleSelectMode(){
+  SEL_MODE = !SEL_MODE;
+  SEL_IDS.clear();
+  const btn = g('btn-select-mode');
+  if(btn) btn.style.borderColor = SEL_MODE ? 'var(--red)' : '';
+  if(btn) btn.style.color = SEL_MODE ? 'var(--red)' : '';
+  updateSelBar();
+  renderInv();
+}
+
+function onCardCheck(e, cb){
+  e.stopPropagation();
+  const id = cb.dataset.cid;
+  if(cb.checked) SEL_IDS.add(id);
+  else SEL_IDS.delete(id);
+  updateSelBar();
+}
+
+function updateSelBar(){
+  const bar = g('inv-select-bar');
+  if(!bar) return;
+  const count = SEL_IDS.size;
+  bar.classList.toggle('visible', SEL_MODE);
+  const el = g('sel-count');
+  if(el) el.textContent = count + ' card' + (count !== 1 ? 's' : '') + ' selected';
+}
+
+function selAll(){
+  invF.forEach(r => SEL_IDS.add(r.id));
+  document.querySelectorAll('.inv-check').forEach(cb => cb.checked = true);
+  updateSelBar();
+}
+
+function selNone(){
+  SEL_IDS.clear();
+  SEL_MODE = false;
+  const btn = g('btn-select-mode');
+  if(btn){ btn.style.borderColor=''; btn.style.color=''; }
+  document.querySelectorAll('.inv-check').forEach(cb => cb.checked = false);
+  updateSelBar();
+  renderInv();
+}
+
+async function applyBulkChanges(){
+  if(!SEL_IDS.size) return toast('No cards selected', true);
+  const newStatus = g('bulk-stat-sel').value;
+  const newDisp = g('bulk-disp-sel').value;
+  const newBatch = g('bulk-batch-inp').value.trim();
+  if(!newStatus && !newDisp && !newBatch) return toast('Choose a status, disposition, or batch ID to apply', true);
+  const ids = [...SEL_IDS];
+  const updates = {};
+  if(newStatus) updates.status = newStatus;
+  if(newDisp) updates.disposition = newDisp;
+  if(newBatch) updates.batch_id = newBatch;
+  const summary = [
+    newStatus ? 'Status → '+newStatus : '',
+    newDisp ? 'Disposition → '+newDisp : '',
+    newBatch ? 'Batch → '+newBatch : ''
+  ].filter(Boolean).join(', ');
+  if(!confirm('Apply to '+ids.length+' cards: '+summary+'?')) return;
+  const res = await sb.from('inventory').update(updates).in('id', ids);
+  if(res.error) return toast('Error: '+res.error.message, true);
+  INV = INV.map(r => ids.includes(r.id) ? Object.assign({}, r, updates) : r);
+  g('bulk-stat-sel').value = '';
+  g('bulk-disp-sel').value = '';
+  g('bulk-batch-inp').value = '';
+  selNone();
+  toast(ids.length+' cards updated!');
+}
+
 loadTheme();
 initAuth();
 
@@ -3896,3 +4067,9 @@ function blCalc() {
 
 </body>
 </html>
+
+  // Wire checkboxes
+  g('inv-list').querySelectorAll('.inv-check').forEach(function(cb){
+    cb.checked = SEL_IDS.has(cb.dataset.cid);
+    cb.addEventListener('click', function(e){ e.stopPropagation(); if(this.checked) SEL_IDS.add(this.dataset.cid); else SEL_IDS.delete(this.dataset.cid); updateSelBar(); });
+  });
