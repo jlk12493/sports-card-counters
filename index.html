@@ -399,8 +399,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
 .sel-count{font-size:12px;font-weight:700;color:var(--red);}
 
 /* ── MOBILE BOTTOM TAB BAR ── */
-.mob-tabbar{display:none !important;position:fixed;bottom:0;left:0;right:0;background:var(--near-black);border-top:2px solid var(--border);z-index:150;padding:0;}
-#auth-screen ~ .mob-tabbar, #auth-screen:not([style*="none"]) ~ * .mob-tabbar{display:none !important;}
+.mob-tabbar{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--near-black);border-top:2px solid var(--border);z-index:150;padding:0;}
 .mob-tabs{display:flex;align-items:stretch;}
 .mob-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px 10px;gap:3px;background:transparent;border:none;color:var(--text-muted);font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;}
 .mob-tab:active{background:rgba(255,255,255,.05);}
@@ -437,7 +436,6 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
 
 /* ── MOBILE MEDIA QUERIES ── */
 @media(max-width:768px){
-  .mob-tabbar{display:block;}
   .main{padding:12px 10px 80px;}
   .ham-btn{display:none !important;}
   .hdr-inner{padding:6px 12px;}
@@ -453,7 +451,6 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
   #bl-list .bl-body > div{padding:10px;}
 }
 @media(min-width:769px){
-  .mob-tabbar{display:none !important;}
   .fab{display:none !important;}
 }
 </style>
