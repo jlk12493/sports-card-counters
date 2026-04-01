@@ -290,7 +290,10 @@ input.fi{flex:1;min-width:160px;}
 
 /* MODAL */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;}
-@media(max-width:768px){.modal-bg{align-items:flex-start;padding:16px 12px;padding-top:env(safe-area-inset-top,16px);}}
+@media(max-width:768px){
+  .modal-bg{align-items:flex-start;padding:0 !important;}
+  .modal-bg .modal{max-width:100% !important;width:100%;min-height:100vh;border-radius:0;max-height:100vh;overflow-y:auto;padding:20px 16px;padding-top:calc(env(safe-area-inset-top,0px) + 16px);}
+}
 .modal-bg.open{display:flex;}
 .modal{background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--red);border-radius:var(--r);padding:20px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;}
 .modal-title{font-size:14px;font-weight:700;color:#fff;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;}
@@ -396,7 +399,8 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
 .sel-count{font-size:12px;font-weight:700;color:var(--red);}
 
 /* ── MOBILE BOTTOM TAB BAR ── */
-.mob-tabbar{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--near-black);border-top:2px solid var(--border);z-index:150;padding:0;safe-area-inset-bottom:env(safe-area-inset-bottom);}
+.mob-tabbar{display:none !important;position:fixed;bottom:0;left:0;right:0;background:var(--near-black);border-top:2px solid var(--border);z-index:150;padding:0;}
+#auth-screen ~ .mob-tabbar, #auth-screen:not([style*="none"]) ~ * .mob-tabbar{display:none !important;}
 .mob-tabs{display:flex;align-items:stretch;}
 .mob-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px 10px;gap:3px;background:transparent;border:none;color:var(--text-muted);font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;}
 .mob-tab:active{background:rgba(255,255,255,.05);}
@@ -1649,6 +1653,7 @@ async function doLogout() {
   CU=null; INV=[]; BATCHES=[]; BL=[];
   g('app-screen').style.display='none';
   g('auth-screen').style.display='flex';
+  const tbl=document.querySelector('.mob-tabbar');if(tbl)tbl.style.display='none';
 }
 
 function toggleTheme() {
@@ -1751,6 +1756,7 @@ async function loadApp() {
   await loadUserSettings();
   renderAll();renderHelp();
   g('app-screen').style.display='block';
+  const tb=document.querySelector('.mob-tabbar');if(tb)tb.style.display='block';
   migrateCardIDs();
 }
 
