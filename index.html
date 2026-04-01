@@ -290,10 +290,6 @@ input.fi{flex:1;min-width:160px;}
 
 /* MODAL */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;}
-@media(max-width:768px){
-  .modal-bg{align-items:flex-start;padding:0 !important;}
-  .modal-bg .modal{max-width:100% !important;width:100%;min-height:100vh;border-radius:0;max-height:100vh;overflow-y:auto;padding:20px 16px;padding-top:calc(env(safe-area-inset-top,0px) + 16px);}
-}
 .modal-bg.open{display:flex;}
 .modal{background:var(--surface);border:1px solid var(--border);border-top:3px solid var(--red);border-radius:var(--r);padding:20px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;}
 .modal-title{font-size:14px;font-weight:700;color:#fff;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;}
@@ -393,34 +389,23 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
 .btn-sold{background:transparent;border:1px solid var(--green);color:var(--green);padding:6px 14px;border-radius:5px;font-size:11px;font-weight:700;letter-spacing:.5px;cursor:pointer;}
 .btn-sold:hover{background:var(--green);color:#fff;}
 
-.inv-check{width:16px;height:16px;cursor:pointer;accent-color:var(--red);}
-.inv-select-bar{display:none;background:var(--surface);border:1px solid var(--red);border-radius:var(--r);padding:10px 14px;margin-bottom:10px;align-items:center;gap:12px;flex-wrap:wrap;}
-.inv-select-bar.visible{display:flex;}
-.sel-count{font-size:12px;font-weight:700;color:var(--red);}
-
 /* ── MOBILE BOTTOM TAB BAR ── */
-.mob-tabbar{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--near-black);border-top:2px solid var(--border);z-index:150;padding:0;}
+.mob-tabbar{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--near-black);border-top:2px solid var(--border);z-index:150;}
 .mob-tabs{display:flex;align-items:stretch;}
 .mob-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px 10px;gap:3px;background:transparent;border:none;color:var(--text-muted);font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;}
-.mob-tab:active{background:rgba(255,255,255,.05);}
 .mob-tab.active{color:var(--red);}
 .mob-tab .mob-icon{font-size:20px;line-height:1;}
-.mob-tab-plus{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 4px 10px;gap:3px;background:transparent;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.mob-tab-plus{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 4px 10px;background:transparent;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent;}
 .mob-tab-plus .mob-plus-btn{width:48px;height:48px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;box-shadow:0 2px 12px rgba(204,0,0,.5);margin-top:-16px;}
 .mob-tab-plus span{font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:.5px;text-transform:uppercase;}
-
-/* ── FLOATING + BUTTON (hidden on desktop, only shows when no bottom bar) ── */
-.fab{display:none;position:fixed;bottom:24px;right:20px;width:56px;height:56px;border-radius:50%;background:var(--red);border:none;color:#fff;font-size:28px;cursor:pointer;box-shadow:0 4px 16px rgba(204,0,0,.5);z-index:149;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;}
-.fab:active{transform:scale(.95);}
-
-/* ── MOBILE EV CALCULATOR OVERLAY ── */
+/* ── MOBILE EV OVERLAY ── */
 .mob-ev-overlay{display:none;position:fixed;inset:0;background:var(--black);z-index:300;flex-direction:column;overflow-y:auto;}
 .mob-ev-overlay.open{display:flex;}
 .mob-ev-header{display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid var(--border);flex-shrink:0;}
 .mob-ev-title{font-size:16px;font-weight:800;color:var(--text);}
 .mob-ev-close{background:transparent;border:none;color:var(--text-muted);font-size:24px;cursor:pointer;}
 .mob-ev-body{padding:16px;flex:1;}
-.mob-ev-input{width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:16px;border-radius:var(--r);font-size:22px;font-weight:700;outline:none;margin-bottom:4px;-webkit-appearance:none;}
+.mob-ev-input{width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:16px;border-radius:var(--r);font-size:22px;font-weight:700;outline:none;margin-bottom:4px;}
 .mob-ev-input:focus{border-color:var(--red);}
 .mob-ev-label{font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;display:block;}
 .mob-ev-result{border-radius:var(--r);padding:20px;margin-top:16px;text-align:center;border:2px solid var(--border);}
@@ -428,32 +413,23 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
 .mob-ev-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;}
 .mob-ev-stat label{font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:3px;}
 .mob-ev-stat div{font-size:18px;font-weight:700;color:var(--text);}
-
-/* ── SWIPE TO SELL ── */
-.inv-swipe-wrap{position:relative;overflow:hidden;}
-.inv-swipe-sell{position:absolute;right:0;top:0;bottom:0;width:100px;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transform:translateX(100%);transition:transform .2s;}
-.inv-swipe-sell.revealed{transform:translateX(0);}
-
 /* ── MOBILE MEDIA QUERIES ── */
 @media(max-width:768px){
-  .main{padding:12px 10px 80px;}
+  .mob-tabbar{display:block;}
+  .hnav{display:none;}
   .ham-btn{display:none !important;}
+  .main{padding:12px 10px 80px;}
   .hdr-inner{padding:6px 12px;}
   .uemail{display:none;}
   .kgrid{grid-template-columns:repeat(2,1fr) !important;gap:8px;}
   #d-status-tiles{grid-template-columns:repeat(3,1fr) !important;}
   .dgrid{grid-template-columns:1fr !important;}
   .agrid{grid-template-columns:1fr !important;}
-  .twrap{border-radius:6px;}
-  .fbar{gap:6px;}
-  .inv-select-bar{gap:6px;}
-  /* EV Log full width on mobile */
-  #bl-list .bl-body > div{padding:10px;}
+  .modal-bg{align-items:flex-start;padding:0 !important;}
+  .modal-bg .modal{max-width:100% !important;width:100%;min-height:100vh;border-radius:0;max-height:100vh;overflow-y:auto;padding:20px 16px;}
 }
 @media(min-width:769px){
-  .fab{display:none !important;}
 }
-
 </style>
 </head>
 <body>
@@ -706,8 +682,8 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
             <div class="ff"><label>Gem Rate (0–1)</label><input type="number" step="0.01" id="f-gem" placeholder="0.75"></div>
             <div class="ff"><label>Gross PSA 10 $</label><input type="number" step="0.01" id="f-p10" placeholder="150.00"></div>
             <div class="ff"><label>Gross PSA 9 $</label><input type="number" step="0.01" id="f-p9" placeholder="50.00"></div>
-            <div class="ff"><label>Disposition</label><select id="f-disp"><option value="Grade">Grade</option><option value="Sell Raw">Sell Raw</option><option value="Hold">Hold</option></select></div>
-            <div class="ff"><label>Status</label><select id="f-stat"><option value="Awaiting Item">Awaiting Item</option><option value="Raw">Raw</option><option value="Submitted">Submitted</option><option value="Graded">Graded</option><option value="Listed">Listed</option></select></div>
+            <div class="ff"><label>Disposition</label><select id="f-disp"><option value="Grade">Grade</option><option value="Sell Raw">Sell Raw</option><option value="Hold">Hold</option><option value="Awaiting Item">Awaiting Item</option></select></div>
+            <div class="ff"><label>Status</label><select id="f-stat"><option value="Raw">Raw</option><option value="Submitted">Submitted</option><option value="Graded">Graded</option><option value="Listed">Listed</option></select></div>
             <div class="ff"><label>Batch ID</label><input type="text" id="f-batch" placeholder="14442636"></div>
           </div>
           <div class="factions">
@@ -720,7 +696,6 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
         <button class="btn-s" onclick="toggleForm('inv-form',true)" id="btn-add-inv">+ Add Card</button>
         <button class="btn-export" onclick="exportCSV()">Export CSV</button>
         <button class="btn-export" style="color:var(--amber);border-color:var(--amber);" onclick="openEVRecalc()">Update Comps</button>
-        <button class="btn-s" id="btn-select-mode" onclick="toggleSelectMode()">&#9745; Select</button>
       </div>
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:12px;">
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
@@ -752,11 +727,11 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
           </div>
           <div>
             <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Status</div>
-            <select class="fi" id="inv-stat" onchange="filterInv()" style="width:100%;"><option value="">All</option><option>Awaiting Item</option><option>Raw</option><option>Submitted</option><option>Graded</option><option>Listed</option></select>
+            <select class="fi" id="inv-stat" onchange="filterInv()" style="width:100%;"><option value="">All</option><option>Raw</option><option>Submitted</option><option>Graded</option><option>Listed</option></select>
           </div>
           <div>
             <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Disposition</div>
-            <select class="fi" id="inv-disp" onchange="filterInv()" style="width:100%;"><option value="">All</option><option>Grade</option><option>Sell Raw</option><option>Hold</option></select>
+            <select class="fi" id="inv-disp" onchange="filterInv()" style="width:100%;"><option value="">All</option><option>Grade</option><option>Sell Raw</option><option>Hold</option><option>Awaiting Item</option></select>
           </div>
           <div>
             <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Batch ID</div>
@@ -780,29 +755,6 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
           <span class="fcnt" id="inv-cnt"></span>
           <button onclick="clearInvFilters()" style="background:transparent;border:none;color:var(--text-muted);font-size:11px;cursor:pointer;padding:0;">Clear all filters</button>
         </div>
-      </div>
-      <div class="inv-select-bar" id="inv-select-bar">
-        <span class="sel-count" id="sel-count">0 selected</span>
-        <button class="btn-s" onclick="selAll()">Select All</button>
-        <button class="btn-s" onclick="selNone()">Clear</button>
-        <select id="bulk-stat-sel" class="fi" style="min-width:140px;">
-          <option value="">Change Status...</option>
-          <option value="Awaiting Item">Awaiting Item</option>
-          <option value="Raw">Raw</option>
-          <option value="Submitted">Submitted</option>
-          <option value="Graded">Graded</option>
-          <option value="Listed">Listed</option>
-          <option value="Sold">Sold</option>
-        </select>
-        <select id="bulk-disp-sel" class="fi" style="min-width:140px;">
-          <option value="">Change Disposition...</option>
-          <option value="Grade">Grade</option>
-          <option value="Sell Raw">Sell Raw</option>
-          <option value="Hold">Hold</option>
-        </select>
-        <input type="text" id="bulk-batch-inp" class="fi" placeholder="Assign Batch ID..." style="min-width:140px;">
-        <button class="btn-a" style="font-size:11px;padding:6px 14px;" onclick="applyBulkChanges()">Apply</button>
-        <button class="btn-c" style="font-size:11px;padding:6px 14px;" onclick="selNone()">Cancel</button>
       </div>
       <div id="inv-list"></div>
       <div class="pag" id="inv-pag"></div>
@@ -1089,32 +1041,6 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
     </div>
 
 
-
-<!-- MOBILE BOTTOM TAB BAR -->
-<div class="mob-tabbar">
-  <div class="mob-tabs">
-    <button class="mob-tab active" id="mobt-dashboard" onclick="mobGoSec('dashboard')">
-      <span class="mob-icon">&#128202;</span>
-      <span>Dashboard</span>
-    </button>
-    <button class="mob-tab" id="mobt-inventory" onclick="mobGoSec('inventory')">
-      <span class="mob-icon">&#128230;</span>
-      <span>Inventory</span>
-    </button>
-    <button class="mob-tab-plus" onclick="openQuickAdd()">
-      <div class="mob-plus-btn">+</div>
-      <span>Add Card</span>
-    </button>
-    <button class="mob-tab" id="mobt-buylog" onclick="mobGoSec('buylog')">
-      <span class="mob-icon">&#128200;</span>
-      <span>EV Log</span>
-    </button>
-    <button class="mob-tab" id="mobt-more" onclick="openMobMore()">
-      <span class="mob-icon">&#9776;</span>
-      <span>More</span>
-    </button>
-  </div>
-</div>
   </main>
 </div>
 
@@ -1143,8 +1069,8 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
       <div class="ff"><label>Gem Rate (0–1)</label><input type="number" step="0.01" id="e-gem"></div>
       <div class="ff"><label>Gross PSA 10 $</label><input type="number" step="0.01" id="e-p10"></div>
       <div class="ff"><label>Gross PSA 9 $</label><input type="number" step="0.01" id="e-p9"></div>
-      <div class="ff"><label>Disposition</label><select id="e-disp"><option value="Grade">Grade</option><option value="Sell Raw">Sell Raw</option><option value="Hold">Hold</option></select></div>
-      <div class="ff"><label>Status</label><select id="e-stat" onchange="toggleSoldFields()"><option value="Awaiting Item">Awaiting Item</option><option value="Raw">Raw</option><option value="Submitted">Submitted</option><option value="Graded">Graded</option><option value="Listed">Listed</option><option value="Sold">Sold</option></select></div>
+      <div class="ff"><label>Disposition</label><select id="e-disp"><option value="Grade">Grade</option><option value="Sell Raw">Sell Raw</option><option value="Hold">Hold</option><option value="Awaiting Item">Awaiting Item</option></select></div>
+      <div class="ff"><label>Status</label><select id="e-stat" onchange="toggleSoldFields()"><option value="Raw">Raw</option><option value="Submitted">Submitted</option><option value="Graded">Graded</option><option value="Listed">Listed</option><option value="Sold">Sold</option></select></div>
       <div class="ff"><label>Batch ID</label><input type="text" id="e-batch"></div>
     </div>
     <div id="sold-fields" style="display:none;background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:6px;padding:14px;margin-bottom:14px;">
@@ -1174,7 +1100,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
 
 <!-- QUICK ADD MODAL -->
 <div class="modal-bg" id="quickadd-modal">
-  <div class="modal" style="max-width:480px;max-height:85vh;overflow-y:auto;">
+  <div class="modal" style="max-width:480px;">
     <div class="modal-title">
       Quick Add Card
       <button class="modal-close" onclick="closeModal('quickadd-modal')">x</button>
@@ -1236,10 +1162,13 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
     <div id="qa-step-2" style="display:none;">
       <div style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;">Step 2 of 3 - Purchase Details</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-        <div class="ff"><label>Date Acquired</label><input type="date" id="qa-date" style="font-size:16px;padding:12px;"></div>
+        <div class="ff"><label>Date Acquired</label><input type="date" id="qa-date" style="font-size:15px;padding:11px;"></div>
         <div class="ff"><label>Source</label>
           <input type="text" id="qa-src" placeholder="e.g. eBay" style="font-size:16px;padding:12px;" list="qa-src-list" autocomplete="off">
-          <datalist id="qa-src-list"><option>eBay</option><option>Facebook</option><option>WhatNot</option><option>COMC</option><option>LCS</option><option>TikTok</option><option>Show</option><option>Trade</option></datalist>
+          <datalist id="qa-src-list">
+            <option>eBay</option><option>Facebook</option><option>WhatNot</option><option>COMC</option>
+            <option>LCS</option><option>TikTok</option><option>Show</option><option>Trade</option>
+          </datalist>
         </div>
         <div class="ff"><label>Purchase Price $</label><input type="number" step="0.01" id="qa-price" placeholder="0.00" style="font-size:16px;padding:12px;" oninput="qaCalcCost()"></div>
         <div class="ff"><label>Ship / Tax $</label><input type="number" step="0.01" id="qa-ship" placeholder="0.00" style="font-size:16px;padding:12px;" oninput="qaCalcCost()"></div>
@@ -1256,21 +1185,22 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
     <div id="qa-step-3" style="display:none;">
       <div style="font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:14px;">Step 3 of 3 - EV Data</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-        <div class="ff"><label>Gem Rate (0-1)</label><input type="number" step="0.01" id="qa-gem" placeholder="0.75" style="font-size:16px;padding:12px;" oninput="qaCalcEV()"></div>
-        <div class="ff"><label>PSA 10 $</label><input type="number" step="0.01" id="qa-p10" placeholder="0.00" style="font-size:16px;padding:12px;" oninput="qaCalcEV()"></div>
-        <div class="ff"><label>PSA 9 $</label><input type="number" step="0.01" id="qa-p9" placeholder="0.00" style="font-size:16px;padding:12px;" oninput="qaCalcEV()"></div>
+        <div class="ff"><label>Gem Rate (0-1)</label><input type="number" step="0.01" id="qa-gem" placeholder="e.g. 0.75" style="font-size:16px;padding:12px;" oninput="qaCalcEV()"></div>
+        <div class="ff"><label>Gross PSA 10 $</label><input type="number" step="0.01" id="qa-p10" placeholder="0.00" style="font-size:16px;padding:12px;" oninput="qaCalcEV()"></div>
+        <div class="ff"><label>Gross PSA 9 $</label><input type="number" step="0.01" id="qa-p9" placeholder="0.00" style="font-size:16px;padding:12px;" oninput="qaCalcEV()"></div>
         <div class="ff"><label>Disposition</label>
-          <select id="qa-disp" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:#fff;padding:12px;border-radius:5px;font-size:16px;outline:none;">
-            <option value="Grade">Grade</option><option value="Sell Raw">Sell Raw</option><option value="Hold">Hold</option>
+          <select id="qa-disp" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:#fff;padding:12px;border-radius:5px;font-size:15px;outline:none;">
+            <option value="Grade">Grade</option><option value="Sell Raw">Sell Raw</option><option value="Hold">Hold</option><option value="Awaiting Item">Awaiting Item</option>
           </select>
         </div>
         <div class="ff"><label>Status</label>
-          <select id="qa-stat" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:#fff;padding:12px;border-radius:5px;font-size:16px;outline:none;">
-            <option value="Awaiting Item">Awaiting Item</option><option value="Raw">Raw</option><option value="Submitted">Submitted</option><option value="Graded">Graded</option><option value="Listed">Listed</option>
+          <select id="qa-stat" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:#fff;padding:12px;border-radius:5px;font-size:15px;outline:none;">
+            <option value="Raw">Raw</option><option value="Submitted">Submitted</option><option value="Graded">Graded</option><option value="Listed">Listed</option>
           </select>
         </div>
         <div class="ff"><label>Batch ID</label><input type="text" id="qa-batch" placeholder="Optional" style="font-size:16px;padding:12px;"></div>
       </div>
+      <!-- EV PREVIEW -->
       <div id="qa-ev-preview" style="display:none;background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--red);border-radius:6px;padding:12px;margin-bottom:14px;">
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
           <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;">EV$</div><div style="font-size:16px;font-weight:700;" id="qa-ev-dollar">--</div></div>
@@ -1278,7 +1208,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
           <div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:3px;">DECISION</div><div style="font-size:16px;font-weight:700;" id="qa-ev-dec">--</div></div>
         </div>
       </div>
-      <div style="font-size:11px;color:var(--text-muted);margin-bottom:14px;">EV fields are optional — fill in later</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:14px;">EV fields are optional - you can fill them in later</div>
       <div style="display:flex;gap:8px;">
         <button class="btn-c" style="flex:1;padding:13px;" onclick="qaBack(3)">Back</button>
         <button class="btn-a" style="flex:2;padding:13px;font-size:13px;" id="qa-save-btn" onclick="qaSave()">Save Card</button>
@@ -1759,11 +1689,11 @@ async function loadApp() {
       btn.onclick=function(){goSec('admin',this);};
       nav.appendChild(btn);
     }
-    const mobAdmin=g('mob-admin-link');
+    var mobAdmin=g('mob-admin-link');
     if(mobAdmin&&!mobAdmin.querySelector('button')){
-      const mbtn=document.createElement('button');
+      var mbtn=document.createElement('button');
       mbtn.className='mntab';mbtn.style.borderColor='var(--amber)';mbtn.style.color='var(--amber)';
-      mbtn.textContent='&#9881; Admin';
+      mbtn.innerHTML='&#9881; Admin';
       mbtn.onclick=function(){mobGoSec('admin');closeMobMore();};
       mobAdmin.appendChild(mbtn);
     }
@@ -1937,21 +1867,18 @@ function renderInv() {
     return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;overflow:hidden;">' +
 
       // COLLAPSED HEADER ROW
-      '<div style="padding:10px 14px;display:flex;align-items:center;gap:10px;">' +
-        '<input type="checkbox" class="inv-check" data-cid="' + r.id + '" style="display:' + (SEL_MODE?"block":"none") + ';flex-shrink:0;">' +
-        '<div style="flex:1;cursor:pointer;display:flex;align-items:center;gap:10px;" onclick="toggleInvCard(this)" data-id="' + r.id + '">' +
-          '<i id="ichev-' + r.id + '" style="font-style:normal;font-size:10px;color:var(--text-muted);transition:transform .2s;flex-shrink:0;' + (isOpen?'transform:rotate(90deg)':'') + '">&#9658;</i>' +
-          '<div style="flex:1;min-width:0;">' +
-            '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' +
-              '<span style="font-size:13px;font-weight:700;color:var(--text);">' + (r.player||'--') + '</span>' +
-              '<span style="font-size:11px;color:var(--text-muted);">' + (r.year||'') + (r.set_name?' · '+r.set_name:'') + (r.parallel?' · '+r.parallel:'') + (r.card_no?' #'+r.card_no:'') + '</span>' +
-            '</div>' +
-            '<div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;">' +
-              sBdg(r.status) + dBdg(r.disposition) +
-              '<span style="font-size:11px;color:var(--text-muted);">Cost: <strong style="color:var(--text);">' + (r.total_cost!=null?f$(r.total_cost):'--') + '</strong></span>' +
-              (evp !== null ? '<div style="display:flex;align-items:center;gap:4px;"><div style="width:50px;height:3px;background:var(--border);border-radius:2px;overflow:hidden;"><div style="height:100%;width:' + evBarW.toFixed(0) + '%;background:' + evColor + ';border-radius:2px;"></div></div><span style="font-size:11px;font-weight:700;color:' + evColor + ';">' + (evp*100).toFixed(0) + '%</span></div>' : '') +
-              (isStaleComps(r) ? '<span style="font-size:9px;background:rgba(245,158,11,.2);color:var(--amber);border:1px solid rgba(245,158,11,.3);border-radius:3px;padding:1px 5px;font-weight:700;">STALE</span>' : '') +
-            '</div>' +
+      '<div style="padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;" onclick="toggleInvCard(this)" data-id="' + r.id + '">' +
+        '<i id="ichev-' + r.id + '" style="font-style:normal;font-size:10px;color:var(--text-muted);transition:transform .2s;flex-shrink:0;' + (isOpen?'transform:rotate(90deg)':'') + '">&#9658;</i>' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' +
+            '<span style="font-size:13px;font-weight:700;color:var(--text);">' + (r.player||'--') + '</span>' +
+            '<span style="font-size:11px;color:var(--text-muted);">' + (r.year||'') + (r.set_name?' · '+r.set_name:'') + (r.parallel?' · '+r.parallel:'') + (r.card_no?' #'+r.card_no:'') + '</span>' +
+          '</div>' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;">' +
+            sBdg(r.status) + dBdg(r.disposition) +
+            '<span style="font-size:11px;color:var(--text-muted);">Cost: <strong style="color:var(--text);">' + (r.total_cost!=null?f$(r.total_cost):'--') + '</strong></span>' +
+            (evp !== null ? '<div style="display:flex;align-items:center;gap:4px;"><div style="width:50px;height:3px;background:var(--border);border-radius:2px;overflow:hidden;"><div style="height:100%;width:' + evBarW.toFixed(0) + '%;background:' + evColor + ';border-radius:2px;"></div></div><span style="font-size:11px;font-weight:700;color:' + evColor + ';">' + (evp*100).toFixed(0) + '%</span></div>' : '') +
+            (isStaleComps(r) ? '<span style="font-size:9px;background:rgba(245,158,11,.2);color:var(--amber);border:1px solid rgba(245,158,11,.3);border-radius:3px;padding:1px 5px;font-weight:700;">STALE</span>' : '') +
           '</div>' +
         '</div>' +
       '</div>' +
@@ -1979,7 +1906,6 @@ function renderInv() {
         (r.notes ? '<div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;padding:8px 10px;background:var(--surface-2);border-radius:5px;">&#128221; ' + r.notes + '</div>' : '') +
         '<div style="display:flex;gap:8px;">' +
           '<button class="btn-a" style="font-size:11px;padding:6px 14px;" onclick="openEdit(\'' + r.id + '\')" >Edit</button>' +
-          '<button class="btn-s" style="font-size:11px;padding:6px 14px;" data-copyid="' + r.id + '" >Copy</button>' +
           '<button class="btn-sold" data-sid="' + r.id + '" onclick="openMarkSold(this.dataset.sid)" >Mark as Sold</button>' +
           '<button class="btn-c" style="font-size:11px;padding:6px 14px;color:#F87171;border-color:#F87171;" onclick="delCard(\'' + r.id + '\')" >Delete</button>' +
         '</div>' +
@@ -2042,7 +1968,7 @@ async function addCard() {
     sport:gv('f-sport'),date_acquired:gv('f-date'),source:gv('f-src'),
     price:nf('f-price'),ship:nf('f-ship'),grading:nf('f-grade'),
     gem_rate:nf('f-gem'),psa10:nf('f-p10'),psa9:nf('f-p9'),
-    disposition:gv('f-disp'),status:gv('f-stat')||'Awaiting Item',batch_id:gv('f-batch')
+    disposition:gv('f-disp'),status:gv('f-stat'),batch_id:gv('f-batch')
   };
   c.total_cost=(c.price||0)+(c.ship||0)+(c.grading||0);
   const {data,error}=await sb.from('inventory').insert(c).select().single();
@@ -2085,8 +2011,6 @@ function calcPerCardCost() {
 async function addBatch() {
   const b={user_id:CU.id,batch_id:gv('sf-id'),submit_date:gv('sf-date'),grader:gv('sf-grader'),service:gv('sf-svc'),status:gv('sf-stat'),notes:gv('sf-notes')};
   if (!b.batch_id) return toast('Batch ID required',true);
-  const dupBatch=BATCHES.find(x=>x.batch_id===b.batch_id);
-  if(dupBatch&&!confirm('Batch #'+b.batch_id+' already exists. Add anyway?'))return;
   const totalCost = parseFloat(g('sf-total-cost')?.value||0)||0;
   const {data,error}=await sb.from('batches').insert(b).select().single();
   if (error) return toast('Error: '+error.message,true);
@@ -2582,7 +2506,7 @@ async function qaSave() {
     total_cost:price+ship+grade,
     gem_rate:pf('qa-gem'), psa10:pf('qa-p10'), psa9:pf('qa-p9'),
     disposition:g('qa-disp').value,
-    status:g('qa-stat').value||'Awaiting Item',
+    status:g('qa-stat').value,
     batch_id:g('qa-batch').value.trim()||null,
   };
   const {data,error}=await sb.from('inventory').insert(card).select().single();
@@ -2744,7 +2668,7 @@ async function confirmImport() {
       psa10: pf(get(r,'psa10')),
       psa9: pf(get(r,'psa9')),
       disposition: ps(get(r,'disposition'))||'Grade',
-      status: ps(get(r,'status'))||'Awaiting Item',
+      status: ps(get(r,'status'))||'Raw',
       batch_id: ps(get(r,'batch_id')),
       sale_price: pf(get(r,'sale_price')),
       fees: pf(get(r,'fees')),
@@ -3387,8 +3311,8 @@ function fmtDate(d) {
 function calcEV(r){const n10=r.psa10*0.865,n9=(r.psa9||0)*0.865;return r.gem_rate*n10+(1-r.gem_rate)*n9-(r.total_cost||0);}
 function f$(v){if(v==null||isNaN(v))return'--';return(v<0?'-$':'$')+Math.abs(v).toFixed(2);}
 function evBar(p){const pct=p*100,w=Math.min(Math.max(pct,0),200)/2,c=pct>=100?'#22C55E':pct>=40?'#F59E0B':'#CC0000';return`<div class="evw"><div class="evb"><div class="evf" style="width:${w.toFixed(0)}%;background:${c};"></div></div><span style="font-size:10px;color:${c};font-family:'Courier New',monospace;">${pct.toFixed(0)}%</span></div>`;}
-function sBdg(s){const m={'Awaiting Item':'b-sub',Raw:'b-raw',Submitted:'b-sub',Graded:'b-grd',Listed:'b-lst',Sold:'b-sld'};return`<span class="bdg ${m[s]||'b-raw'}">${s||'--'}</span>`;}
-function dBdg(d){if(!d)return'--';if(d==='Grade')return`<span class="bdg b-grade">Grade</span>`;if(d==='Sell Raw')return`<span class="bdg b-sld">Sell Raw</span>`;if(d==='Hold')return`<span class="bdg b-hold">Hold</span>`;return`<span class="bdg b-raw">${d}</span>`;}
+function sBdg(s){const m={Raw:'b-raw',Submitted:'b-sub',Graded:'b-grd',Listed:'b-lst',Sold:'b-sld'};return`<span class="bdg ${m[s]||'b-raw'}">${s||'--'}</span>`;}
+function dBdg(d){if(!d)return'--';if(d==='Grade')return`<span class="bdg b-grade">Grade</span>`;if(d==='Sell Raw')return`<span class="bdg b-sld">Sell Raw</span>`;if(d==='Hold')return`<span class="bdg b-hold">Hold</span>`;if(d==='Awaiting Item')return`<span class="bdg b-sub">Awaiting</span>`;return`<span class="bdg b-raw">${d}</span>`;}
 function g(id){return document.getElementById(id);}
 function gv(id){return(g(id)||{}).value||'';}
 function ni(id){const v=parseInt(gv(id));return isNaN(v)?null:v;}
@@ -3835,259 +3759,90 @@ async function saveEditBL(){
 }
 
 
-// ── COPY CARD ──
-async function copyCard(id){
-  const r=INV.find(function(c){return c.id===id;});
-  if(!r)return;
-  if(!confirm('Copy "'+r.player+'" card? A duplicate entry will be created.'))return;
-  const existingIDs=INV.map(function(x){return x.card_id;}).filter(Boolean);
-  const newID=generateCardID(r.player,r.year,r.set_name,r.parallel,r.card_no,existingIDs);
-  const copy=Object.assign({},r);
-  delete copy.id;
-  delete copy.created_at;
-  copy.card_id=newID;
-  copy.user_id=CU.id;
-  copy.status='Awaiting Item';
-  copy.date_acquired=null;
-  copy.sale_price=null;copy.fees=null;copy.ship_out=null;
-  copy.net_proceeds=null;copy.realized_profit=null;copy.date_sold=null;
-  copy.ev_pct_returned=null;copy.reinvest_amount=null;copy.takehome_amount=null;
-  const res=await sb.from('inventory').insert(copy).select().single();
-  if(res.error)return toast('Error: '+res.error.message,true);
-  INV.unshift(res.data);
-  renderAll();
-  toast('Card copied! New ID: '+newID);
-}
-
-// ── BULK ASSIGN BATCH ──
-function openBulkBatch(){
-  const cards=invF.length?invF:INV.filter(function(r){return r.status!=='Sold';});
-  if(!cards.length)return toast('No cards in current view',true);
-  const modal=document.createElement('div');
-  modal.className='modal-bg open';
-  modal.id='bulk-batch-modal';
-  const batchOptions=BATCHES.map(function(b){return '<option value="'+b.batch_id+'">Batch #'+b.batch_id+' ('+b.grader+' · '+b.service+')</option>';}).join('');
-  modal.innerHTML='<div class="modal" style="max-width:460px;">'+
-    '<div class="modal-title">Bulk Assign to Batch<button class="modal-close" id="bb-close-btn">&#10005;</button></div>'+
-    '<div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">Assign <strong style="color:var(--text);">'+cards.length+' cards</strong> from your current inventory view to a batch.</div>'+
-    '<div class="ff" style="margin-bottom:14px;"><label>Select Batch</label>'+
-    '<select id="bb-batch-sel" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:9px 10px;border-radius:5px;font-size:13px;outline:none;">'+
-    '<option value="">Choose a batch...</option>'+batchOptions+
-    '</select></div>'+
-    '<div style="font-size:11px;color:var(--amber);margin-bottom:14px;">&#9888; This will overwrite the existing Batch ID on all selected cards.</div>'+
-    '<div class="factions">'+
-    '<button class="btn-a" id="bb-confirm-btn">Assign Cards</button>'+
-    '<button class="btn-c" id="bb-cancel-btn">Cancel</button>'+
-    '</div></div>';
-  document.body.appendChild(modal);
-  document.getElementById('bb-close-btn').onclick=function(){modal.remove();};
-  document.getElementById('bb-cancel-btn').onclick=function(){modal.remove();};
-  document.getElementById('bb-confirm-btn').onclick=function(){confirmBulkBatch(cards.map(function(r){return r.id;}));};
-}
-
-async function confirmBulkBatch(ids){
-  const batchId=document.getElementById('bb-batch-sel').value;
-  if(!batchId)return toast('Please select a batch',true);
-  const modal=document.getElementById('bulk-batch-modal');
-  const res=await sb.from('inventory').update({batch_id:batchId,status:'Submitted'}).in('id',ids);
-  if(res.error)return toast('Error: '+res.error.message,true);
-  INV=INV.map(function(r){return ids.includes(r.id)?Object.assign({},r,{batch_id:batchId,status:'Submitted'}):r;});
-  if(modal)modal.remove();
-  renderAll();
-  toast(ids.length+' cards assigned to Batch #'+batchId+'!');
-}
-
-
-var SEL_MODE = false;
-var SEL_IDS = new Set();
-
-function toggleSelectMode(){
-  SEL_MODE = !SEL_MODE;
-  SEL_IDS.clear();
-  const btn = g('btn-select-mode');
-  if(btn) btn.style.borderColor = SEL_MODE ? 'var(--red)' : '';
-  if(btn) btn.style.color = SEL_MODE ? 'var(--red)' : '';
-  updateSelBar();
-  renderInv();
-}
-
-function onCardCheck(e, cb){
-  e.stopPropagation();
-  const id = cb.dataset.cid;
-  if(cb.checked) SEL_IDS.add(id);
-  else SEL_IDS.delete(id);
-  updateSelBar();
-}
-
-function updateSelBar(){
-  const bar = g('inv-select-bar');
-  if(!bar) return;
-  const count = SEL_IDS.size;
-  bar.classList.toggle('visible', SEL_MODE);
-  const el = g('sel-count');
-  if(el) el.textContent = count + ' card' + (count !== 1 ? 's' : '') + ' selected';
-}
-
-function selAll(){
-  invF.forEach(r => SEL_IDS.add(r.id));
-  document.querySelectorAll('.inv-check').forEach(cb => cb.checked = true);
-  updateSelBar();
-}
-
-function selNone(){
-  SEL_IDS.clear();
-  SEL_MODE = false;
-  const btn = g('btn-select-mode');
-  if(btn){ btn.style.borderColor=''; btn.style.color=''; }
-  document.querySelectorAll('.inv-check').forEach(cb => cb.checked = false);
-  updateSelBar();
-  renderInv();
-}
-
-async function applyBulkChanges(){
-  if(!SEL_IDS.size) return toast('No cards selected', true);
-  const newStatus = g('bulk-stat-sel').value;
-  const newDisp = g('bulk-disp-sel').value;
-  const newBatch = g('bulk-batch-inp').value.trim();
-  if(!newStatus && !newDisp && !newBatch) return toast('Choose a status, disposition, or batch ID to apply', true);
-  const ids = [...SEL_IDS];
-  const updates = {};
-  if(newStatus) updates.status = newStatus;
-  if(newDisp) updates.disposition = newDisp;
-  if(newBatch) updates.batch_id = newBatch;
-  const summary = [
-    newStatus ? 'Status → '+newStatus : '',
-    newDisp ? 'Disposition → '+newDisp : '',
-    newBatch ? 'Batch → '+newBatch : ''
-  ].filter(Boolean).join(', ');
-  if(!confirm('Apply to '+ids.length+' cards: '+summary+'?')) return;
-  const res = await sb.from('inventory').update(updates).in('id', ids);
-  if(res.error) return toast('Error: '+res.error.message, true);
-  INV = INV.map(r => ids.includes(r.id) ? Object.assign({}, r, updates) : r);
-  g('bulk-stat-sel').value = '';
-  g('bulk-disp-sel').value = '';
-  g('bulk-batch-inp').value = '';
-  selNone();
-  toast(ids.length+' cards updated!');
-}
-
-
 // ── MOBILE NAV ──
 function mobGoSec(name){
-  goSec(name, null);
-  // Update bottom tab active state
+  goSec(name,null);
   ['dashboard','inventory','buylog','more'].forEach(function(t){
-    const el = document.getElementById('mobt-'+t);
-    if(el) el.classList.toggle('active', t===name);
+    var el=document.getElementById('mobt-'+t);
+    if(el)el.classList.toggle('active',t===name);
   });
-  // For sections not in bottom bar, highlight "more"
-  const inBar = ['dashboard','inventory','buylog'];
-  const moreBtn = document.getElementById('mobt-more');
-  if(moreBtn) moreBtn.classList.toggle('active', !inBar.includes(name));
+  var inBar=['dashboard','inventory','buylog'];
+  var moreBtn=document.getElementById('mobt-more');
+  if(moreBtn)moreBtn.classList.toggle('active',!inBar.includes(name));
 }
-
-function openMobMore(){
-  document.getElementById('mob-more-menu').classList.add('open');
-}
-function closeMobMore(){
-  document.getElementById('mob-more-menu').classList.remove('open');
-}
-
-// ── MOBILE EV CALCULATOR ──
-function openMobEV(){
-  const overlay = document.getElementById('mob-ev-overlay');
-  if(overlay) overlay.classList.add('open');
-  setTimeout(function(){ const el=document.getElementById('mev-gem'); if(el) el.focus(); }, 200);
-}
-function closeMobEV(){
-  const overlay = document.getElementById('mob-ev-overlay');
-  if(overlay) overlay.classList.remove('open');
-}
-
+function openMobMore(){var el=document.getElementById('mob-more-menu');if(el)el.classList.add('open');}
+function closeMobMore(){var el=document.getElementById('mob-more-menu');if(el)el.classList.remove('open');}
+function openMobEV(){var el=document.getElementById('mob-ev-overlay');if(el)el.classList.add('open');setTimeout(function(){var i=document.getElementById('mev-gem');if(i)i.focus();},200);}
+function closeMobEV(){var el=document.getElementById('mob-ev-overlay');if(el)el.classList.remove('open');}
 function mobEVCalc(){
-  const gem=parseFloat(document.getElementById('mev-gem').value);
-  const p10=parseFloat(document.getElementById('mev-p10').value);
-  const p9=parseFloat(document.getElementById('mev-p9').value)||0;
-  const cost=parseFloat(document.getElementById('mev-cost').value);
-  const result=document.getElementById('mev-result');
+  var gem=parseFloat(document.getElementById('mev-gem').value);
+  var p10=parseFloat(document.getElementById('mev-p10').value);
+  var p9=parseFloat(document.getElementById('mev-p9').value)||0;
+  var cost=parseFloat(document.getElementById('mev-cost').value);
+  var result=document.getElementById('mev-result');
   if(!gem||!p10||!cost){if(result)result.style.display='none';return;}
-  const n10=p10*0.865, n9=p9*0.865;
-  const ev=gem*n10+(1-gem)*n9-cost;
-  const evp=ev/cost;
-  const mb40=(gem*n10+(1-gem)*n9)/1.40;
-  const mb35=(gem*n10+(1-gem)*n9)/1.35;
-  const dec=evDecision(evp);
-  const decColor=dec==='BUY'?'var(--green)':dec==='CAUTION'?'var(--amber)':'#F87171';
+  var n10=p10*0.865,n9=p9*0.865;
+  var ev=gem*n10+(1-gem)*n9-cost;
+  var evp=ev/cost;
+  var mb40=(gem*n10+(1-gem)*n9)/1.40;
+  var mb35=(gem*n10+(1-gem)*n9)/1.35;
+  var dec=evDecision(evp);
+  var decColor=dec==='BUY'?'var(--green)':dec==='CAUTION'?'var(--amber)':'#F87171';
   result.style.display='block';
   result.style.borderColor=decColor;
-  result.style.background=dec==='BUY'?'rgba(34,197,94,.08)':dec==='CAUTION'?'rgba(245,158,11,.08)':'rgba(204,0,0,.08)';
   document.getElementById('mev-dec').textContent=dec;
   document.getElementById('mev-dec').style.color=decColor;
   document.getElementById('mev-ev').textContent=f$(ev);
-  document.getElementById('mev-ev').style.color=ev>=0?'var(--green)':'#F87171';
   document.getElementById('mev-evp').textContent=(evp*100).toFixed(1)+'%';
-  document.getElementById('mev-evp').style.color=decColor;
   document.getElementById('mev-mb40').textContent=f$(mb40);
   document.getElementById('mev-mb35').textContent=f$(mb35);
 }
-
 function mobEVToLog(){
-  // Pre-fill the EV log form and switch to EV log tab
-  const gem=parseFloat(document.getElementById('mev-gem').value);
-  const p10=parseFloat(document.getElementById('mev-p10').value);
-  const p9=parseFloat(document.getElementById('mev-p9').value)||0;
-  const cost=parseFloat(document.getElementById('mev-cost').value);
-  closeMobEV();
-  mobGoSec('buylog');
+  var gem=parseFloat(document.getElementById('mev-gem').value);
+  var p10=parseFloat(document.getElementById('mev-p10').value);
+  var p9=parseFloat(document.getElementById('mev-p9').value)||0;
+  var cost=parseFloat(document.getElementById('mev-cost').value);
+  closeMobEV();mobGoSec('buylog');
   setTimeout(function(){
-    toggleForm('bl-form', true);
-    if(g('bl-gem')) g('bl-gem').value = gem||'';
-    if(g('bl-p10')) g('bl-p10').value = p10||'';
-    if(g('bl-p9')) g('bl-p9').value = p9||'';
-    if(g('bl-cost')) g('bl-cost').value = cost||'';
+    toggleForm('bl-form',true);
+    if(g('bl-gem'))g('bl-gem').value=gem||'';
+    if(g('bl-p10'))g('bl-p10').value=p10||'';
+    if(g('bl-p9'))g('bl-p9').value=p9||'';
+    if(g('bl-cost'))g('bl-cost').value=cost||'';
     blCalc();
-    toast('EV data copied to log — add card details and save!');
-  }, 300);
+    toast('EV data copied to log!');
+  },300);
 }
-
 // ── SWIPE TO SELL ──
 (function(){
-  var startX=0, startY=0, activeEl=null;
-  document.addEventListener('touchstart', function(e){
-    if(!e.target.closest('#inv-list')) return;
-    startX=e.touches[0].clientX;
-    startY=e.touches[0].clientY;
+  var startX=0,startY=0,activeEl=null;
+  document.addEventListener('touchstart',function(e){
+    if(!e.target.closest('#inv-list'))return;
+    startX=e.touches[0].clientX;startY=e.touches[0].clientY;
     activeEl=e.target.closest('[data-id]');
-  }, {passive:true});
-
-  document.addEventListener('touchend', function(e){
-    if(!activeEl) return;
-    const dx=e.changedTouches[0].clientX-startX;
-    const dy=Math.abs(e.changedTouches[0].clientY-startY);
-    if(dx < -60 && dy < 30){
-      // Swipe left — show sell button
-      const id=activeEl.dataset.id;
-      // Remove any existing sell overlays
+  },{passive:true});
+  document.addEventListener('touchend',function(e){
+    if(!activeEl)return;
+    var dx=e.changedTouches[0].clientX-startX;
+    var dy=Math.abs(e.changedTouches[0].clientY-startY);
+    if(dx<-60&&dy<30){
+      var id=activeEl.dataset.id;
       document.querySelectorAll('.swipe-sell-btn').forEach(function(el){el.remove();});
-      const card=document.querySelector('.inv-body[data-id="'+id+'"]')?.closest('div');
-      if(card){
-        const btn=document.createElement('div');
+      var card=document.querySelector('.inv-body[data-id="'+id+'"]');
+      var parent=card?card.parentElement:null;
+      if(parent){
+        var btn=document.createElement('div');
         btn.className='swipe-sell-btn';
         btn.style.cssText='position:absolute;right:0;top:0;bottom:0;width:90px;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;border-radius:0 var(--r) var(--r) 0;z-index:10;';
         btn.textContent='Sell';
         btn.onclick=function(ev){ev.stopPropagation();btn.remove();openMarkSold(id);};
-        card.style.position='relative';
-        card.style.overflow='hidden';
-        card.appendChild(btn);
-        // Auto-hide after 3s
-        setTimeout(function(){if(btn.parentNode)btn.remove();}, 3000);
+        parent.style.position='relative';parent.style.overflow='hidden';
+        parent.appendChild(btn);
+        setTimeout(function(){if(btn.parentNode)btn.remove();},3000);
       }
-    } else if(dx > 30){
-      // Swipe right — dismiss any sell buttons
-      document.querySelectorAll('.swipe-sell-btn').forEach(function(el){el.remove();});
-    }
+    }else if(dx>30){document.querySelectorAll('.swipe-sell-btn').forEach(function(el){el.remove();});}
     activeEl=null;
-  }, {passive:true});
+  },{passive:true});
 })();
 
 loadTheme();
@@ -4278,6 +4033,17 @@ function blCalc() {
 </div>
 
 
+<!-- MOBILE BOTTOM TAB BAR (outside app-screen so always visible on mobile) -->
+<div class="mob-tabbar">
+  <div class="mob-tabs">
+    <button class="mob-tab active" id="mobt-dashboard" onclick="mobGoSec('dashboard')"><span class="mob-icon">&#128202;</span><span>Dashboard</span></button>
+    <button class="mob-tab" id="mobt-inventory" onclick="mobGoSec('inventory')"><span class="mob-icon">&#128230;</span><span>Inventory</span></button>
+    <button class="mob-tab-plus" onclick="openQuickAdd()"><div class="mob-plus-btn">+</div><span>Add Card</span></button>
+    <button class="mob-tab" id="mobt-buylog" onclick="mobGoSec('buylog')"><span class="mob-icon">&#128200;</span><span>EV Log</span></button>
+    <button class="mob-tab" id="mobt-more" onclick="openMobMore()"><span class="mob-icon">&#9776;</span><span>More</span></button>
+  </div>
+</div>
+
 <!-- MOBILE MORE MENU -->
 <div class="mobile-nav" id="mob-more-menu">
   <button class="mob-close" onclick="closeMobMore()">&#10005;</button>
@@ -4289,29 +4055,55 @@ function blCalc() {
   <button class="mntab" onclick="openMobEV();closeMobMore()">&#9889; Quick EV Calculator</button>
 </div>
 
-<!-- MOBILE EV CALCULATOR OVERLAY -->
+<!-- MOBILE EV CALCULATOR -->
 <div class="mob-ev-overlay" id="mob-ev-overlay">
   <div class="mob-ev-header">
     <div class="mob-ev-title">&#9889; Quick EV Check</div>
     <button class="mob-ev-close" onclick="closeMobEV()">&#10005;</button>
   </div>
   <div class="mob-ev-body">
-    <div style="margin-bottom:16px;">
-      <label class="mob-ev-label">Gem Rate (0–1)</label>
-      <input class="mob-ev-input" type="number" id="mev-gem" inputmode="decimal" placeholder="0.68" oninput="mobEVCalc()">
+    <div style="margin-bottom:16px;"><label class="mob-ev-label">Gem Rate (0-1)</label><input class="mob-ev-input" type="number" id="mev-gem" inputmode="decimal" placeholder="0.68" oninput="mobEVCalc()"></div>
+    <div style="margin-bottom:16px;"><label class="mob-ev-label">PSA 10 Comp $</label><input class="mob-ev-input" type="number" id="mev-p10" inputmode="decimal" placeholder="420.00" oninput="mobEVCalc()"></div>
+    <div style="margin-bottom:16px;"><label class="mob-ev-label">PSA 9 Comp $</label><input class="mob-ev-input" type="number" id="mev-p9" inputmode="decimal" placeholder="85.00" oninput="mobEVCalc()"></div>
+    <div style="margin-bottom:16px;"><label class="mob-ev-label">Your Cost $</label><input class="mob-ev-input" type="number" id="mev-cost" inputmode="decimal" placeholder="110.00" oninput="mobEVCalc()"></div>
+    <div class="mob-ev-result" id="mev-result" style="display:none;">
+      <div class="mob-ev-dec" id="mev-dec">BUY</div>
+      <div class="mob-ev-stats">
+        <div class="mob-ev-stat"><label>EV$</label><div id="mev-ev">--</div></div>
+        <div class="mob-ev-stat"><label>EV%</label><div id="mev-evp">--</div></div>
+        <div class="mob-ev-stat"><label>Max Buy @40%</label><div id="mev-mb40">--</div></div>
+        <div class="mob-ev-stat"><label>Max Buy @35%</label><div id="mev-mb35">--</div></div>
+      </div>
+      <button class="btn-a" style="width:100%;margin-top:16px;padding:14px;font-size:14px;" onclick="mobEVToLog()">&#128200; Save to EV Log</button>
     </div>
-    <div style="margin-bottom:16px;">
-      <label class="mob-ev-label">PSA 10 Comp $</label>
-      <input class="mob-ev-input" type="number" id="mev-p10" inputmode="decimal" placeholder="420.00" oninput="mobEVCalc()">
-    </div>
-    <div style="margin-bottom:16px;">
-      <label class="mob-ev-label">PSA 9 Comp $</label>
-      <input class="mob-ev-input" type="number" id="mev-p9" inputmode="decimal" placeholder="85.00" oninput="mobEVCalc()">
-    </div>
-    <div style="margin-bottom:16px;">
-      <label class="mob-ev-label">Your Cost $</label>
-      <input class="mob-ev-input" type="number" id="mev-cost" inputmode="decimal" placeholder="110.00" oninput="mobEVCalc()">
-    </div>
+  </div>
+</div>
+
+</body>
+</html>
+
+<!-- MOBILE MORE MENU -->
+<div class="mobile-nav" id="mob-more-menu">
+  <button class="mob-close" onclick="closeMobMore()">&#10005;</button>
+  <button class="mntab" onclick="mobGoSec('submissions');closeMobMore()">&#128233; Submissions</button>
+  <button class="mntab" onclick="mobGoSec('sold');closeMobMore()">&#128176; Sold</button>
+  <button class="mntab" onclick="mobGoSec('financials');closeMobMore()">&#128188; Financials</button>
+  <button class="mntab" style="border-color:#3B82F6;color:#3B82F6;" onclick="mobGoSec('help');closeMobMore()">&#127916; Help</button>
+  <div id="mob-admin-link"></div>
+  <button class="mntab" onclick="openMobEV();closeMobMore()">&#9889; Quick EV Calculator</button>
+</div>
+
+<!-- MOBILE EV CALCULATOR -->
+<div class="mob-ev-overlay" id="mob-ev-overlay">
+  <div class="mob-ev-header">
+    <div class="mob-ev-title">&#9889; Quick EV Check</div>
+    <button class="mob-ev-close" onclick="closeMobEV()">&#10005;</button>
+  </div>
+  <div class="mob-ev-body">
+    <div style="margin-bottom:16px;"><label class="mob-ev-label">Gem Rate (0-1)</label><input class="mob-ev-input" type="number" id="mev-gem" inputmode="decimal" placeholder="0.68" oninput="mobEVCalc()"></div>
+    <div style="margin-bottom:16px;"><label class="mob-ev-label">PSA 10 Comp $</label><input class="mob-ev-input" type="number" id="mev-p10" inputmode="decimal" placeholder="420.00" oninput="mobEVCalc()"></div>
+    <div style="margin-bottom:16px;"><label class="mob-ev-label">PSA 9 Comp $</label><input class="mob-ev-input" type="number" id="mev-p9" inputmode="decimal" placeholder="85.00" oninput="mobEVCalc()"></div>
+    <div style="margin-bottom:16px;"><label class="mob-ev-label">Your Cost $</label><input class="mob-ev-input" type="number" id="mev-cost" inputmode="decimal" placeholder="110.00" oninput="mobEVCalc()"></div>
     <div class="mob-ev-result" id="mev-result" style="display:none;">
       <div class="mob-ev-dec" id="mev-dec">BUY</div>
       <div class="mob-ev-stats">
