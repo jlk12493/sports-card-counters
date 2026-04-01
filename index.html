@@ -393,6 +393,64 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
 .inv-select-bar{display:none;background:var(--surface);border:1px solid var(--red);border-radius:var(--r);padding:10px 14px;margin-bottom:10px;align-items:center;gap:12px;flex-wrap:wrap;}
 .inv-select-bar.visible{display:flex;}
 .sel-count{font-size:12px;font-weight:700;color:var(--red);}
+
+/* ── MOBILE BOTTOM TAB BAR ── */
+.mob-tabbar{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--near-black);border-top:2px solid var(--border);z-index:150;padding:0;safe-area-inset-bottom:env(safe-area-inset-bottom);}
+.mob-tabs{display:flex;align-items:stretch;}
+.mob-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px 10px;gap:3px;background:transparent;border:none;color:var(--text-muted);font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.mob-tab:active{background:rgba(255,255,255,.05);}
+.mob-tab.active{color:var(--red);}
+.mob-tab .mob-icon{font-size:20px;line-height:1;}
+.mob-tab-plus{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 4px 10px;gap:3px;background:transparent;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.mob-tab-plus .mob-plus-btn{width:48px;height:48px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;box-shadow:0 2px 12px rgba(204,0,0,.5);margin-top:-16px;}
+.mob-tab-plus span{font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:.5px;text-transform:uppercase;}
+
+/* ── FLOATING + BUTTON (hidden on desktop, only shows when no bottom bar) ── */
+.fab{display:none;position:fixed;bottom:24px;right:20px;width:56px;height:56px;border-radius:50%;background:var(--red);border:none;color:#fff;font-size:28px;cursor:pointer;box-shadow:0 4px 16px rgba(204,0,0,.5);z-index:149;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;}
+.fab:active{transform:scale(.95);}
+
+/* ── MOBILE EV CALCULATOR OVERLAY ── */
+.mob-ev-overlay{display:none;position:fixed;inset:0;background:var(--black);z-index:300;flex-direction:column;overflow-y:auto;}
+.mob-ev-overlay.open{display:flex;}
+.mob-ev-header{display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.mob-ev-title{font-size:16px;font-weight:800;color:var(--text);}
+.mob-ev-close{background:transparent;border:none;color:var(--text-muted);font-size:24px;cursor:pointer;}
+.mob-ev-body{padding:16px;flex:1;}
+.mob-ev-input{width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:16px;border-radius:var(--r);font-size:22px;font-weight:700;outline:none;margin-bottom:4px;-webkit-appearance:none;}
+.mob-ev-input:focus{border-color:var(--red);}
+.mob-ev-label{font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;display:block;}
+.mob-ev-result{border-radius:var(--r);padding:20px;margin-top:16px;text-align:center;border:2px solid var(--border);}
+.mob-ev-dec{font-size:36px;font-weight:900;margin-bottom:8px;}
+.mob-ev-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;}
+.mob-ev-stat label{font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:3px;}
+.mob-ev-stat div{font-size:18px;font-weight:700;color:var(--text);}
+
+/* ── SWIPE TO SELL ── */
+.inv-swipe-wrap{position:relative;overflow:hidden;}
+.inv-swipe-sell{position:absolute;right:0;top:0;bottom:0;width:100px;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transform:translateX(100%);transition:transform .2s;}
+.inv-swipe-sell.revealed{transform:translateX(0);}
+
+/* ── MOBILE MEDIA QUERIES ── */
+@media(max-width:768px){
+  .mob-tabbar{display:block;}
+  .main{padding:12px 10px 80px;}
+  .ham-btn{display:none !important;}
+  .hdr-inner{padding:6px 12px;}
+  .uemail{display:none;}
+  .kgrid{grid-template-columns:repeat(2,1fr) !important;gap:8px;}
+  #d-status-tiles{grid-template-columns:repeat(3,1fr) !important;}
+  .dgrid{grid-template-columns:1fr !important;}
+  .agrid{grid-template-columns:1fr !important;}
+  .twrap{border-radius:6px;}
+  .fbar{gap:6px;}
+  .inv-select-bar{gap:6px;}
+  /* EV Log full width on mobile */
+  #bl-list .bl-body > div{padding:10px;}
+}
+@media(min-width:769px){
+  .mob-tabbar{display:none !important;}
+  .fab{display:none !important;}
+}
 </style>
 </head>
 <body>
@@ -1674,6 +1732,14 @@ async function loadApp() {
       btn.className='ntab atab'; btn.textContent='Admin';
       btn.onclick=function(){goSec('admin',this);};
       nav.appendChild(btn);
+    }
+    const mobAdmin=g('mob-admin-link');
+    if(mobAdmin&&!mobAdmin.querySelector('button')){
+      const mbtn=document.createElement('button');
+      mbtn.className='mntab';mbtn.style.borderColor='var(--amber)';mbtn.style.color='var(--amber)';
+      mbtn.textContent='&#9881; Admin';
+      mbtn.onclick=function(){mobGoSec('admin');closeMobMore();};
+      mobAdmin.appendChild(mbtn);
     }
   }
   const uid = CU.id;
@@ -3879,6 +3945,125 @@ async function applyBulkChanges(){
   toast(ids.length+' cards updated!');
 }
 
+
+// ── MOBILE NAV ──
+function mobGoSec(name){
+  goSec(name, null);
+  // Update bottom tab active state
+  ['dashboard','inventory','buylog','more'].forEach(function(t){
+    const el = document.getElementById('mobt-'+t);
+    if(el) el.classList.toggle('active', t===name);
+  });
+  // For sections not in bottom bar, highlight "more"
+  const inBar = ['dashboard','inventory','buylog'];
+  const moreBtn = document.getElementById('mobt-more');
+  if(moreBtn) moreBtn.classList.toggle('active', !inBar.includes(name));
+}
+
+function openMobMore(){
+  document.getElementById('mob-more-menu').classList.add('open');
+}
+function closeMobMore(){
+  document.getElementById('mob-more-menu').classList.remove('open');
+}
+
+// ── MOBILE EV CALCULATOR ──
+function openMobEV(){
+  const overlay = document.getElementById('mob-ev-overlay');
+  if(overlay) overlay.classList.add('open');
+  setTimeout(function(){ const el=document.getElementById('mev-gem'); if(el) el.focus(); }, 200);
+}
+function closeMobEV(){
+  const overlay = document.getElementById('mob-ev-overlay');
+  if(overlay) overlay.classList.remove('open');
+}
+
+function mobEVCalc(){
+  const gem=parseFloat(document.getElementById('mev-gem').value);
+  const p10=parseFloat(document.getElementById('mev-p10').value);
+  const p9=parseFloat(document.getElementById('mev-p9').value)||0;
+  const cost=parseFloat(document.getElementById('mev-cost').value);
+  const result=document.getElementById('mev-result');
+  if(!gem||!p10||!cost){if(result)result.style.display='none';return;}
+  const n10=p10*0.865, n9=p9*0.865;
+  const ev=gem*n10+(1-gem)*n9-cost;
+  const evp=ev/cost;
+  const mb40=(gem*n10+(1-gem)*n9)/1.40;
+  const mb35=(gem*n10+(1-gem)*n9)/1.35;
+  const dec=evDecision(evp);
+  const decColor=dec==='BUY'?'var(--green)':dec==='CAUTION'?'var(--amber)':'#F87171';
+  result.style.display='block';
+  result.style.borderColor=decColor;
+  result.style.background=dec==='BUY'?'rgba(34,197,94,.08)':dec==='CAUTION'?'rgba(245,158,11,.08)':'rgba(204,0,0,.08)';
+  document.getElementById('mev-dec').textContent=dec;
+  document.getElementById('mev-dec').style.color=decColor;
+  document.getElementById('mev-ev').textContent=f$(ev);
+  document.getElementById('mev-ev').style.color=ev>=0?'var(--green)':'#F87171';
+  document.getElementById('mev-evp').textContent=(evp*100).toFixed(1)+'%';
+  document.getElementById('mev-evp').style.color=decColor;
+  document.getElementById('mev-mb40').textContent=f$(mb40);
+  document.getElementById('mev-mb35').textContent=f$(mb35);
+}
+
+function mobEVToLog(){
+  // Pre-fill the EV log form and switch to EV log tab
+  const gem=parseFloat(document.getElementById('mev-gem').value);
+  const p10=parseFloat(document.getElementById('mev-p10').value);
+  const p9=parseFloat(document.getElementById('mev-p9').value)||0;
+  const cost=parseFloat(document.getElementById('mev-cost').value);
+  closeMobEV();
+  mobGoSec('buylog');
+  setTimeout(function(){
+    toggleForm('bl-form', true);
+    if(g('bl-gem')) g('bl-gem').value = gem||'';
+    if(g('bl-p10')) g('bl-p10').value = p10||'';
+    if(g('bl-p9')) g('bl-p9').value = p9||'';
+    if(g('bl-cost')) g('bl-cost').value = cost||'';
+    blCalc();
+    toast('EV data copied to log — add card details and save!');
+  }, 300);
+}
+
+// ── SWIPE TO SELL ──
+(function(){
+  var startX=0, startY=0, activeEl=null;
+  document.addEventListener('touchstart', function(e){
+    if(!e.target.closest('#inv-list')) return;
+    startX=e.touches[0].clientX;
+    startY=e.touches[0].clientY;
+    activeEl=e.target.closest('[data-id]');
+  }, {passive:true});
+
+  document.addEventListener('touchend', function(e){
+    if(!activeEl) return;
+    const dx=e.changedTouches[0].clientX-startX;
+    const dy=Math.abs(e.changedTouches[0].clientY-startY);
+    if(dx < -60 && dy < 30){
+      // Swipe left — show sell button
+      const id=activeEl.dataset.id;
+      // Remove any existing sell overlays
+      document.querySelectorAll('.swipe-sell-btn').forEach(function(el){el.remove();});
+      const card=document.querySelector('.inv-body[data-id="'+id+'"]')?.closest('div');
+      if(card){
+        const btn=document.createElement('div');
+        btn.className='swipe-sell-btn';
+        btn.style.cssText='position:absolute;right:0;top:0;bottom:0;width:90px;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;border-radius:0 var(--r) var(--r) 0;z-index:10;';
+        btn.textContent='Sell';
+        btn.onclick=function(ev){ev.stopPropagation();btn.remove();openMarkSold(id);};
+        card.style.position='relative';
+        card.style.overflow='hidden';
+        card.appendChild(btn);
+        // Auto-hide after 3s
+        setTimeout(function(){if(btn.parentNode)btn.remove();}, 3000);
+      }
+    } else if(dx > 30){
+      // Swipe right — dismiss any sell buttons
+      document.querySelectorAll('.swipe-sell-btn').forEach(function(el){el.remove();});
+    }
+    activeEl=null;
+  }, {passive:true});
+})();
+
 loadTheme();
 initAuth();
 
@@ -4062,6 +4247,80 @@ function blCalc() {
     <div class="factions">
       <button class="btn-a" onclick="saveEditBL()">Save Changes</button>
       <button class="btn-c" onclick="closeModal('edit-bl-modal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MOBILE BOTTOM TAB BAR -->
+<div class="mob-tabbar">
+  <div class="mob-tabs">
+    <button class="mob-tab active" id="mobt-dashboard" onclick="mobGoSec('dashboard')">
+      <span class="mob-icon">&#128202;</span>
+      <span>Dashboard</span>
+    </button>
+    <button class="mob-tab" id="mobt-inventory" onclick="mobGoSec('inventory')">
+      <span class="mob-icon">&#128230;</span>
+      <span>Inventory</span>
+    </button>
+    <button class="mob-tab-plus" onclick="openQuickAdd()">
+      <div class="mob-plus-btn">+</div>
+      <span>Add Card</span>
+    </button>
+    <button class="mob-tab" id="mobt-buylog" onclick="mobGoSec('buylog')">
+      <span class="mob-icon">&#128200;</span>
+      <span>EV Log</span>
+    </button>
+    <button class="mob-tab" id="mobt-more" onclick="openMobMore()">
+      <span class="mob-icon">&#9776;</span>
+      <span>More</span>
+    </button>
+  </div>
+</div>
+
+<!-- MOBILE MORE MENU -->
+<div class="mobile-nav" id="mob-more-menu">
+  <button class="mob-close" onclick="closeMobMore()">&#10005;</button>
+  <button class="mntab" onclick="mobGoSec('submissions');closeMobMore()">&#128233; Submissions</button>
+  <button class="mntab" onclick="mobGoSec('sold');closeMobMore()">&#128176; Sold</button>
+  <button class="mntab" onclick="mobGoSec('financials');closeMobMore()">&#128188; Financials</button>
+  <button class="mntab" style="border-color:#3B82F6;color:#3B82F6;" onclick="mobGoSec('help');closeMobMore()">&#127916; Help</button>
+  <div id="mob-admin-link"></div>
+  <button class="mntab" onclick="openMobEV();closeMobMore()">&#9889; Quick EV Calculator</button>
+</div>
+
+<!-- MOBILE EV CALCULATOR OVERLAY -->
+<div class="mob-ev-overlay" id="mob-ev-overlay">
+  <div class="mob-ev-header">
+    <div class="mob-ev-title">&#9889; Quick EV Check</div>
+    <button class="mob-ev-close" onclick="closeMobEV()">&#10005;</button>
+  </div>
+  <div class="mob-ev-body">
+    <div style="margin-bottom:16px;">
+      <label class="mob-ev-label">Gem Rate (0–1)</label>
+      <input class="mob-ev-input" type="number" id="mev-gem" inputmode="decimal" placeholder="0.68" oninput="mobEVCalc()">
+    </div>
+    <div style="margin-bottom:16px;">
+      <label class="mob-ev-label">PSA 10 Comp $</label>
+      <input class="mob-ev-input" type="number" id="mev-p10" inputmode="decimal" placeholder="420.00" oninput="mobEVCalc()">
+    </div>
+    <div style="margin-bottom:16px;">
+      <label class="mob-ev-label">PSA 9 Comp $</label>
+      <input class="mob-ev-input" type="number" id="mev-p9" inputmode="decimal" placeholder="85.00" oninput="mobEVCalc()">
+    </div>
+    <div style="margin-bottom:16px;">
+      <label class="mob-ev-label">Your Cost $</label>
+      <input class="mob-ev-input" type="number" id="mev-cost" inputmode="decimal" placeholder="110.00" oninput="mobEVCalc()">
+    </div>
+    <div class="mob-ev-result" id="mev-result" style="display:none;">
+      <div class="mob-ev-dec" id="mev-dec">BUY</div>
+      <div class="mob-ev-stats">
+        <div class="mob-ev-stat"><label>EV$</label><div id="mev-ev">--</div></div>
+        <div class="mob-ev-stat"><label>EV%</label><div id="mev-evp">--</div></div>
+        <div class="mob-ev-stat"><label>Max Buy @40%</label><div id="mev-mb40">--</div></div>
+        <div class="mob-ev-stat"><label>Max Buy @35%</label><div id="mev-mb35">--</div></div>
+      </div>
+      <button class="btn-a" style="width:100%;margin-top:16px;padding:14px;font-size:14px;" onclick="mobEVToLog()">&#128200; Save to EV Log</button>
     </div>
   </div>
 </div>
