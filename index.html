@@ -453,6 +453,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
 @media(min-width:769px){
   .fab{display:none !important;}
 }
+
 </style>
 </head>
 <body>
@@ -1087,6 +1088,33 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
       </div>
     </div>
 
+
+
+<!-- MOBILE BOTTOM TAB BAR -->
+<div class="mob-tabbar">
+  <div class="mob-tabs">
+    <button class="mob-tab active" id="mobt-dashboard" onclick="mobGoSec('dashboard')">
+      <span class="mob-icon">&#128202;</span>
+      <span>Dashboard</span>
+    </button>
+    <button class="mob-tab" id="mobt-inventory" onclick="mobGoSec('inventory')">
+      <span class="mob-icon">&#128230;</span>
+      <span>Inventory</span>
+    </button>
+    <button class="mob-tab-plus" onclick="openQuickAdd()">
+      <div class="mob-plus-btn">+</div>
+      <span>Add Card</span>
+    </button>
+    <button class="mob-tab" id="mobt-buylog" onclick="mobGoSec('buylog')">
+      <span class="mob-icon">&#128200;</span>
+      <span>EV Log</span>
+    </button>
+    <button class="mob-tab" id="mobt-more" onclick="openMobMore()">
+      <span class="mob-icon">&#9776;</span>
+      <span>More</span>
+    </button>
+  </div>
+</div>
   </main>
 </div>
 
@@ -1650,7 +1678,6 @@ async function doLogout() {
   CU=null; INV=[]; BATCHES=[]; BL=[];
   g('app-screen').style.display='none';
   g('auth-screen').style.display='flex';
-  const tbl=document.querySelector('.mob-tabbar');if(tbl)tbl.style.display='none';
 }
 
 function toggleTheme() {
@@ -1753,7 +1780,6 @@ async function loadApp() {
   await loadUserSettings();
   renderAll();renderHelp();
   g('app-screen').style.display='block';
-  const tb=document.querySelector('.mob-tabbar');if(tb)tb.style.display='block';
   migrateCardIDs();
 }
 
@@ -4251,32 +4277,6 @@ function blCalc() {
   </div>
 </div>
 
-
-<!-- MOBILE BOTTOM TAB BAR -->
-<div class="mob-tabbar">
-  <div class="mob-tabs">
-    <button class="mob-tab active" id="mobt-dashboard" onclick="mobGoSec('dashboard')">
-      <span class="mob-icon">&#128202;</span>
-      <span>Dashboard</span>
-    </button>
-    <button class="mob-tab" id="mobt-inventory" onclick="mobGoSec('inventory')">
-      <span class="mob-icon">&#128230;</span>
-      <span>Inventory</span>
-    </button>
-    <button class="mob-tab-plus" onclick="openQuickAdd()">
-      <div class="mob-plus-btn">+</div>
-      <span>Add Card</span>
-    </button>
-    <button class="mob-tab" id="mobt-buylog" onclick="mobGoSec('buylog')">
-      <span class="mob-icon">&#128200;</span>
-      <span>EV Log</span>
-    </button>
-    <button class="mob-tab" id="mobt-more" onclick="openMobMore()">
-      <span class="mob-icon">&#9776;</span>
-      <span>More</span>
-    </button>
-  </div>
-</div>
 
 <!-- MOBILE MORE MENU -->
 <div class="mobile-nav" id="mob-more-menu">
