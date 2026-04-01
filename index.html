@@ -1848,17 +1848,18 @@ function renderInv() {
       '<div style="padding:10px 14px;display:flex;align-items:center;gap:10px;">' +
         '<input type="checkbox" class="inv-check" data-cid="' + r.id + '" style="display:' + (SEL_MODE?"block":"none") + ';flex-shrink:0;">' +
         '<div style="flex:1;cursor:pointer;display:flex;align-items:center;gap:10px;" onclick="toggleInvCard(this)" data-id="' + r.id + '">' +
-        '<i id="ichev-' + r.id + '" style="font-style:normal;font-size:10px;color:var(--text-muted);transition:transform .2s;flex-shrink:0;' + (isOpen?'transform:rotate(90deg)':'') + '">&#9658;</i>' +
-        '<div style="flex:1;min-width:0;">' +
-          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' +
-            '<span style="font-size:13px;font-weight:700;color:var(--text);">' + (r.player||'--') + '</span>' +
-            '<span style="font-size:11px;color:var(--text-muted);">' + (r.year||'') + (r.set_name?' · '+r.set_name:'') + (r.parallel?' · '+r.parallel:'') + (r.card_no?' #'+r.card_no:'') + '</span>' +
-          '</div>' +
-          '<div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;">' +
-            sBdg(r.status) + dBdg(r.disposition) +
-            '<span style="font-size:11px;color:var(--text-muted);">Cost: <strong style="color:var(--text);">' + (r.total_cost!=null?f$(r.total_cost):'--') + '</strong></span>' +
-            (evp !== null ? '<div style="display:flex;align-items:center;gap:4px;"><div style="width:50px;height:3px;background:var(--border);border-radius:2px;overflow:hidden;"><div style="height:100%;width:' + evBarW.toFixed(0) + '%;background:' + evColor + ';border-radius:2px;"></div></div><span style="font-size:11px;font-weight:700;color:' + evColor + ';">' + (evp*100).toFixed(0) + '%</span></div>' : '') +
-            (isStaleComps(r) ? '<span style="font-size:9px;background:rgba(245,158,11,.2);color:var(--amber);border:1px solid rgba(245,158,11,.3);border-radius:3px;padding:1px 5px;font-weight:700;">STALE</span>' : '') +
+          '<i id="ichev-' + r.id + '" style="font-style:normal;font-size:10px;color:var(--text-muted);transition:transform .2s;flex-shrink:0;' + (isOpen?'transform:rotate(90deg)':'') + '">&#9658;</i>' +
+          '<div style="flex:1;min-width:0;">' +
+            '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' +
+              '<span style="font-size:13px;font-weight:700;color:var(--text);">' + (r.player||'--') + '</span>' +
+              '<span style="font-size:11px;color:var(--text-muted);">' + (r.year||'') + (r.set_name?' · '+r.set_name:'') + (r.parallel?' · '+r.parallel:'') + (r.card_no?' #'+r.card_no:'') + '</span>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;">' +
+              sBdg(r.status) + dBdg(r.disposition) +
+              '<span style="font-size:11px;color:var(--text-muted);">Cost: <strong style="color:var(--text);">' + (r.total_cost!=null?f$(r.total_cost):'--') + '</strong></span>' +
+              (evp !== null ? '<div style="display:flex;align-items:center;gap:4px;"><div style="width:50px;height:3px;background:var(--border);border-radius:2px;overflow:hidden;"><div style="height:100%;width:' + evBarW.toFixed(0) + '%;background:' + evColor + ';border-radius:2px;"></div></div><span style="font-size:11px;font-weight:700;color:' + evColor + ';">' + (evp*100).toFixed(0) + '%</span></div>' : '') +
+              (isStaleComps(r) ? '<span style="font-size:9px;background:rgba(245,158,11,.2);color:var(--amber);border:1px solid rgba(245,158,11,.3);border-radius:3px;padding:1px 5px;font-weight:700;">STALE</span>' : '') +
+            '</div>' +
           '</div>' +
         '</div>' +
       '</div>' +
