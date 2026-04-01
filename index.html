@@ -848,8 +848,10 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
       </div>
       <div id="bl-list"></div>
 
+    </div>
+
     <!-- FINANCIALS -->
-    <div class="sec" id="sec-financials">
+    <div class="sec" id="sec-financials" style="min-height:100px;">
 
       <!-- TAX YEAR SELECTOR -->
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
@@ -941,7 +943,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
 
 
     <!-- HELP -->
-    <div class="sec" id="sec-help">
+    <div class="sec" id="sec-help" style="min-height:100px;">
       <div style="margin-bottom:24px;">
         <h2 style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:6px;">&#127916; Tutorial Videos</h2>
         <p style="font-size:13px;color:var(--text-muted);line-height:1.6;">Short walkthroughs for every feature. Click any video to watch it right here without leaving the page.</p>
@@ -950,7 +952,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
     </div>
 
     <!-- ADMIN -->
-    <div class="sec" id="sec-admin">
+    <div class="sec" id="sec-admin" style="min-height:100px;">
       <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:5px;padding:8px 12px;margin-bottom:16px;font-size:11px;color:#FCD34D;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
         <span>Admin Panel — Only visible to you</span>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -1668,6 +1670,7 @@ function goSec(name,btn) {
   if (btn) btn.classList.add('active');
   if (name==='admin') loadAdmin();
   if (name==='financials') renderFinancials();
+  if (name==='help') renderHelp();
 }
 
 // - RENDER ALL -
