@@ -437,6 +437,15 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
 .inv-select-bar{display:none;background:var(--surface);border:1px solid var(--red);border-radius:var(--r);padding:10px 14px;margin-bottom:10px;align-items:center;gap:10px;flex-wrap:wrap;}
 .inv-select-bar.visible{display:flex;}
 .sel-count{font-size:12px;font-weight:700;color:var(--red);}
+
+.scanner-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:800;letter-spacing:.5px;}
+.sb-buy{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3);}
+.sb-caution{background:rgba(245,158,11,.15);color:var(--amber);border:1px solid rgba(245,158,11,.3);}
+.scanner-row{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;overflow:hidden;}
+.scanner-row:hover{border-color:var(--red);}
+.scanner-header{padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;}
+.scanner-body{display:none;border-top:1px solid var(--border);padding:14px;}
+.scanner-body.open{display:block;}
 </style>
 
   <!-- PWA -->
@@ -931,6 +940,64 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
       </div>
       <div id="bl-list"></div>
 
+    </div>
+
+
+    <!-- EV SCANNER (ADMIN ONLY) -->
+    <div class="sec" id="sec-scanner">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+        <div>
+          <h2 style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:4px;">&#9889; EV Scanner</h2>
+          <div style="font-size:12px;color:var(--text-muted);">Auto-scanned opportunities ranked by EV%. Last run: <span id="scanner-last-run">Never</span></div>
+        </div>
+        <button class="btn-a" style="background:var(--red);" onclick="runScanner()">&#9654; Run Scanner Now</button>
+      </div>
+
+      <!-- KPIs -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:20px;">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;">
+          <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Total Opps</div>
+          <div style="font-size:22px;font-weight:800;color:var(--text);" id="sc-total">--</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;">
+          <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">BUY Signals</div>
+          <div style="font-size:22px;font-weight:800;color:var(--green);" id="sc-buys">--</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;">
+          <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Avg EV%</div>
+          <div style="font-size:22px;font-weight:800;color:var(--amber);" id="sc-avgev">--</div>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;">
+          <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Top EV%</div>
+          <div style="font-size:22px;font-weight:800;color:var(--green);" id="sc-topev">--</div>
+        </div>
+      </div>
+
+      <!-- FILTERS -->
+      <div class="fbar" style="margin-bottom:14px;">
+        <input class="fi" type="text" id="sc-q" placeholder="Search player, set..." oninput="filterScanner()" style="flex:1;min-width:140px;">
+        <select class="fi" id="sc-dec" onchange="filterScanner()">
+          <option value="">All Decisions</option>
+          <option value="BUY">BUY</option>
+          <option value="CAUTION">CAUTION</option>
+        </select>
+        <select class="fi" id="sc-sport" onchange="filterScanner()">
+          <option value="">All Sports</option>
+          <option value="Baseball">Baseball</option>
+          <option value="Football">Football</option>
+          <option value="Basketball">Basketball</option>
+        </select>
+        <select class="fi" id="sc-sort" onchange="filterScanner()">
+          <option value="ev_pct">Sort: EV% High→Low</option>
+          <option value="ev_dollar">Sort: EV$ High→Low</option>
+          <option value="raw_price">Sort: Raw Price Low→High</option>
+          <option value="sales_volume">Sort: Volume High→Low</option>
+        </select>
+        <span class="fcnt" id="sc-cnt"></span>
+      </div>
+
+      <!-- RESULTS -->
+      <div id="sc-list"></div>
     </div>
 
     <!-- FINANCIALS -->
@@ -1758,6 +1825,7 @@ function goSec(name,btn) {
   if (name==='admin') loadAdmin();
   if (name==='financials') renderFinancials();
   if (name==='help') renderHelp();
+  if (name==='scanner') loadScanner();
 }
 
 // - RENDER ALL -
@@ -3968,6 +4036,157 @@ async function copyCard(id){
   if(res.error)return toast('Error: '+res.error.message,true);
   INV.unshift(res.data);renderAll();
   toast('Card copied! New ID: '+newID);
+}
+
+
+var SCANNER_DATA = [];
+var SCANNER_FILTERED = [];
+
+async function loadScanner(){
+  const {data, error} = await sb.from('ev_scanner').select('*').order('ev_pct', {ascending: false});
+  if(error){console.error('Scanner load error:', error);return;}
+  SCANNER_DATA = data || [];
+  SCANNER_FILTERED = [...SCANNER_DATA];
+  renderScanner();
+}
+
+function filterScanner(){
+  const q = g('sc-q').value.toLowerCase();
+  const dec = g('sc-dec').value;
+  const sport = g('sc-sport').value;
+  const sort = g('sc-sort').value;
+  SCANNER_FILTERED = SCANNER_DATA.filter(r => {
+    const mq = !q || (r.player||'').toLowerCase().includes(q) || (r.set_name||'').toLowerCase().includes(q);
+    const md = !dec || r.decision === dec;
+    const ms = !sport || (r.sport||'').toLowerCase().includes(sport.toLowerCase());
+    return mq && md && ms;
+  });
+  // Sort
+  SCANNER_FILTERED.sort((a,b) => {
+    if(sort === 'ev_pct') return (b.ev_pct||0) - (a.ev_pct||0);
+    if(sort === 'ev_dollar') return (b.ev_dollar||0) - (a.ev_dollar||0);
+    if(sort === 'raw_price') return (a.raw_price||0) - (b.raw_price||0);
+    if(sort === 'sales_volume') return (b.sales_volume||0) - (a.sales_volume||0);
+    return 0;
+  });
+  renderScanner();
+}
+
+function renderScanner(){
+  // KPIs
+  const buys = SCANNER_DATA.filter(r=>r.decision==='BUY').length;
+  const avgEV = SCANNER_DATA.length ? SCANNER_DATA.reduce((s,r)=>s+(r.ev_pct||0),0)/SCANNER_DATA.length : 0;
+  const topEV = SCANNER_DATA.length ? Math.max(...SCANNER_DATA.map(r=>r.ev_pct||0)) : 0;
+  if(g('sc-total')) g('sc-total').textContent = SCANNER_DATA.length;
+  if(g('sc-buys')) g('sc-buys').textContent = buys;
+  if(g('sc-avgev')) g('sc-avgev').textContent = (avgEV*100).toFixed(1)+'%';
+  if(g('sc-topev')) g('sc-topev').textContent = (topEV*100).toFixed(1)+'%';
+  if(g('sc-cnt')) g('sc-cnt').textContent = SCANNER_FILTERED.length+' cards';
+
+  const list = g('sc-list');
+  if(!list) return;
+
+  if(!SCANNER_FILTERED.length){
+    list.innerHTML = '<div class="empty"><div class="empty-icon">&#9889;</div><div class="empty-title">No results</div><div style="font-size:12px;">Run the scanner or adjust filters</div></div>';
+    return;
+  }
+
+  list.innerHTML = SCANNER_FILTERED.map(r => {
+    const evPct = (r.ev_pct||0)*100;
+    const evColor = r.decision==='BUY'?'var(--green)':'var(--amber)';
+    const badgeClass = r.decision==='BUY'?'sb-buy':'sb-caution';
+    return '<div class="scanner-row">'+
+      '<div class="scanner-header" onclick="toggleScannerRow(this)" data-scid="'+r.id+'">'+
+        '<i style="font-style:normal;font-size:10px;color:var(--text-muted);flex-shrink:0;">&#9658;</i>'+
+        '<div style="flex:1;min-width:0;">'+
+          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'+
+            '<span style="font-size:13px;font-weight:700;color:var(--text);">'+(r.player||'--')+'</span>'+
+            '<span style="font-size:11px;color:var(--text-muted);">'+(r.set_name||'')+'</span>'+
+            '<span class="scanner-badge '+badgeClass+'">'+r.decision+'</span>'+
+          '</div>'+
+          '<div style="display:flex;align-items:center;gap:10px;margin-top:4px;flex-wrap:wrap;">'+
+            '<span style="font-size:11px;font-weight:700;color:'+evColor+';">EV: '+evPct.toFixed(1)+'%</span>'+
+            '<span style="font-size:11px;color:var(--text-muted);">Raw: <strong style="color:var(--text);">'+f$(r.raw_price)+'</strong></span>'+
+            '<span style="font-size:11px;color:var(--text-muted);">Max Buy: <strong style="color:var(--text);">'+f$(r.max_buy_40)+'</strong></span>'+
+            '<span style="font-size:11px;color:var(--text-muted);">Vol: '+r.sales_volume+'</span>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="scanner-body" data-scid="'+r.id+'">'+
+        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:14px;">'+
+          '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">EV$</div><div style="font-size:14px;font-weight:700;color:'+evColor+';">'+f$(r.ev_dollar)+'</div></div>'+
+          '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">EV%</div><div style="font-size:14px;font-weight:700;color:'+evColor+';">'+evPct.toFixed(1)+'%</div></div>'+
+          '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">PSA 10</div><div style="font-size:14px;font-weight:600;color:var(--text);">'+f$(r.psa10_price)+'</div></div>'+
+          '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">PSA 9</div><div style="font-size:14px;font-weight:600;color:var(--text);">'+f$(r.psa9_price)+'</div></div>'+
+          '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Raw Price</div><div style="font-size:14px;font-weight:600;color:var(--text);">'+f$(r.raw_price)+'</div></div>'+
+          '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Implied Gem%</div><div style="font-size:14px;font-weight:600;color:var(--text);">'+(r.implied_gem_rate!=null?((r.implied_gem_rate*100).toFixed(1)+'%'):'--')+'</div></div>'+
+          '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Max Buy @40%</div><div style="font-size:14px;font-weight:600;color:var(--amber);">'+f$(r.max_buy_40)+'</div></div>'+
+          '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Max Buy @35%</div><div style="font-size:14px;font-weight:600;color:var(--amber);">'+f$(r.max_buy_35)+'</div></div>'+
+          '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Sales Volume</div><div style="font-size:14px;font-weight:600;color:var(--text);">'+(r.sales_volume||'--')+'</div></div>'+
+        '</div>'+
+        '<button class="btn-a" style="font-size:11px;padding:6px 14px;background:var(--green);" data-scanid="'+r.id+'">&#9654; Add to Quick Add</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+
+  // Wire scanner buy buttons
+  list.querySelectorAll('[data-scanid]').forEach(function(btn){
+    btn.addEventListener('click',function(e){e.stopPropagation();scannerToBuy(this.dataset.scanid);});
+  });
+  // Update last run time
+  if(SCANNER_DATA.length){
+    const latest = SCANNER_DATA.reduce((a,b)=>new Date(a.scanned_at)>new Date(b.scanned_at)?a:b);
+    const el = g('scanner-last-run');
+    if(el && latest.scanned_at) el.textContent = new Date(latest.scanned_at).toLocaleString();
+  }
+}
+
+function toggleScannerRow(el){
+  const id = el.dataset.scid;
+  const body = document.querySelector('.scanner-body[data-scid="'+id+'"]');
+  const chev = el.querySelector('i');
+  if(!body) return;
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  if(chev) chev.style.transform = isOpen ? '' : 'rotate(90deg)';
+}
+
+function scannerToBuy(id){
+  const r = SCANNER_DATA.find(x=>x.id===id);
+  if(!r) return;
+  openQuickAdd();
+  setTimeout(()=>{
+    if(r.player && g('qa-player')) g('qa-player').value = r.player;
+    if(r.set_name && g('qa-set')) g('qa-set').value = r.set_name;
+    if(r.card_no && g('qa-cno')) g('qa-cno').value = r.card_no;
+    if(r.psa10_price && g('qa-p10')) g('qa-p10').value = r.psa10_price;
+    if(r.psa9_price && g('qa-p9')) g('qa-p9').value = r.psa9_price;
+    qaCalcEV();
+    qaShowStep(1);
+    toast('Card pre-filled from Scanner!');
+  }, 250);
+}
+
+async function runScanner(){
+  toast('Scanner running — this may take a few minutes...');
+  try {
+    const res = await fetch('https://lmwqizcflhikvtoqehzj.supabase.co/functions/v1/ev-scanner', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.95XMeRWGeCcD_KxN40ciJi_QjB9GG4sVJexzBEhJ9NM'
+      }
+    });
+    const data = await res.json();
+    if(data.success){
+      toast('Scanner complete! Found '+data.cards_found+' opportunities.');
+      await loadScanner();
+    } else {
+      toast('Scanner error: '+(data.error||'unknown'), true);
+    }
+  } catch(e){
+    toast('Scanner failed: '+e.message, true);
+  }
 }
 
 loadTheme();
