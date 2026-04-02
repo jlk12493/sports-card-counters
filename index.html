@@ -1770,7 +1770,7 @@ function goSec(name,btn) {
   if (btn) btn.classList.add('active');
   if (name==='admin') loadAdmin();
   if (name==='financials') renderFinancials();
-  if (name==='scanner') loadScanner();
+  if (name==='scanner'){if(!CU||CU.email!==ADMIN){goSec('dashboard',null);return;}loadScanner();}
   if (name==='help') renderHelp();
 }
 
@@ -3940,6 +3940,7 @@ async function copyCard(id){
 }
 var SCANNER_DATA=[],SCANNER_FILTERED=[];
 async function loadScanner(){
+  if(!CU||CU.email!==ADMIN){g('sc-list').innerHTML='<div class="empty"><div class="empty-icon">&#128274;</div><div class="empty-title">Access Denied</div></div>';return;}
   const {data,error}=await sb.from('ev_scanner').select('*').order('ev_pct',{ascending:false});
   if(error){console.error('Scanner load error:',error);return;}
   SCANNER_DATA=data||[];SCANNER_FILTERED=[...SCANNER_DATA];renderScanner();
@@ -4005,6 +4006,7 @@ function renderScanner(){
 function toggleScannerRow(el){const id=el.dataset.scid;const body=document.querySelector('.scanner-body[data-scid="'+id+'"]');const chev=el.querySelector('i');if(!body)return;const isOpen=body.classList.contains('open');body.classList.toggle('open',!isOpen);if(chev)chev.style.transform=isOpen?'':'rotate(90deg)';}
 function scannerToBuy(id){const r=SCANNER_DATA.find(x=>x.id===id);if(!r)return;openQuickAdd();setTimeout(()=>{if(r.player&&g('qa-player'))g('qa-player').value=r.player;if(r.set_name&&g('qa-set'))g('qa-set').value=r.set_name;if(r.card_no&&g('qa-cno'))g('qa-cno').value=r.card_no;if(r.psa10_price&&g('qa-p10'))g('qa-p10').value=r.psa10_price;if(r.psa9_price&&g('qa-p9'))g('qa-p9').value=r.psa9_price;qaCalcEV();qaShowStep(1);toast('Card pre-filled from Scanner!');},250);}
 async function runScanner(){
+  if(!CU||CU.email!==ADMIN)return toast('Access denied',true);
   toast('Scanner running - this may take a few minutes...');
   try{
     const res=await fetch('https://lmwqizcflhikvtoqehzj.supabase.co/functions/v1/ev-scanner',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.95XMeRWGeCcD_KxN40ciJi_QjB9GG4sVJexzBEhJ9NM'}});
