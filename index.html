@@ -4007,13 +4007,23 @@ function toggleScannerRow(el){const id=el.dataset.scid;const body=document.query
 function scannerToBuy(id){const r=SCANNER_DATA.find(x=>x.id===id);if(!r)return;openQuickAdd();setTimeout(()=>{if(r.player&&g('qa-player'))g('qa-player').value=r.player;if(r.set_name&&g('qa-set'))g('qa-set').value=r.set_name;if(r.card_no&&g('qa-cno'))g('qa-cno').value=r.card_no;if(r.psa10_price&&g('qa-p10'))g('qa-p10').value=r.psa10_price;if(r.psa9_price&&g('qa-p9'))g('qa-p9').value=r.psa9_price;qaCalcEV();qaShowStep(1);toast('Card pre-filled from Scanner!');},250);}
 async function runScanner(){
   if(!CU||CU.email!==ADMIN)return toast('Access denied',true);
-  toast('Scanner running - this may take a few minutes...');
+  toast('Scanner queued - results will appear in a few minutes. Check back shortly!');
   try{
-    const res=await fetch('https://lmwqizcflhikvtoqehzj.supabase.co/functions/v1/ev-scanner',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.95XMeRWGeCcD_KxN40ciJi_QjB9GG4sVJexzBEhJ9NM'}});
-    const data=await res.json();
-    if(data.success){toast('Scanner complete! Found '+data.cards_found+' opportunities.');await loadScanner();}
-    else toast('Scanner error: '+(data.error||'unknown'),true);
-  }catch(e){toast('Scanner failed: '+e.message,true);}
+    // Trigger via database RPC to avoid CORS - runs server side
+    const {error}=await sb.rpc('trigger_ev_scanner');
+    if(error)toast('Trigger error: '+error.message,true);
+    else{
+      // Poll for new results after 30 seconds
+      setTimeout(async function(){
+        await loadScanner();
+        toast('Scanner results refreshed!');
+      }, 30000);
+    }
+  }catch(e){
+    // Fallback - just reload existing data
+    toast('Refreshing scanner data...');
+    await loadScanner();
+  }
 }
 
 loadTheme();
