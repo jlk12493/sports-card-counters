@@ -3941,7 +3941,7 @@ async function copyCard(id){
 var SCANNER_DATA=[],SCANNER_FILTERED=[];
 async function loadScanner(){
   if(!CU||CU.email!==ADMIN){g('sc-list').innerHTML='<div class="empty"><div class="empty-icon">&#128274;</div><div class="empty-title">Access Denied</div></div>';return;}
-  const {data,error}=await sb.from('ev_scanner').select('*').order('ev_pct',{ascending:false});
+  const {data,error}=await sb.from('ev_scanner').select('*').in('decision',['BUY','CAUTION']).order('ev_pct',{ascending:false});
   if(error){console.error('Scanner load error:',error);return;}
   SCANNER_DATA=data||[];SCANNER_FILTERED=[...SCANNER_DATA];renderScanner();
 }
@@ -3950,7 +3950,8 @@ function filterScanner(){
   SCANNER_FILTERED=SCANNER_DATA.filter(r=>{
     const mq=!q||(r.player||'').toLowerCase().includes(q)||(r.set_name||'').toLowerCase().includes(q);
     const md=!dec||r.decision===dec,ms=!sport||(r.sport||'').toLowerCase().includes(sport.toLowerCase());
-    return mq&&md&&ms;
+    const validDec=r.decision==='BUY'||r.decision==='CAUTION';
+    return mq&&md&&ms&&validDec;
   });
   SCANNER_FILTERED.sort((a,b)=>sort==='ev_pct'?(b.ev_pct||0)-(a.ev_pct||0):sort==='ev_dollar'?(b.ev_dollar||0)-(a.ev_dollar||0):sort==='raw_price'?(a.raw_price||0)-(b.raw_price||0):(b.sales_volume||0)-(a.sales_volume||0));
   renderScanner();
