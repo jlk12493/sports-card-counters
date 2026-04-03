@@ -1,5 +1,5 @@
 <!DOC
-<!-- v12 -->
+<!-- v13 -->
 YPE html>
 <html lang="en">
 <head>
@@ -959,10 +959,12 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
             </select>
           </div>
         </div>
-        <div id="gr-dropzone" ondragover="grDragOver(event)" ondragleave="grDragLeave(event)" ondrop="grDrop(event)"
-          style="border:2px dashed var(--border);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:12px;background:var(--surface-2);"
-          onclick="if(!(g('gr-set').value||'').trim()){toast('Please enter a set name first',true);return;}g('gr-csv').click()">
+        <div id="gr-dropzone" ondragover="grDragOver(event)" ondragleave="grDragLeave(event)" ondrop="grDrop(event)" onclick="grDropzoneClick()" style="border:2px dashed var(--border);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:12px;background:var(--surface-2);">
           <div style="font-size:28px;margin-bottom:6px;">&#128202;</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Drop GemRate CSV here</div>
+          <div style="font-size:11px;color:var(--text-muted);">or click to browse &mdash; enter set name first</div>
+          <input type="file" id="gr-csv" accept=".csv" style="display:none;" onchange="previewGemRateCSV()">
+        </div>
           <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Drop GemRate CSV here</div>
           <div style="font-size:11px;color:var(--text-muted);">or click to browse</div>
           <input type="file" id="gr-csv" accept=".csv" style="display:none;" onchange="previewGemRateCSV()">
@@ -4162,6 +4164,14 @@ function toggleGRImport() {
   const open = body.style.display === 'none';
   body.style.display = open ? 'block' : 'none';
   if (chev) chev.style.transform = open ? 'rotate(90deg)' : '';
+}
+
+function grDropzoneClick() {
+  if (!(g('gr-set').value||'').trim()) {
+    toast('Please enter a set name first', true);
+    return;
+  }
+  g('gr-csv').click();
 }
 
 function grDragOver(e) {
