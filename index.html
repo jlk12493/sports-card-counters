@@ -1,5 +1,5 @@
 <!DOC
-<!-- v13 -->
+<!-- v14 -->
 YPE html>
 <html lang="en">
 <head>
@@ -2043,6 +2043,7 @@ function renderInv() {
         '<div style="flex:1;min-width:0;">' +
           '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' +
             '<span style="font-size:13px;font-weight:700;color:var(--text);">' + (r.player||'--') + '</span>' +
+            (r.parallel?'<span style="font-size:11px;font-weight:600;color:var(--red);background:rgba(204,0,0,.1);border:1px solid rgba(204,0,0,.2);border-radius:3px;padding:1px 5px;">'+r.parallel+'</span>':'') +
             '<span style="font-size:11px;color:var(--text-muted);">' + (r.year||'') + (r.set_name?' · '+r.set_name:'') + (r.parallel?' · '+r.parallel:'') + (r.card_no?' #'+r.card_no:'') + '</span>' +
           '</div>' +
           '<div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;">' +
@@ -2064,6 +2065,7 @@ function renderInv() {
           detailCell('Actual Gem Rate', r.actual_gem_rate!=null?Math.round(r.actual_gem_rate*1000)/10+'%':'--') +
           detailCell('Implied Gem Rate', r.implied_gem_rate!=null?Math.round(r.implied_gem_rate*1000)/10+'%':'--') +
           detailCell('Edge', (r.actual_gem_rate&&r.implied_gem_rate&&r.implied_gem_rate>0)?'×'+(r.actual_gem_rate/r.implied_gem_rate).toFixed(2):'--') +
+          detailCell('Parallel', r.parallel||'Base') +
           detailCell('Sport', r.sport) +
           detailCell('Date Acquired', fmtDate(r.date_acquired)) +
           detailCell('Source', r.source) +
