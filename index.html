@@ -1,5 +1,5 @@
 <!DOC
-<!-- v6 -->
+<!-- v7 -->
 YPE html>
 <html lang="en">
 <head>
@@ -753,7 +753,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
           </div>
           <div>
             <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Status</div>
-            <select class="fi" id="inv-stat" onchange="filterInv()" style="width:100%;"><option value="">All</option><option>Raw</option><option>Submitted</option><option>Graded</option><option>Listed</option></select>
+            <select class="fi" id="inv-stat" onchange="filterInv()" style="width:100%;"><option value="">All</option><option>Awaiting Item</option><option>Raw</option><option>Submitted</option><option>Graded</option><option>Listed</option></select>
           </div>
           <div>
             <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Disposition</div>
@@ -2005,6 +2005,7 @@ function renderInv() {
             (isStaleComps(r) ? '<span style="font-size:9px;background:rgba(245,158,11,.2);color:var(--amber);border:1px solid rgba(245,158,11,.3);border-radius:3px;padding:1px 5px;font-weight:700;">STALE</span>' : '') +
           '</div>' +
         '</div>' +
+      '</div>' +
       '</div>' +
 
       // EXPANDED DETAIL
