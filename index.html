@@ -931,12 +931,36 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;"><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Avg EV%</div><div style="font-size:22px;font-weight:800;color:var(--amber);" id="sc-avgev">--</div></div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;"><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Top EV%</div><div style="font-size:22px;font-weight:800;color:var(--green);" id="sc-topev">--</div></div>
       </div>
-      <div class="fbar" style="margin-bottom:14px;">
-        <input class="fi" type="text" id="sc-q" placeholder="Search player, set..." oninput="filterScanner()" style="flex:1;min-width:140px;">
-        <select class="fi" id="sc-dec" onchange="filterScanner()"><option value="">All Decisions</option><option value="BUY">BUY</option><option value="CAUTION">CAUTION</option></select>
-        <select class="fi" id="sc-sport" onchange="filterScanner()"><option value="">All Sports</option><option value="Baseball">Baseball</option><option value="Football">Football</option><option value="Basketball">Basketball</option></select>
-        <select class="fi" id="sc-sort" onchange="filterScanner()"><option value="ev_pct">Sort: EV% High-Low</option><option value="ev_dollar">Sort: EV$ High-Low</option><option value="raw_price">Sort: Raw Price Low-High</option><option value="sales_volume">Sort: Volume High-Low</option></select>
-        <span class="fcnt" id="sc-cnt"></span>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:14px;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:12px;">
+          <div class="ff"><label>Player Search</label><input class="fi" type="text" id="sc-q" placeholder="e.g. Caleb Williams" oninput="filterScanner()" style="width:100%;"></div>
+          <div class="ff"><label>Sport</label>
+            <select class="fi" id="sc-sport" onchange="filterScanner()" style="width:100%;">
+              <option value="">All Sports</option>
+              <option value="Baseball">Baseball</option>
+              <option value="Football">Football</option>
+              <option value="Basketball">Basketball</option>
+            </select>
+          </div>
+          <div class="ff"><label>Min Raw Price $</label><input class="fi" type="number" id="sc-min-price" placeholder="0" value="0" oninput="filterScanner()" style="width:100%;"></div>
+          <div class="ff"><label>Max Raw Price $</label><input class="fi" type="number" id="sc-max-price" placeholder="No limit" oninput="filterScanner()" style="width:100%;"></div>
+          <div class="ff"><label>Min EV% <span id="sc-ev-label" style="color:var(--green);font-weight:700;">40%</span></label>
+            <input type="range" id="sc-ev-slider" min="0" max="200" value="40" oninput="updateEVSlider()" style="width:100%;accent-color:var(--red);">
+          </div>
+          <div class="ff"><label>Min Sales Volume</label><input class="fi" type="number" id="sc-min-vol" placeholder="120" value="120" oninput="filterScanner()" style="width:100%;"></div>
+          <div class="ff"><label>Sort By</label>
+            <select class="fi" id="sc-sort" onchange="filterScanner()" style="width:100%;">
+              <option value="ev_pct">EV% High→Low</option>
+              <option value="ev_dollar">EV$ High→Low</option>
+              <option value="raw_price">Raw Price Low→High</option>
+              <option value="sales_volume">Volume High→Low</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <span class="fcnt" id="sc-cnt"></span>
+          <button class="btn-c" style="font-size:11px;padding:4px 10px;" onclick="resetScannerFilters()">Reset Filters</button>
+        </div>
       </div>
       <div id="sc-list"></div>
     </div>
@@ -3941,19 +3965,50 @@ async function copyCard(id){
 var SCANNER_DATA=[],SCANNER_FILTERED=[];
 async function loadScanner(){
   if(!CU||CU.email!==ADMIN){g('sc-list').innerHTML='<div class="empty"><div class="empty-icon">&#128274;</div><div class="empty-title">Access Denied</div></div>';return;}
-  const {data,error}=await sb.from('ev_scanner').select('*').in('decision',['BUY','CAUTION']).order('ev_pct',{ascending:false});
+  const {data,error}=await sb.from('ev_scanner').select('*').order('ev_pct',{ascending:false});
   if(error){console.error('Scanner load error:',error);return;}
   SCANNER_DATA=data||[];SCANNER_FILTERED=[...SCANNER_DATA];renderScanner();
 }
+function updateEVSlider(){
+  const val=g('sc-ev-slider').value;
+  if(g('sc-ev-label'))g('sc-ev-label').textContent=val+'%';
+  filterScanner();
+}
+
+function resetScannerFilters(){
+  if(g('sc-q'))g('sc-q').value='';
+  if(g('sc-sport'))g('sc-sport').value='';
+  if(g('sc-min-price'))g('sc-min-price').value='0';
+  if(g('sc-max-price'))g('sc-max-price').value='';
+  if(g('sc-ev-slider')){g('sc-ev-slider').value='40';if(g('sc-ev-label'))g('sc-ev-label').textContent='40%';}
+  if(g('sc-min-vol'))g('sc-min-vol').value='120';
+  if(g('sc-sort'))g('sc-sort').value='ev_pct';
+  filterScanner();
+}
+
 function filterScanner(){
-  const q=g('sc-q').value.toLowerCase(),dec=g('sc-dec').value,sport=g('sc-sport').value,sort=g('sc-sort').value;
+  const q=(g('sc-q')||{value:''}).value.toLowerCase();
+  const sport=(g('sc-sport')||{value:''}).value;
+  const sort=(g('sc-sort')||{value:'ev_pct'}).value;
+  const minPrice=parseFloat((g('sc-min-price')||{value:'0'}).value)||0;
+  const maxPrice=parseFloat((g('sc-max-price')||{value:''}).value)||Infinity;
+  const minEV=parseFloat((g('sc-ev-slider')||{value:'40'}).value)/100||0.40;
+  const minVol=parseInt((g('sc-min-vol')||{value:'120'}).value)||0;
+
   SCANNER_FILTERED=SCANNER_DATA.filter(r=>{
     const mq=!q||(r.player||'').toLowerCase().includes(q)||(r.set_name||'').toLowerCase().includes(q);
-    const md=!dec||r.decision===dec,ms=!sport||(r.sport||'').toLowerCase().includes(sport.toLowerCase());
-    const validDec=r.decision==='BUY'||r.decision==='CAUTION';
-    return mq&&md&&ms&&validDec;
+    const ms=!sport||(r.sport||'')===(sport);
+    const mPrice=(r.raw_price||0)>=minPrice&&(r.raw_price||0)<=maxPrice;
+    const mEV=(r.ev_pct||0)>=minEV;
+    const mVol=(r.sales_volume||0)>=minVol;
+    return mq&&ms&&mPrice&&mEV&&mVol;
   });
-  SCANNER_FILTERED.sort((a,b)=>sort==='ev_pct'?(b.ev_pct||0)-(a.ev_pct||0):sort==='ev_dollar'?(b.ev_dollar||0)-(a.ev_dollar||0):sort==='raw_price'?(a.raw_price||0)-(b.raw_price||0):(b.sales_volume||0)-(a.sales_volume||0));
+  SCANNER_FILTERED.sort((a,b)=>
+    sort==='ev_pct'?(b.ev_pct||0)-(a.ev_pct||0):
+    sort==='ev_dollar'?(b.ev_dollar||0)-(a.ev_dollar||0):
+    sort==='raw_price'?(a.raw_price||0)-(b.raw_price||0):
+    (b.sales_volume||0)-(a.sales_volume||0)
+  );
   renderScanner();
 }
 function renderScanner(){
