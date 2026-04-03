@@ -1,5 +1,4 @@
 <!DOC
-<!-- v8 -->
 YPE html>
 <html lang="en">
 <head>
@@ -1035,6 +1034,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
           <!-- Sort -->
           <div class="ff"><label>Sort By</label>
             <select class="fi" id="sc-sort" onchange="filterScanner()" style="width:100%;">
+              <option value="scc_score">SCC Score High→Low</option>
               <option value="ev_pct">EV% High→Low</option>
               <option value="ev_dollar">EV$ High→Low</option>
               <option value="raw_price">Raw Price Low→High</option>
@@ -2046,6 +2046,7 @@ function renderInv() {
             sBdg(r.status) + dBdg(r.disposition) +
             '<span style="font-size:11px;color:var(--text-muted);">Cost: <strong style="color:var(--text);">' + (r.total_cost!=null?f$(r.total_cost):'--') + '</strong></span>' +
             (evp !== null ? '<div style="display:flex;align-items:center;gap:4px;"><div style="width:50px;height:3px;background:var(--border);border-radius:2px;overflow:hidden;"><div style="height:100%;width:' + evBarW.toFixed(0) + '%;background:' + evColor + ';border-radius:2px;"></div></div><span style="font-size:11px;font-weight:700;color:' + evColor + ';">' + (evp*100).toFixed(0) + '%</span></div>' : '') +
+            (r.scc_score!=null?'<span style="font-size:11px;font-weight:800;padding:1px 6px;border-radius:3px;background:rgba(0,0,0,.2);color:'+sccColor(r.scc_score)+'">SCC '+r.scc_score+'</span>':'') +
             (isStaleComps(r) ? '<span style="font-size:9px;background:rgba(245,158,11,.2);color:var(--amber);border:1px solid rgba(245,158,11,.3);border-radius:3px;padding:1px 5px;font-weight:700;">STALE</span>' : '') +
           '</div>' +
         '</div>' +
@@ -2055,6 +2056,10 @@ function renderInv() {
       // EXPANDED DETAIL
       '<div class="inv-body' + (isOpen?' open':'') + '" data-id="' + r.id + '" style="' + (isOpen?'':'display:none;') + 'border-top:1px solid var(--border);padding:14px;">' +
         '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:14px;">' +
+          detailCell('SCC Score', r.scc_score!=null?'<span style="font-weight:800;color:'+sccColor(r.scc_score)+';">'+r.scc_score+'/100</span>':'--') +
+          detailCell('Actual Gem Rate', r.actual_gem_rate!=null?Math.round(r.actual_gem_rate*1000)/10+'%':'--') +
+          detailCell('Implied Gem Rate', r.implied_gem_rate!=null?Math.round(r.implied_gem_rate*1000)/10+'%':'--') +
+          detailCell('Edge', (r.actual_gem_rate&&r.implied_gem_rate&&r.implied_gem_rate>0)?'×'+(r.actual_gem_rate/r.implied_gem_rate).toFixed(2):'--') +
           detailCell('Sport', r.sport) +
           detailCell('Date Acquired', fmtDate(r.date_acquired)) +
           detailCell('Source', r.source) +
@@ -3483,6 +3488,13 @@ function fmtDate(d) {
 function calcEV(r){const n10=r.psa10*0.865,n9=(r.psa9||0)*0.865;return r.gem_rate*n10+(1-r.gem_rate)*n9-(r.total_cost||0);}
 function f$(v){if(v==null||isNaN(v))return'--';return(v<0?'-$':'$')+Math.abs(v).toFixed(2);}
 function evBar(p){const pct=p*100,w=Math.min(Math.max(pct,0),200)/2,c=pct>=100?'#22C55E':pct>=40?'#F59E0B':'#CC0000';return`<div class="evw"><div class="evb"><div class="evf" style="width:${w.toFixed(0)}%;background:${c};"></div></div><span style="font-size:10px;color:${c};font-family:'Courier New',monospace;">${pct.toFixed(0)}%</span></div>`;}
+function sccColor(score){
+  if(score>=80) return 'var(--green)';
+  if(score>=60) return '#22c55e';
+  if(score>=40) return 'var(--amber)';
+  return 'var(--text-muted)';
+}
+
 function sBdg(s){const m={Raw:'b-raw',Submitted:'b-sub',Graded:'b-grd',Listed:'b-lst',Sold:'b-sld'};return`<span class="bdg ${m[s]||'b-raw'}">${s||'--'}</span>`;}
 function dBdg(d){if(!d)return'--';if(d==='Grade')return`<span class="bdg b-grade">Grade</span>`;if(d==='Sell Raw')return`<span class="bdg b-sld">Sell Raw</span>`;if(d==='Hold')return`<span class="bdg b-hold">Hold</span>`;return`<span class="bdg b-raw">${d}</span>`;}
 function g(id){return document.getElementById(id);}
@@ -4332,6 +4344,7 @@ function filterScanner(){
     return mp&&ms&&mPrice&&mEV&&mVol;
   });
   SCANNER_FILTERED.sort((a,b)=>
+    sort==='scc_score'?(b.scc_score||0)-(a.scc_score||0):
     sort==='ev_pct'?(b.ev_pct||0)-(a.ev_pct||0):
     sort==='ev_dollar'?(b.ev_dollar||0)-(a.ev_dollar||0):
     sort==='raw_price'?(a.raw_price||0)-(b.raw_price||0):
