@@ -4392,6 +4392,7 @@ function renderScanner(){
         '<div style="flex:1;min-width:0;">'+
           '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'+
             '<span style="font-size:13px;font-weight:700;color:var(--text);">'+(r.player||'--')+'</span>'+
+            (r.parallel?'<span style="font-size:11px;font-weight:600;color:var(--red);background:rgba(204,0,0,.1);border:1px solid rgba(204,0,0,.2);border-radius:3px;padding:1px 5px;">'+r.parallel+'</span>':'')+
             '<span style="font-size:11px;color:var(--text-muted);">'+(r.set_name||'')+(r.card_no?' #'+r.card_no:'')+'</span>'+
             '<span class="scanner-badge '+bc+'">'+r.decision+'</span>'+
           '</div>'+
