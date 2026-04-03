@@ -443,6 +443,17 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
 .scanner-header{padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;}
 .scanner-body{display:none;border-top:1px solid var(--border);padding:14px;}
 .scanner-body.open{display:block;}
+
+.sc-tag-wrap{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 8px;background:var(--surface-2);border:1px solid var(--border);border-radius:5px;min-height:38px;cursor:text;}
+.sc-tag-wrap:focus-within{border-color:var(--red);}
+.sc-tag{display:flex;align-items:center;gap:4px;background:rgba(204,0,0,.15);border:1px solid rgba(204,0,0,.3);color:var(--red);border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;}
+.sc-tag button{background:none;border:none;color:var(--red);cursor:pointer;font-size:13px;padding:0;line-height:1;}
+.sc-tag-input{border:none;outline:none;background:transparent;color:var(--text);font-size:13px;min-width:120px;flex:1;}
+.sc-suggestions{position:absolute;z-index:100;background:var(--surface);border:1px solid var(--border);border-radius:5px;max-height:200px;overflow-y:auto;width:100%;box-shadow:0 4px 12px rgba(0,0,0,.3);}
+.sc-sug-item{padding:8px 12px;cursor:pointer;font-size:13px;color:var(--text);}
+.sc-sug-item:hover{background:var(--surface-2);color:var(--red);}
+.sc-tag-wrap-outer{position:relative;}
+
 </style>
 </head>
 <body>
@@ -932,8 +943,21 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;"><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Top EV%</div><div style="font-size:22px;font-weight:800;color:var(--green);" id="sc-topev">--</div></div>
       </div>
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:14px;">
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:12px;">
-          <div class="ff"><label>Player Search</label><input class="fi" type="text" id="sc-q" placeholder="e.g. Caleb Williams" oninput="filterScanner()" style="width:100%;"></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:12px;">
+
+          <!-- Player multi-select -->
+          <div class="ff" style="grid-column:1/-1;">
+            <label>Players <span style="font-size:10px;color:var(--text-muted);font-weight:400;">— type to search, click to add</span></label>
+            <div class="sc-tag-wrap-outer">
+              <div class="sc-tag-wrap" id="sc-tag-wrap" onclick="g('sc-player-input').focus()">
+                <div id="sc-tags"></div>
+                <input type="text" id="sc-player-input" class="sc-tag-input" placeholder="e.g. Caleb Williams..." oninput="scPlayerInput()" onkeydown="scPlayerKey(event)">
+              </div>
+              <div class="sc-suggestions" id="sc-suggestions" style="display:none;"></div>
+            </div>
+          </div>
+
+          <!-- Sport -->
           <div class="ff"><label>Sport</label>
             <select class="fi" id="sc-sport" onchange="filterScanner()" style="width:100%;">
               <option value="">All Sports</option>
@@ -942,12 +966,28 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
               <option value="Basketball">Basketball</option>
             </select>
           </div>
-          <div class="ff"><label>Min Raw Price $</label><input class="fi" type="number" id="sc-min-price" placeholder="0" value="0" oninput="filterScanner()" style="width:100%;"></div>
-          <div class="ff"><label>Max Raw Price $</label><input class="fi" type="number" id="sc-max-price" placeholder="No limit" oninput="filterScanner()" style="width:100%;"></div>
-          <div class="ff"><label>Min EV% <span id="sc-ev-label" style="color:var(--green);font-weight:700;">40%</span></label>
-            <input type="range" id="sc-ev-slider" min="0" max="200" value="40" oninput="updateEVSlider()" style="width:100%;accent-color:var(--red);">
+
+          <!-- Min Raw Price -->
+          <div class="ff"><label>Min Raw $</label>
+            <input class="fi" type="number" id="sc-min-price" placeholder="0" value="0" oninput="filterScanner()" style="width:100%;">
           </div>
-          <div class="ff"><label>Min Sales Volume</label><input class="fi" type="number" id="sc-min-vol" placeholder="120" value="120" oninput="filterScanner()" style="width:100%;"></div>
+
+          <!-- Max Raw Price -->
+          <div class="ff"><label>Max Raw $</label>
+            <input class="fi" type="number" id="sc-max-price" placeholder="No limit" oninput="filterScanner()" style="width:100%;">
+          </div>
+
+          <!-- EV% Slider -->
+          <div class="ff"><label>Min EV% <span id="sc-ev-label" style="color:var(--green);font-weight:700;">40%</span></label>
+            <input type="range" id="sc-ev-slider" min="0" max="300" step="5" value="40" oninput="updateEVSlider()" style="width:100%;accent-color:var(--red);">
+          </div>
+
+          <!-- Min Volume -->
+          <div class="ff"><label>Min Sales/Year</label>
+            <input class="fi" type="number" id="sc-min-vol" placeholder="0" value="0" oninput="filterScanner()" style="width:100%;">
+          </div>
+
+          <!-- Sort -->
           <div class="ff"><label>Sort By</label>
             <select class="fi" id="sc-sort" onchange="filterScanner()" style="width:100%;">
               <option value="ev_pct">EV% High→Low</option>
@@ -956,10 +996,14 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
               <option value="sales_volume">Volume High→Low</option>
             </select>
           </div>
+
         </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
           <span class="fcnt" id="sc-cnt"></span>
-          <button class="btn-c" style="font-size:11px;padding:4px 10px;" onclick="resetScannerFilters()">Reset Filters</button>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-a" style="font-size:11px;padding:5px 12px;" onclick="saveScannerFilter()">&#128190; Save Filter</button>
+            <button class="btn-c" style="font-size:11px;padding:5px 12px;" onclick="resetScannerFilters()">Reset</button>
+          </div>
         </div>
       </div>
       <div id="sc-list"></div>
@@ -1794,7 +1838,7 @@ function goSec(name,btn) {
   if (btn) btn.classList.add('active');
   if (name==='admin') loadAdmin();
   if (name==='financials') renderFinancials();
-  if (name==='scanner'){if(!CU||CU.email!==ADMIN){goSec('dashboard',null);return;}loadScanner();}
+  if (name==='scanner'){if(!CU||CU.email!==ADMIN){goSec('dashboard',null);return;}loadScanner().then(()=>{loadSavedScannerFilter();filterScanner();});}
   if (name==='help') renderHelp();
 }
 
@@ -3969,39 +4013,131 @@ async function loadScanner(){
   if(error){console.error('Scanner load error:',error);return;}
   SCANNER_DATA=data||[];SCANNER_FILTERED=[...SCANNER_DATA];renderScanner();
 }
+// ── SCANNER PLAYER TAGS ──
+var SC_SELECTED_PLAYERS = [];
+
+function scPlayerInput(){
+  const val = g('sc-player-input').value.trim().toLowerCase();
+  const sug = g('sc-suggestions');
+  if(!val){sug.style.display='none';return;}
+  const players = [...new Set(SCANNER_DATA.map(r=>r.player).filter(Boolean))].sort();
+  const matches = players.filter(p=>p.toLowerCase().includes(val)&&!SC_SELECTED_PLAYERS.includes(p)).slice(0,8);
+  if(!matches.length){sug.style.display='none';return;}
+  sug.innerHTML = matches.map(function(p){return '<div class="sc-sug-item" data-player="'+p.replace(/"/g,'&quot;')+'">'+p+'</div>';}).join('');
+  sug.querySelectorAll('.sc-sug-item').forEach(function(el){el.addEventListener('click',function(){addPlayerTag(this.dataset.player);});});
+  sug.style.display='block';
+}
+
+function scPlayerKey(e){
+  if(e.key==='Backspace'&&g('sc-player-input').value===''&&SC_SELECTED_PLAYERS.length){
+    SC_SELECTED_PLAYERS.pop();renderPlayerTags();filterScanner();
+  }
+  if(e.key==='Escape') g('sc-suggestions').style.display='none';
+}
+
+function addPlayerTag(player){
+  if(!SC_SELECTED_PLAYERS.includes(player)) SC_SELECTED_PLAYERS.push(player);
+  g('sc-player-input').value='';
+  g('sc-suggestions').style.display='none';
+  renderPlayerTags();
+  filterScanner();
+}
+
+function removePlayerTag(player){
+  SC_SELECTED_PLAYERS = SC_SELECTED_PLAYERS.filter(p=>p!==player);
+  renderPlayerTags();
+  filterScanner();
+}
+
+function renderPlayerTags(){
+  const wrap = g('sc-tags');
+  if(!wrap) return;
+  wrap.innerHTML = '';
+  SC_SELECTED_PLAYERS.forEach(function(p){
+    const span=document.createElement('span');
+    span.className='sc-tag';
+    span.innerHTML=p+' ';
+    const btn=document.createElement('button');
+    btn.innerHTML='&#10005;';btn.title='Remove';
+    btn.addEventListener('click',function(){removePlayerTag(p);});
+    span.appendChild(btn);
+    wrap.appendChild(span);
+  });
+}
+
+// Close suggestions when clicking outside
+document.addEventListener('click', function(e){
+  if(!e.target.closest('.sc-tag-wrap-outer')) {
+    const s = g('sc-suggestions');
+    if(s) s.style.display='none';
+  }
+});
+
 function updateEVSlider(){
-  const val=g('sc-ev-slider').value;
-  if(g('sc-ev-label'))g('sc-ev-label').textContent=val+'%';
+  const val = g('sc-ev-slider').value;
+  if(g('sc-ev-label')) g('sc-ev-label').textContent = val+'%';
   filterScanner();
 }
 
 function resetScannerFilters(){
-  if(g('sc-q'))g('sc-q').value='';
-  if(g('sc-sport'))g('sc-sport').value='';
-  if(g('sc-min-price'))g('sc-min-price').value='0';
-  if(g('sc-max-price'))g('sc-max-price').value='';
+  SC_SELECTED_PLAYERS=[];
+  renderPlayerTags();
+  if(g('sc-player-input')) g('sc-player-input').value='';
+  if(g('sc-sport')) g('sc-sport').value='';
+  if(g('sc-min-price')) g('sc-min-price').value='0';
+  if(g('sc-max-price')) g('sc-max-price').value='';
   if(g('sc-ev-slider')){g('sc-ev-slider').value='40';if(g('sc-ev-label'))g('sc-ev-label').textContent='40%';}
-  if(g('sc-min-vol'))g('sc-min-vol').value='120';
-  if(g('sc-sort'))g('sc-sort').value='ev_pct';
+  if(g('sc-min-vol')) g('sc-min-vol').value='0';
+  if(g('sc-sort')) g('sc-sort').value='ev_pct';
   filterScanner();
 }
 
+async function saveScannerFilter(){
+  const filterData={
+    players: SC_SELECTED_PLAYERS,
+    sport: g('sc-sport').value,
+    minPrice: g('sc-min-price').value,
+    maxPrice: g('sc-max-price').value,
+    minEV: g('sc-ev-slider').value,
+    minVol: g('sc-min-vol').value,
+    sort: g('sc-sort').value,
+  };
+  const {error}=await sb.from('user_settings').upsert({user_id:CU.id,scanner_filter:JSON.stringify(filterData)},{onConflict:'user_id'});
+  if(error) toast('Error saving filter: '+error.message,true);
+  else toast('Filter saved! Will load automatically next time.');
+}
+
+async function loadSavedScannerFilter(){
+  const {data}=await sb.from('user_settings').select('scanner_filter').eq('user_id',CU.id).single();
+  if(!data||!data.scanner_filter) return;
+  try{
+    const f=JSON.parse(data.scanner_filter);
+    SC_SELECTED_PLAYERS=f.players||[];
+    renderPlayerTags();
+    if(f.sport&&g('sc-sport')) g('sc-sport').value=f.sport;
+    if(f.minPrice&&g('sc-min-price')) g('sc-min-price').value=f.minPrice;
+    if(f.maxPrice&&g('sc-max-price')) g('sc-max-price').value=f.maxPrice;
+    if(f.minEV&&g('sc-ev-slider')){g('sc-ev-slider').value=f.minEV;if(g('sc-ev-label'))g('sc-ev-label').textContent=f.minEV+'%';}
+    if(f.minVol&&g('sc-min-vol')) g('sc-min-vol').value=f.minVol;
+    if(f.sort&&g('sc-sort')) g('sc-sort').value=f.sort;
+  }catch(e){console.error('Filter parse error:',e);}
+}
+
 function filterScanner(){
-  const q=(g('sc-q')||{value:''}).value.toLowerCase();
   const sport=(g('sc-sport')||{value:''}).value;
   const sort=(g('sc-sort')||{value:'ev_pct'}).value;
   const minPrice=parseFloat((g('sc-min-price')||{value:'0'}).value)||0;
   const maxPrice=parseFloat((g('sc-max-price')||{value:''}).value)||Infinity;
-  const minEV=parseFloat((g('sc-ev-slider')||{value:'40'}).value)/100||0.40;
-  const minVol=parseInt((g('sc-min-vol')||{value:'120'}).value)||0;
+  const minEV=parseFloat((g('sc-ev-slider')||{value:'40'}).value)/100;
+  const minVol=parseInt((g('sc-min-vol')||{value:'0'}).value)||0;
 
   SCANNER_FILTERED=SCANNER_DATA.filter(r=>{
-    const mq=!q||(r.player||'').toLowerCase().includes(q)||(r.set_name||'').toLowerCase().includes(q);
-    const ms=!sport||(r.sport||'')===(sport);
+    const mp=!SC_SELECTED_PLAYERS.length||SC_SELECTED_PLAYERS.some(p=>(r.player||'').toLowerCase().includes(p.toLowerCase()));
+    const ms=!sport||(r.sport||'')===sport;
     const mPrice=(r.raw_price||0)>=minPrice&&(r.raw_price||0)<=maxPrice;
     const mEV=(r.ev_pct||0)>=minEV;
     const mVol=(r.sales_volume||0)>=minVol;
-    return mq&&ms&&mPrice&&mEV&&mVol;
+    return mp&&ms&&mPrice&&mEV&&mVol;
   });
   SCANNER_FILTERED.sort((a,b)=>
     sort==='ev_pct'?(b.ev_pct||0)-(a.ev_pct||0):
@@ -4030,7 +4166,7 @@ function renderScanner(){
         '<div style="flex:1;min-width:0;">'+
           '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'+
             '<span style="font-size:13px;font-weight:700;color:var(--text);">'+(r.player||'--')+'</span>'+
-            '<span style="font-size:11px;color:var(--text-muted);">'+(r.set_name||'')+'</span>'+
+            '<span style="font-size:11px;color:var(--text-muted);">'+(r.set_name||'')+(r.card_no?' #'+r.card_no:'')+'</span>'+
             '<span class="scanner-badge '+bc+'">'+r.decision+'</span>'+
           '</div>'+
           '<div style="display:flex;align-items:center;gap:10px;margin-top:4px;flex-wrap:wrap;">'+
