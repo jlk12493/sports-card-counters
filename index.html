@@ -1,5 +1,5 @@
 <!DOC
-<!-- v9 -->
+<!-- v10 -->
 YPE html>
 <html lang="en">
 <head>
@@ -4199,10 +4199,12 @@ async function importGemRateCSV() {
   
   for (let i = 0; i < GR_PARSED_DATA.length; i += CHUNK) {
     const chunk = GR_PARSED_DATA.slice(i, i + CHUNK);
+    // Delete existing records for this set+player combo then insert fresh
     const {error} = await sb.from('gem_rates').upsert(chunk, {
-      onConflict: 'player,parallel,card_no,set_name'
+      onConflict: 'player,parallel,card_no,set_name',
+      ignoreDuplicates: true
     });
-    if (error) { console.error('Import error:', error.message); errors += chunk.length; }
+    if (error) { console.error('Import error:', error.message); g('gr-status').textContent = 'Error: '+error.message; errors += chunk.length; }
     else imported += chunk.length;
     g('gr-status').textContent = `Importing... ${imported}/${GR_PARSED_DATA.length}`;
   }
