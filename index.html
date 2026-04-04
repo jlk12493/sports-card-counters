@@ -4148,6 +4148,16 @@ function previewGemRateCSV() {
   reader.readAsText(file);
 }
 
+function selectSCPName(btn) {
+  const name = btn.dataset.name;
+  const el = g('gr-scp-detect');
+  if (el) el.dataset.scpName = name;
+  // Highlight selected button
+  el.querySelectorAll('button').forEach(b => b.style.background = 'var(--surface)');
+  btn.style.background = 'var(--red)';
+  btn.style.color = '#fff';
+}
+
 async function detectSCPSetName(setName) {
   if (!setName) return;
   const statusEl = g('gr-status');
@@ -4165,10 +4175,17 @@ async function detectSCPSetName(setName) {
         el.style.display = 'block';
         if (matches) {
           el.innerHTML = '<span style="color:var(--green);">&#10003; SCP matches: <strong>' + data.scp_set_name + '</strong></span>';
+          el.dataset.scpName = data.scp_set_name;
         } else {
-          el.innerHTML = '<span style="color:var(--amber);">&#9888; SCP calls this: <strong>' + data.scp_set_name + '</strong></span>' +
-            '<br><span style="font-size:11px;color:var(--text-muted);">Your import name will be updated to match SCP automatically on import.</span>';
-          // Store the SCP name for use during import
+          const allNames = data.all_names || [data.scp_set_name];
+          let html = '<div style="margin-bottom:6px;"><span style="color:var(--amber);">&#9888; SCP calls this set: <strong>' + data.scp_set_name + '</strong></span></div>';
+          html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">The import name will automatically use the SCP name above. Or pick manually:</div>';
+          html += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
+          allNames.forEach(function(name) {
+            html += '<button data-name="' + name.replace(/"/g,'&quot;') + '" onclick="selectSCPName(this)" style="font-size:11px;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;">' + name + '</button>';
+          });
+          html += '</div>';
+          el.innerHTML = html;
           el.dataset.scpName = data.scp_set_name;
         }
       }
