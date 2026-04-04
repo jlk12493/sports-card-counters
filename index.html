@@ -1123,17 +1123,9 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
           <span id="registry-chevron" style="font-size:10px;color:var(--text-muted);transition:transform .2s;">&#9658;</span>
         </div>
         <div id="registry-body" style="display:none;padding:0 16px 16px;border-top:1px solid var(--border);">
-          <!-- Single add -->
-          <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:12px;align-items:end;">
-            <div class="ff"><label>Your Import Name</label><input class="fi" id="reg-import-name" placeholder="e.g. Topps Chrome" style="width:100%;"></div>
-            <div class="ff"><label>SCP Set Name</label><input class="fi" id="reg-scp-name" placeholder="e.g. Baseball Cards 2018 Topps Chrome" style="width:100%;"></div>
-            <button class="btn-a" style="padding:7px 14px;font-size:12px;" onclick="addSetMapping()">+ Add</button>
-          </div>
-
           <!-- Bulk import from set list CSV -->
-          <div style="border-top:1px solid var(--border);padding-top:12px;margin-bottom:12px;">
-            <div style="font-size:12px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Bulk Import from Set List CSV</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:10px;align-items:end;">
+          <div style="margin-bottom:12px;margin-top:12px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
               <div class="ff"><label>Year</label><input class="fi" id="bulk-year" placeholder="e.g. 2018" style="width:100%;"></div>
               <div class="ff"><label>Sport</label>
                 <select class="fi" id="bulk-sport" style="width:100%;">
@@ -1142,12 +1134,13 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
                   <option value="Basketball">Basketball</option>
                 </select>
               </div>
-              <div class="ff"><label>&nbsp;</label>
-                <label class="btn-c" style="cursor:pointer;display:block;text-align:center;padding:7px 14px;font-size:12px;">
-                  &#128196; Upload Set List
-                  <input type="file" id="bulk-csv" accept=".csv" style="display:none;" onchange="parseBulkSetList()">
-                </label>
-              </div>
+            </div>
+            <div id="bulk-dropzone" ondragover="bulkDragOver(event)" ondragleave="bulkDragLeave(event)" ondrop="bulkDrop(event)" onclick="g('bulk-csv').click()"
+              style="border:2px dashed var(--border);border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface-2);margin-bottom:10px;">
+              <div style="font-size:24px;margin-bottom:6px;">&#128218;</div>
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Drop GemRate Set List CSV here</div>
+              <div style="font-size:11px;color:var(--text-muted);">or click to browse — the summary CSV from gemrate.com</div>
+              <input type="file" id="bulk-csv" accept=".csv" style="display:none;" onchange="parseBulkSetList()">
             </div>
             <div id="bulk-preview" style="display:none;">
               <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Review detected SCP names — correct any that are wrong then click Register All:</div>
@@ -1159,7 +1152,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
             </div>
           </div>
 
-          <div id="registry-list" style="font-size:12px;"></div>
+                    <div id="registry-list" style="font-size:12px;"></div>
         </div>
       </div>
 
@@ -4350,20 +4343,26 @@ function grRegistrySelect(val) {
   }
 }
 
-async function addSetMapping() {
-  const importName = (g('reg-import-name').value || '').trim();
-  const scpName = (g('reg-scp-name').value || '').trim();
-  if (!importName || !scpName) { toast('Both fields required', true); return; }
-  const {error} = await sb.from('set_registry').insert({import_name: importName, scp_name: scpName});
-  if (error) { toast('Error: ' + error.message, true); return; }
-  g('reg-import-name').value = '';
-  g('reg-scp-name').value = '';
-  toast('Set mapping added!');
-  loadSetRegistry();
-}
-
 // ── BULK SET LIST IMPORT ──
 var BULK_SETS = [];
+
+function bulkDragOver(e) {
+  e.preventDefault();
+  const dz = g('bulk-dropzone');
+  if(dz){dz.style.borderColor='var(--green)';dz.style.background='rgba(34,197,94,.05)';}
+}
+function bulkDragLeave(e) {
+  const dz = g('bulk-dropzone');
+  if(dz){dz.style.borderColor='var(--border)';dz.style.background='var(--surface-2)';}
+}
+function bulkDrop(e) {
+  e.preventDefault(); bulkDragLeave(e);
+  const file = e.dataTransfer.files[0];
+  if (!file || !file.name.endsWith('.csv')) { toast('Please drop a CSV file', true); return; }
+  const dt = new DataTransfer(); dt.items.add(file);
+  g('bulk-csv').files = dt.files;
+  parseBulkSetList();
+}
 
 function parseBulkSetList() {
   const file = g('bulk-csv').files[0];
