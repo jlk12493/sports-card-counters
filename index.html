@@ -968,6 +968,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
           <div style="font-size:11px;color:var(--text-muted);">or click to browse</div>
           <input type="file" id="gr-csv" accept=".csv" style="display:none;" onchange="previewGemRateCSV()">
         </div>
+        <div id="gr-scp-detect" style="display:none;background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:10px;font-size:12px;margin-bottom:10px;"></div>
         <div id="gr-preview" style="display:none;margin-bottom:12px;">
           <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:10px;font-size:12px;">
             <span id="gr-preview-text"></span>
@@ -4140,8 +4141,44 @@ function previewGemRateCSV() {
       Sample: ${GR_PARSED_DATA.slice(0,3).map(r=>r.player+' '+r.parallel+' #'+r.card_no+' ('+Math.round(r.gem_rate*100)+'%)').join(', ')}`;
     g('gr-import-btn').style.display = 'inline-block';
     g('gr-status').textContent = '';
+
+    // Auto-detect SCP set name
+    detectSCPSetName(setName);
   };
   reader.readAsText(file);
+}
+
+async function detectSCPSetName(setName) {
+  if (!setName) return;
+  const statusEl = g('gr-status');
+  statusEl.textContent = 'Checking SCP for matching set name...';
+  try {
+    const res = await fetch(
+      'https://lmwqizcflhikvtoqehzj.supabase.co/functions/v1/rapid-endpoint?detect=1&q=' + encodeURIComponent(setName),
+      { method: 'POST', headers: { 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.95XMeRWGeCcD_KxN40ciJi_QjB9GG4sVJexzBEhJ9NM', 'Content-Type': 'application/json' } }
+    );
+    const data = await res.json();
+    if (data.scp_set_name) {
+      const matches = data.scp_set_name === setName;
+      const el = g('gr-scp-detect');
+      if (el) {
+        el.style.display = 'block';
+        if (matches) {
+          el.innerHTML = '<span style="color:var(--green);">&#10003; SCP matches: <strong>' + data.scp_set_name + '</strong></span>';
+        } else {
+          el.innerHTML = '<span style="color:var(--amber);">&#9888; SCP calls this: <strong>' + data.scp_set_name + '</strong></span>' +
+            '<br><span style="font-size:11px;color:var(--text-muted);">Your import name will be updated to match SCP automatically on import.</span>';
+          // Store the SCP name for use during import
+          el.dataset.scpName = data.scp_set_name;
+        }
+      }
+      statusEl.textContent = '';
+    } else {
+      statusEl.textContent = 'Could not detect SCP set name - import will use your entered name.';
+    }
+  } catch(e) {
+    statusEl.textContent = '';
+  }
 }
 
 function parseCSVLine(line) {
@@ -4200,8 +4237,14 @@ function grDrop(e) {
 
 async function importGemRateCSV() {
   if (!GR_PARSED_DATA.length) { toast('No data to import', true); return; }
-  const setName = (g('gr-set').value || '').trim();
+  let setName = (g('gr-set').value || '').trim();
   if (!setName) { toast('Please enter a set name', true); return; }
+  // Use SCP-detected name if available
+  const detectEl = g('gr-scp-detect');
+  if (detectEl && detectEl.dataset.scpName) {
+    setName = detectEl.dataset.scpName;
+    console.log('Using SCP set name:', setName);
+  }
   
   g('gr-status').textContent = `Importing ${GR_PARSED_DATA.length} cards...`;
   g('gr-import-btn').disabled = true;
