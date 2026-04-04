@@ -4141,14 +4141,19 @@ function previewGemRateCSV() {
     g('gr-import-btn').style.display = 'inline-block';
     g('gr-status').textContent = '';
 
-    // Auto-detect SCP set name
-    detectSCPSetName(setName);
+    // Auto-detect SCP set name using player name + year for accuracy
+    const detSport = g('gr-sport').value || 'Football';
+    const detYear = (g('gr-year').value || '').trim();
+    const firstPlayer = GR_PARSED_DATA.length > 0 ? GR_PARSED_DATA[0].player : '';
+    const hint = (detYear ? detYear + ' ' : '') + firstPlayer;
+    g('gr-status').textContent = 'Detecting set name from SCP...';
+    detectSCPSetName(hint);
+  const name = btn.dataset.name;
   };
   reader.readAsText(file);
 }
 
 function selectSCPName(btn) {
-  const name = btn.dataset.name;
   const el = g('gr-scp-detect');
   if (el) el.dataset.scpName = name;
   // Highlight selected button
@@ -4178,17 +4183,13 @@ async function detectSCPSetName(setName) {
         } else {
           const allNames = data.all_names || [data.scp_set_name];
           let html = '<div style="margin-bottom:8px;"><span style="color:var(--amber);">&#9888; Multiple set names found on SCP</span></div>';
-          if (allNames.length === 1) {
-            html = '<div style="margin-bottom:4px;"><span style="color:var(--amber);">&#9888; SCP calls this: <strong>' + data.scp_set_name + '</strong></span></div>';
-            html += '<div style="font-size:11px;color:var(--text-muted);">Import will use this name automatically.</div>';
-          } else {
-            html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Select the correct set name from SCP:</div>';
-            html += '<select id="gr-scp-select" class="fi" style="width:100%;" onchange="document.getElementById(\'gr-scp-detect\').dataset.scpName=this.value;">';
-            allNames.forEach(function(name, i) {
-              html += '<option value="' + name.replace(/"/g,'&quot;') + '"' + (i===0?' selected':'') + '>' + name + '</option>';
-            });
-            html += '</select>';
-          }
+          // Always show dropdown so user can confirm or change
+          html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Select the correct SCP set name:</div>';
+          html += '<select id="gr-scp-select" class="fi" style="width:100%;" onchange="document.getElementById(\'gr-scp-detect\').dataset.scpName=this.value;">';
+          allNames.forEach(function(name, i) {
+            html += '<option value="' + name.replace(/"/g,'&quot;') + '"' + (i===0?' selected':'') + '>' + name + '</option>';
+          });
+          html += '</select>';
           el.innerHTML = html;
           el.dataset.scpName = data.scp_set_name;
         }
