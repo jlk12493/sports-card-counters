@@ -1,5 +1,5 @@
 <!DOC
-<!-- v28 -->
+<!-- v29 -->
 YPE html>
 <html lang="en">
 <head>
@@ -4105,71 +4105,6 @@ async function loadScanner(){
 // ── GEMRATE CSV IMPORT ──
 var GR_PARSED_DATA = [];
 
-function previewGemRateCSV() {
-  const file = g('gr-csv').files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const text = e.target.result;
-    const lines = text.split('\n').filter(l => l.trim());
-    // Skip header rows (row 0 is group headers, row 1 is column headers)
-    // Find the data start - look for row with gemrate_id pattern
-    let dataStart = 0;
-    for (let i = 0; i < Math.min(5, lines.length); i++) {
-      if (lines[i].includes('Gemrate_id') || lines[i].includes('gemrate_id')) {
-        dataStart = i + 1;
-        break;
-      }
-    }
-    
-    GR_PARSED_DATA = [];
-    const setName = (g('gr-set').value || '').trim();
-    const year = (g('gr-year').value || '').trim();
-    const sport = (g('gr-sport').value || 'Football');
-    
-    for (let i = dataStart; i < lines.length; i++) {
-      // Parse CSV properly handling quoted fields
-      const cols = parseCSVLine(lines[i]);
-      if (!cols || cols.length < 10) continue;
-      
-      const player = (cols[2] || '').trim();
-      const parallel = (cols[3] || '').trim();
-      const cardNo = (cols[4] || '').trim();
-      const cardDesc = (cols[5] || '').trim();
-      const gems = parseInt((cols[6] || '0').replace(/,/g, '')) || 0;
-      const total = parseInt((cols[7] || '0').replace(/,/g, '')) || 0;
-      const gemRateStr = (cols[8] || '0%').replace('%', '').trim();
-      const gemRate = parseFloat(gemRateStr) / 100 || 0;
-      const gemRateMonthStr = (cols[9] || '').replace('%', '').trim();
-      const gemRateMonth = gemRateMonthStr ? parseFloat(gemRateMonthStr) / 100 : null;
-      const gemrateId = (cols[0] || '').trim();
-      
-      // Extract PSA cert from URL in col 17
-      const certUrl = (cols[17] || '');
-      const certMatch = certUrl.match(/\/cert\/(\d+)\//);
-      const psaCert = certMatch ? certMatch[1] : null;
-      
-      if (!player || !cardNo || total < 5) continue;
-      
-      GR_PARSED_DATA.push({
-        gemrate_id: gemrateId,
-        player, parallel, card_no: cardNo, card_description: cardDesc,
-        gems, total, gem_rate: gemRate,
-        gem_rate_month: gemRateMonth,
-        psa_cert: psaCert,
-        set_name: setName, year, sport,
-        last_updated: new Date().toISOString()
-      });
-    }
-    
-    g('gr-preview').style.display = 'block';
-    g('gr-preview-text').innerHTML = `<strong>${GR_PARSED_DATA.length} cards parsed</strong> from ${file.name}. 
-      Sample: ${GR_PARSED_DATA.slice(0,3).map(r=>r.player+' '+r.parallel+' #'+r.card_no+' ('+Math.round(r.gem_rate*100)+'%)').join(', ')}`;
-    g('gr-import-btn').style.display = 'inline-block';
-    g('gr-status').textContent = '';
-  };
-  reader.readAsText(file);
-}
 
 function parseCSVLine(line) {
   const result = [];
@@ -4248,17 +4183,19 @@ function previewGemRateCSV(){
         card_description:cardDesc,gems,total,gem_rate:gemRate,gem_rate_month:gmMonth,
         psa_cert:certMatch?certMatch[1]:null,set_name:'',last_updated:new Date().toISOString()});
     }
+    // Check if registry set already selected BEFORE touching the detect element
     const det=g('gr-scp-detect');
-    if(det){det.style.display='none';det.dataset.scpName='';}
+    const existingName = (det && det.dataset.scpName) || '';
     g('gr-preview').style.display='block';
     g('gr-preview-text').innerHTML='<strong>'+GR_PARSED_DATA.length+' cards parsed</strong> from '+file.name;
     g('gr-import-btn').style.display='inline-block';
     g('gr-status').textContent='';
-    // If a registry set is already selected, skip detection
-    const existingName = (g('gr-scp-detect') && g('gr-scp-detect').dataset.scpName) || '';
     if (existingName) {
-      g('gr-status').textContent = '';
+      // Registry set already selected - keep it, don't detect
+      if(det){det.style.display='block';}
     } else {
+      // No registry selection - clear and auto-detect
+      if(det){det.style.display='none';det.dataset.scpName='';}
       const hint=(g('gr-hint')?g('gr-hint').value:'').trim()||(GR_PARSED_DATA[0]?GR_PARSED_DATA[0].player:'');
       if(hint){g('gr-status').textContent='Detecting set name...';detectSCPSetName(hint);}
     }
