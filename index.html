@@ -947,9 +947,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
           <span id="gr-chevron" style="font-size:10px;color:var(--text-muted);transition:transform .2s;">&#9658;</span>
         </div>
         <div id="gr-import-body" style="display:none;padding:0 16px 16px;border-top:1px solid var(--border);">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;align-items:end;">
-          <div class="ff"><label>Set Name <span style="color:var(--red);">*</span> <span style="font-size:10px;color:var(--text-muted);font-weight:400;">required before upload</span></label><input class="fi" id="gr-set" placeholder="e.g. 2024 Panini Prizm Football" style="width:100%;" oninput="const dz=g('gr-dropzone');if(dz)dz.style.opacity=this.value.trim()?'1':'0.5';"></div>
-          <div class="ff"><label>Year</label><input class="fi" id="gr-year" placeholder="2024" style="width:100%;"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;align-items:end;">
           <div class="ff"><label>Sport</label>
             <select class="fi" id="gr-sport" style="width:100%;">
               <option value="Football">Football</option>
@@ -957,11 +955,12 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
               <option value="Basketball">Basketball</option>
             </select>
           </div>
+          <div class="ff"><label>Year</label><input class="fi" id="gr-year" placeholder="2024" style="width:100%;"></div>
         </div>
         <div id="gr-dropzone" ondragover="grDragOver(event)" ondragleave="grDragLeave(event)" ondrop="grDrop(event)" onclick="grDropzoneClick()" style="border:2px dashed var(--border);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:12px;background:var(--surface-2);">
           <div style="font-size:28px;margin-bottom:6px;">&#128202;</div>
           <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Drop GemRate CSV here</div>
-          <div style="font-size:11px;color:var(--text-muted);">or click to browse &mdash; enter set name first</div>
+          <div style="font-size:11px;color:var(--text-muted);">or click to browse</div>
           <input type="file" id="gr-csv" accept=".csv" style="display:none;" onchange="previewGemRateCSV()">
         </div>
           <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Drop GemRate CSV here</div>
@@ -4097,7 +4096,7 @@ function previewGemRateCSV() {
     }
     
     GR_PARSED_DATA = [];
-    const setName = (g('gr-set').value || '').trim();
+    const setName = ''; // Will be set from SCP detection
     const year = (g('gr-year').value || '').trim();
     const sport = (g('gr-sport').value || 'Football');
     
@@ -4226,10 +4225,6 @@ function toggleGRImport() {
 }
 
 function grDropzoneClick() {
-  if (!(g('gr-set').value||'').trim()) {
-    toast('Please enter a set name first', true);
-    return;
-  }
   g('gr-csv').click();
 }
 
@@ -4247,7 +4242,6 @@ function grDragLeave(e) {
 function grDrop(e) {
   e.preventDefault();
   grDragLeave(e);
-  if (!(g('gr-set').value||'').trim()) { toast('Please enter a set name first', true); return; }
   const file = e.dataTransfer.files[0];
   if (!file || !file.name.endsWith('.csv')) { toast('Please drop a CSV file', true); return; }
   // Feed the dropped file into the existing handler
@@ -4259,14 +4253,11 @@ function grDrop(e) {
 
 async function importGemRateCSV() {
   if (!GR_PARSED_DATA.length) { toast('No data to import', true); return; }
-  let setName = (g('gr-set').value || '').trim();
-  if (!setName) { toast('Please enter a set name', true); return; }
-  // Use SCP-detected name if available
+  // Use SCP-detected name - required before import
   const detectEl = g('gr-scp-detect');
-  if (detectEl && detectEl.dataset.scpName) {
-    setName = detectEl.dataset.scpName;
-    console.log('Using SCP set name:', setName);
-  }
+  const setName = detectEl ? detectEl.dataset.scpName : '';
+  if (!setName) { toast('Please wait for SCP set name detection to complete', true); return; }
+  console.log('Using SCP set name:', setName);
   
   g('gr-status').textContent = `Importing ${GR_PARSED_DATA.length} cards...`;
   g('gr-import-btn').disabled = true;
