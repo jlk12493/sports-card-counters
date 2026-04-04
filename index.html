@@ -1113,47 +1113,63 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
 
     <!-- ADMIN -->
     <div class="sec" id="sec-admin" style="min-height:100px;">
+      <!-- Set Registry -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:20px;overflow:hidden;">
+        <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;user-select:none;" onclick="toggleSetRegistry()">
+          <span style="font-size:14px;">&#128218;</span>
+          <strong style="font-size:13px;">Set Registry</strong>
+          <span style="font-size:11px;color:var(--text-muted);flex:1;">Map your import names to SCP set names</span>
+          <span id="registry-count" style="font-size:11px;color:var(--green);font-weight:700;"></span>
+          <span id="registry-chevron" style="font-size:10px;color:var(--text-muted);transition:transform .2s;">&#9658;</span>
+        </div>
+        <div id="registry-body" style="display:none;padding:0 16px 16px;border-top:1px solid var(--border);">
+          <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:12px;align-items:end;">
+            <div class="ff"><label>Your Import Name</label><input class="fi" id="reg-import-name" placeholder="e.g. Topps Chrome" style="width:100%;"></div>
+            <div class="ff"><label>SCP Set Name</label><input class="fi" id="reg-scp-name" placeholder="e.g. Baseball Cards 2018 Topps Chrome" style="width:100%;"></div>
+            <button class="btn-a" style="padding:7px 14px;font-size:12px;" onclick="addSetMapping()">+ Add</button>
+          </div>
+          <div id="registry-list" style="font-size:12px;"></div>
+        </div>
+      </div>
+
       <!-- GemRate CSV Import -->
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:20px;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-          <span style="font-size:16px;">&#128202;</span>
-          <strong style="font-size:14px;">GemRate CSV Import</strong>
-          <span style="font-size:11px;color:var(--text-muted);">Upload CSVs exported from gemrate.com to populate gem rates</span>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:20px;overflow:hidden;">
+        <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;user-select:none;" onclick="toggleGRImport()">
+          <span style="font-size:14px;">&#128202;</span>
+          <strong style="font-size:13px;">GemRate CSV Import</strong>
+          <span style="font-size:11px;color:var(--text-muted);flex:1;">Upload CSVs from gemrate.com to power the scanner</span>
+          <span id="gr-count" style="font-size:11px;color:var(--green);font-weight:700;"></span>
+          <span id="gr-chevron" style="font-size:10px;color:var(--text-muted);transition:transform .2s;">&#9658;</span>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;margin-bottom:12px;align-items:end;">
-          <div class="ff"><label>Set Name</label><input class="fi" id="gr-set" placeholder="e.g. 2024 Panini Prizm Football" style="width:100%;"></div>
-          <div class="ff"><label>Year</label><input class="fi" id="gr-year" placeholder="2024" style="width:100%;"></div>
-          <div class="ff"><label>Sport</label>
-            <select class="fi" id="gr-sport" style="width:100%;">
-              <option value="Football">Football</option>
-              <option value="Baseball">Baseball</option>
-              <option value="Basketball">Basketball</option>
-            </select>
+        <div id="gr-import-body" style="display:none;padding:0 16px 16px;border-top:1px solid var(--border);">
+          <div style="margin-bottom:12px;margin-top:12px;">
+            <div class="ff">
+              <label>Select from Registry <span style="font-size:10px;color:var(--text-muted);font-weight:400;">or type a search hint</span></label>
+              <select class="fi" id="gr-registry-select" style="width:100%;margin-bottom:8px;" onchange="grRegistrySelect(this.value)">
+                <option value="">-- Pick a registered set --</option>
+              </select>
+              <input class="fi" id="gr-hint" placeholder="Or type set name hint e.g. 2018 Topps Chrome..." style="width:100%;">
+            </div>
           </div>
-          <div class="ff"><label>&nbsp;</label><label class="btn-a" style="cursor:pointer;display:block;text-align:center;padding:8px 16px;">
-            &#128196; Choose CSV
+          <div id="gr-dropzone" ondragover="grDragOver(event)" ondragleave="grDragLeave(event)" ondrop="grDrop(event)" onclick="grDropzoneClick()" style="border:2px dashed var(--border);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:12px;background:var(--surface-2);">
+            <div style="font-size:28px;margin-bottom:6px;">&#128202;</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Drop GemRate CSV here</div>
+            <div style="font-size:11px;color:var(--text-muted);">or click to browse</div>
             <input type="file" id="gr-csv" accept=".csv" style="display:none;" onchange="previewGemRateCSV()">
-          </label></div>
-        </div>
-        <div id="gr-dropzone" ondragover="grDragOver(event)" ondragleave="grDragLeave(event)" ondrop="grDrop(event)" onclick="grDropzoneClick()" style="border:2px dashed var(--border);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:12px;background:var(--surface-2);">
-          <div style="font-size:28px;margin-bottom:6px;">&#128202;</div>
-          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Drop GemRate CSV here</div>
-          <div style="font-size:11px;color:var(--text-muted);">or click to browse</div>
-          <input type="file" id="gr-csv" accept=".csv" style="display:none;" onchange="previewGemRateCSV()">
-        </div>
-        <div id="gr-scp-detect" style="display:none;background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:10px;font-size:12px;margin-bottom:10px;"></div>
-        <div id="gr-preview" style="display:none;margin-bottom:12px;">
-          <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:10px;font-size:12px;">
-            <span id="gr-preview-text"></span>
           </div>
-        </div>
-        <div style="display:flex;gap:10px;align-items:center;">
-          <button class="btn-a" onclick="importGemRateCSV()" id="gr-import-btn" style="display:none;">&#9650; Import to Database</button>
-          <span id="gr-status" style="font-size:12px;color:var(--text-muted);"></span>
-        </div>
-        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
-          <span id="gr-count" style="font-size:12px;color:var(--text-muted);">Loading gem rate count...</span>
-          <button class="btn-c" style="font-size:11px;padding:3px 8px;margin-left:10px;" onclick="loadGemRateCount()">Refresh</button>
+          <div id="gr-scp-detect" style="display:none;background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:10px;font-size:12px;margin-bottom:10px;"></div>
+          <div id="gr-preview" style="display:none;margin-bottom:12px;">
+            <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:10px;font-size:12px;">
+              <span id="gr-preview-text"></span>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <button class="btn-a" onclick="importGemRateCSV()" id="gr-import-btn" style="display:none;">&#9650; Import to Database</button>
+            <span id="gr-status" style="font-size:12px;color:var(--text-muted);"></span>
+          </div>
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+            <button class="btn-c" style="font-size:11px;padding:3px 8px;" onclick="loadGemRateCount()">&#8635; Refresh Count</button>
+          </div>
         </div>
       </div>
 
@@ -1881,7 +1897,7 @@ function goSec(name,btn) {
   document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
   g('sec-'+name).classList.add('active');
   if (btn) btn.classList.add('active');
-  if (name==='admin') loadAdmin();
+  if (name==='admin') { loadAdmin(); setTimeout(loadSetRegistry, 500); loadGemRateCount(); }
   if (name==='financials') renderFinancials();
   if (name==='scanner'){if(!CU||CU.email!==ADMIN){goSec('dashboard',null);return;}loadScanner().then(()=>{loadSavedScannerFilter();filterScanner();});}
   if (name==='help') renderHelp();
@@ -4254,6 +4270,80 @@ function grDrop(e){
   if(!file||!file.name.endsWith('.csv')){toast('Please drop a CSV file',true);return;}
   const dt=new DataTransfer();dt.items.add(file);g('gr-csv').files=dt.files;previewGemRateCSV();
 }
+// ── SET REGISTRY ──
+var SET_REGISTRY = [];
+
+async function loadSetRegistry() {
+  try {
+    const {data} = await sb.from('set_registry').select('*').order('import_name');
+    SET_REGISTRY = data || [];
+    renderSetRegistry();
+    populateRegistryDropdown();
+  } catch(e) { console.error('Registry load error:', e); }
+}
+
+function renderSetRegistry() {
+  const el = g('registry-list');
+  const cnt = g('registry-count');
+  if (cnt) cnt.textContent = SET_REGISTRY.length + ' sets';
+  if (!el) return;
+  if (!SET_REGISTRY.length) {
+    el.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:8px 0;">No sets registered yet. Add your first set above.</div>';
+    return;
+  }
+  el.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;font-size:11px;font-weight:700;color:var(--text-muted);padding:4px 0;margin-bottom:4px;border-bottom:1px solid var(--border);">' +
+    '<span>Your Import Name</span><span>SCP Set Name</span><span></span></div>' +
+    SET_REGISTRY.map(r =>
+      '<div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);">' +
+      '<span style="font-size:12px;">' + r.import_name + '</span>' +
+      '<span style="font-size:11px;color:var(--text-muted);">' + r.scp_name + '</span>' +
+      '<button onclick="deleteSetMapping(' + r.id + ')" style="background:none;border:none;color:#F87171;cursor:pointer;font-size:13px;padding:0 4px;">&#10005;</button>' +
+      '</div>'
+    ).join('');
+}
+
+function populateRegistryDropdown() {
+  const sel = g('gr-registry-select');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">-- Pick a registered set --</option>' +
+    SET_REGISTRY.map(r => '<option value="' + r.scp_name.replace(/"/g,'&quot;') + '">' + r.import_name + ' → ' + r.scp_name + '</option>').join('');
+}
+
+function grRegistrySelect(val) {
+  if (!val) return;
+  const el = g('gr-scp-detect');
+  if (el) {
+    el.style.display = 'block';
+    el.dataset.scpName = val;
+    el.innerHTML = '<span style="color:var(--green);">&#10003; Selected: <strong>' + val + '</strong></span>';
+  }
+}
+
+async function addSetMapping() {
+  const importName = (g('reg-import-name').value || '').trim();
+  const scpName = (g('reg-scp-name').value || '').trim();
+  if (!importName || !scpName) { toast('Both fields required', true); return; }
+  const {error} = await sb.from('set_registry').insert({import_name: importName, scp_name: scpName});
+  if (error) { toast('Error: ' + error.message, true); return; }
+  g('reg-import-name').value = '';
+  g('reg-scp-name').value = '';
+  toast('Set mapping added!');
+  loadSetRegistry();
+}
+
+async function deleteSetMapping(id) {
+  await sb.from('set_registry').delete().eq('id', id);
+  loadSetRegistry();
+}
+
+function toggleSetRegistry() {
+  const body = g('registry-body'), chev = g('registry-chevron');
+  const open = body.style.display === 'none';
+  body.style.display = open ? 'block' : 'none';
+  if (chev) chev.style.transform = open ? 'rotate(90deg)' : '';
+  if (open) loadSetRegistry();
+}
+
 function toggleGRImport(){
   const body=g('gr-import-body'),chev=g('gr-chevron');
   const open=body.style.display==='none';
