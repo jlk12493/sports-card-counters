@@ -4174,17 +4174,22 @@ async function detectSCPSetName(setName) {
       if (el) {
         el.style.display = 'block';
         if (matches) {
-          el.innerHTML = '<span style="color:var(--green);">&#10003; SCP matches: <strong>' + data.scp_set_name + '</strong></span>';
+          el.innerHTML = '<span style="color:var(--green);">&#10003; SCP name confirmed: <strong>' + data.scp_set_name + '</strong></span>';
           el.dataset.scpName = data.scp_set_name;
         } else {
           const allNames = data.all_names || [data.scp_set_name];
-          let html = '<div style="margin-bottom:6px;"><span style="color:var(--amber);">&#9888; SCP calls this set: <strong>' + data.scp_set_name + '</strong></span></div>';
-          html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">The import name will automatically use the SCP name above. Or pick manually:</div>';
-          html += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
-          allNames.forEach(function(name) {
-            html += '<button data-name="' + name.replace(/"/g,'&quot;') + '" onclick="selectSCPName(this)" style="font-size:11px;padding:3px 8px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;">' + name + '</button>';
-          });
-          html += '</div>';
+          let html = '<div style="margin-bottom:8px;"><span style="color:var(--amber);">&#9888; Multiple set names found on SCP</span></div>';
+          if (allNames.length === 1) {
+            html = '<div style="margin-bottom:4px;"><span style="color:var(--amber);">&#9888; SCP calls this: <strong>' + data.scp_set_name + '</strong></span></div>';
+            html += '<div style="font-size:11px;color:var(--text-muted);">Import will use this name automatically.</div>';
+          } else {
+            html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Select the correct set name from SCP:</div>';
+            html += '<select id="gr-scp-select" class="fi" style="width:100%;" onchange="document.getElementById(\'gr-scp-detect\').dataset.scpName=this.value;">';
+            allNames.forEach(function(name, i) {
+              html += '<option value="' + name.replace(/"/g,'&quot;') + '"' + (i===0?' selected':'') + '>' + name + '</option>';
+            });
+            html += '</select>';
+          }
           el.innerHTML = html;
           el.dataset.scpName = data.scp_set_name;
         }
