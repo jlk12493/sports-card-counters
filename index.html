@@ -194,7 +194,7 @@ body{background:var(--black);color:var(--text);font-family:'Segoe UI',system-ui,
 .ksub{font-size:10px;color:var(--text-muted);margin-top:3px;}
 
 /* PANELS */
-.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;align-items:end;">
 .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;}
 .ptitle{font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
 .stitle{font-size:10px;font-weight:700;color:var(--text-2);letter-spacing:2px;text-transform:uppercase;display:flex;align-items:center;gap:6px;margin-bottom:12px;}
@@ -947,7 +947,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
           <span id="gr-chevron" style="font-size:10px;color:var(--text-muted);transition:transform .2s;">&#9658;</span>
         </div>
         <div id="gr-import-body" style="display:none;padding:0 16px 16px;border-top:1px solid var(--border);">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;align-items:end;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;align-items:end;">
           <div class="ff"><label>Sport</label>
             <select class="fi" id="gr-sport" style="width:100%;">
               <option value="Football">Football</option>
@@ -956,6 +956,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
             </select>
           </div>
           <div class="ff"><label>Year</label><input class="fi" id="gr-year" placeholder="2024" style="width:100%;"></div>
+          <div class="ff"><label>Set Search Hint <span style="font-size:10px;color:var(--text-muted);font-weight:400;">e.g. 2025 Panini Mosaic</span></label><input class="fi" id="gr-hint" placeholder="Helps SCP detection" style="width:100%;"></div>
         </div>
         <div id="gr-dropzone" ondragover="grDragOver(event)" ondragleave="grDragLeave(event)" ondrop="grDrop(event)" onclick="grDropzoneClick()" style="border:2px dashed var(--border);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:12px;background:var(--surface-2);">
           <div style="font-size:28px;margin-bottom:6px;">&#128202;</div>
@@ -4141,11 +4142,11 @@ function previewGemRateCSV() {
     g('gr-import-btn').style.display = 'inline-block';
     g('gr-status').textContent = '';
 
-    // Auto-detect SCP set name using player name + year for accuracy
-    const detSport = g('gr-sport').value || 'Football';
+    // Auto-detect SCP set name - use hint field if provided, else player+year
     const detYear = (g('gr-year').value || '').trim();
+    const hintField = (g('gr-hint') ? g('gr-hint').value : '').trim();
     const firstPlayer = GR_PARSED_DATA.length > 0 ? GR_PARSED_DATA[0].player : '';
-    const hint = (detYear ? detYear + ' ' : '') + firstPlayer;
+    const hint = hintField || ((detYear ? detYear + ' ' : '') + firstPlayer);
     g('gr-status').textContent = 'Detecting set name from SCP...';
     detectSCPSetName(hint);
   const name = btn.dataset.name;
