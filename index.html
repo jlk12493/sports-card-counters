@@ -1,5 +1,5 @@
 <!DOC
-<!-- v27 --
+<!-- v28 -->
 YPE html>
 <html lang="en">
 <head>
@@ -4254,8 +4254,14 @@ function previewGemRateCSV(){
     g('gr-preview-text').innerHTML='<strong>'+GR_PARSED_DATA.length+' cards parsed</strong> from '+file.name;
     g('gr-import-btn').style.display='inline-block';
     g('gr-status').textContent='';
-    const hint=(g('gr-hint')?g('gr-hint').value:'').trim()||(GR_PARSED_DATA[0]?GR_PARSED_DATA[0].player:'');
-    if(hint){g('gr-status').textContent='Detecting set name...';detectSCPSetName(hint);}
+    // If a registry set is already selected, skip detection
+    const existingName = (g('gr-scp-detect') && g('gr-scp-detect').dataset.scpName) || '';
+    if (existingName) {
+      g('gr-status').textContent = '';
+    } else {
+      const hint=(g('gr-hint')?g('gr-hint').value:'').trim()||(GR_PARSED_DATA[0]?GR_PARSED_DATA[0].player:'');
+      if(hint){g('gr-status').textContent='Detecting set name...';detectSCPSetName(hint);}
+    }
   };
   reader.readAsText(file);
 }
@@ -4330,18 +4336,25 @@ function renderSetRegistry() {
 function populateRegistryDropdown() {
   const sel = g('gr-registry-select');
   if (!sel) return;
+  const current = sel.value;
   sel.innerHTML = '<option value="">-- Pick a registered set --</option>' +
     SET_REGISTRY.map(r => '<option value="' + r.scp_name.replace(/"/g,'&quot;') + '">' + r.import_name + ' → ' + r.scp_name + '</option>').join('');
+  // Restore previous selection if still valid
+  if (current) sel.value = current;
 }
 
 function grRegistrySelect(val) {
-  if (!val) return;
   const el = g('gr-scp-detect');
-  if (el) {
-    el.style.display = 'block';
-    el.dataset.scpName = val;
-    el.innerHTML = '<span style="color:var(--green);">&#10003; Selected: <strong>' + val + '</strong></span>';
+  if (!el) return;
+  if (!val) {
+    el.style.display = 'none';
+    el.dataset.scpName = '';
+    return;
   }
+  el.style.display = 'block';
+  el.dataset.scpName = val;
+  el.innerHTML = '<span style="color:var(--green);">&#10003; Set confirmed: <strong>' + val + '</strong></span>' +
+    '<div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Drop your GemRate CSV below to import into this set.</div>';
 }
 
 // ── BULK SET LIST IMPORT ──
@@ -4483,6 +4496,7 @@ function toggleGRImport(){
   const open=body.style.display==='none';
   body.style.display=open?'block':'none';
   if(chev)chev.style.transform=open?'rotate(90deg)':'';
+  if(open) { loadSetRegistry(); loadGemRateCount(); }
 }
 async function importGemRateCSV(){
   if(!GR_PARSED_DATA.length){toast('No data to import',true);return;}
