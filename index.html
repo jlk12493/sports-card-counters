@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<!-- v14 -->
+<!DOC
+YPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -194,7 +194,7 @@ body{background:var(--black);color:var(--text);font-family:'Segoe UI',system-ui,
 .ksub{font-size:10px;color:var(--text-muted);margin-top:3px;}
 
 /* PANELS */
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;align-items:end;">
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
 .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;}
 .ptitle{font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
 .stitle{font-size:10px;font-weight:700;color:var(--text-2);letter-spacing:2px;text-transform:uppercase;display:flex;align-items:center;gap:6px;margin-bottom:12px;}
@@ -937,8 +937,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
         <button class="btn-a" style="background:var(--red);" onclick="runScanner()">&#9654; Run Scanner Now</button>
       </div>
 
-      
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:20px;">
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:20px;">
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;"><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Total Opps</div><div style="font-size:22px;font-weight:800;color:var(--text);" id="sc-total">--</div></div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;"><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">BUY Signals</div><div style="font-size:22px;font-weight:800;color:var(--green);" id="sc-buys">--</div></div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;"><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Avg EV%</div><div style="font-size:22px;font-weight:800;color:var(--amber);" id="sc-avgev">--</div></div>
@@ -992,7 +991,6 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
           <!-- Sort -->
           <div class="ff"><label>Sort By</label>
             <select class="fi" id="sc-sort" onchange="filterScanner()" style="width:100%;">
-              <option value="scc_score">SCC Score High→Low</option>
               <option value="ev_pct">EV% High→Low</option>
               <option value="ev_dollar">EV$ High→Low</option>
               <option value="raw_price">Raw Price Low→High</option>
@@ -1013,45 +1011,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
     </div>
 
     <!-- FINANCIALS -->
-    <div clas<!-- GemRate CSV Import -->
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:20px;overflow:hidden;">
-        <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;user-select:none;" onclick="toggleGRImport()">
-          <span style="font-size:14px;">&#128202;</span>
-          <strong style="font-size:13px;">GemRate CSV Import</strong>
-          <span style="font-size:11px;color:var(--text-muted);flex:1;">Upload CSVs from gemrate.com to power the scanner</span>
-          <span id="gr-count" style="font-size:11px;color:var(--green);font-weight:700;"></span>
-          <span id="gr-chevron" style="font-size:10px;color:var(--text-muted);transition:transform .2s;">&#9658;</span>
-        </div>
-        <div id="gr-import-body" style="display:none;padding:0 16px 16px;border-top:1px solid var(--border);">
-        <div style="margin-bottom:12px;">
-          <div class="ff"><label>Set Search Hint <span style="font-size:10px;color:var(--text-muted);font-weight:400;">e.g. 2025 Panini Mosaic</span></label><input class="fi" id="gr-hint" placeholder="Type set name to detect from SCP..." style="width:100%;"></div>
-        </div>
-        <div id="gr-dropzone" ondragover="grDragOver(event)" ondragleave="grDragLeave(event)" ondrop="grDrop(event)" onclick="grDropzoneClick()" style="border:2px dashed var(--border);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:12px;background:var(--surface-2);">
-          <div style="font-size:28px;margin-bottom:6px;">&#128202;</div>
-          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Drop GemRate CSV here</div>
-          <div style="font-size:11px;color:var(--text-muted);">or click to browse</div>
-          <input type="file" id="gr-csv" accept=".csv" style="display:none;" onchange="previewGemRateCSV()">
-        </div>
-          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Drop GemRate CSV here</div>
-          <div style="font-size:11px;color:var(--text-muted);">or click to browse</div>
-          <input type="file" id="gr-csv" accept=".csv" style="display:none;" onchange="previewGemRateCSV()">
-        </div>
-        <div id="gr-scp-detect" style="display:none;background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:10px;font-size:12px;margin-bottom:10px;"></div>
-        <div id="gr-preview" style="display:none;margin-bottom:12px;">
-          <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:10px;font-size:12px;">
-            <span id="gr-preview-text"></span>
-          </div>
-        </div>
-        <div style="display:flex;gap:10px;align-items:center;">
-          <button class="btn-a" onclick="importGemRateCSV()" id="gr-import-btn" style="display:none;">&#9650; Import to Database</button>
-          <span id="gr-status" style="font-size:12px;color:var(--text-muted);"></span>
-        </div>
-        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
-          <button class="btn-c" style="font-size:11px;padding:3px 8px;" onclick="loadGemRateCount()">&#8635; Refresh Count</button>
-        </div><!-- end gr-import-body -->
-      </div>
-
-    s="sec" id="sec-financials" style="min-height:100px;">
+    <div class="sec" id="sec-financials" style="min-height:100px;">
 
       <!-- TAX YEAR SELECTOR -->
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
@@ -1153,6 +1113,50 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
 
     <!-- ADMIN -->
     <div class="sec" id="sec-admin" style="min-height:100px;">
+      <!-- GemRate CSV Import -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <span style="font-size:16px;">&#128202;</span>
+          <strong style="font-size:14px;">GemRate CSV Import</strong>
+          <span style="font-size:11px;color:var(--text-muted);">Upload CSVs exported from gemrate.com to populate gem rates</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;margin-bottom:12px;align-items:end;">
+          <div class="ff"><label>Set Name</label><input class="fi" id="gr-set" placeholder="e.g. 2024 Panini Prizm Football" style="width:100%;"></div>
+          <div class="ff"><label>Year</label><input class="fi" id="gr-year" placeholder="2024" style="width:100%;"></div>
+          <div class="ff"><label>Sport</label>
+            <select class="fi" id="gr-sport" style="width:100%;">
+              <option value="Football">Football</option>
+              <option value="Baseball">Baseball</option>
+              <option value="Basketball">Basketball</option>
+            </select>
+          </div>
+          <div class="ff"><label>&nbsp;</label><label class="btn-a" style="cursor:pointer;display:block;text-align:center;padding:8px 16px;">
+            &#128196; Choose CSV
+            <input type="file" id="gr-csv" accept=".csv" style="display:none;" onchange="previewGemRateCSV()">
+          </label></div>
+        </div>
+        <div id="gr-dropzone" ondragover="grDragOver(event)" ondragleave="grDragLeave(event)" ondrop="grDrop(event)" onclick="grDropzoneClick()" style="border:2px dashed var(--border);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:12px;background:var(--surface-2);">
+          <div style="font-size:28px;margin-bottom:6px;">&#128202;</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Drop GemRate CSV here</div>
+          <div style="font-size:11px;color:var(--text-muted);">or click to browse</div>
+          <input type="file" id="gr-csv" accept=".csv" style="display:none;" onchange="previewGemRateCSV()">
+        </div>
+        <div id="gr-scp-detect" style="display:none;background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:10px;font-size:12px;margin-bottom:10px;"></div>
+        <div id="gr-preview" style="display:none;margin-bottom:12px;">
+          <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:10px;font-size:12px;">
+            <span id="gr-preview-text"></span>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <button class="btn-a" onclick="importGemRateCSV()" id="gr-import-btn" style="display:none;">&#9650; Import to Database</button>
+          <span id="gr-status" style="font-size:12px;color:var(--text-muted);"></span>
+        </div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+          <span id="gr-count" style="font-size:12px;color:var(--text-muted);">Loading gem rate count...</span>
+          <button class="btn-c" style="font-size:11px;padding:3px 8px;margin-left:10px;" onclick="loadGemRateCount()">Refresh</button>
+        </div>
+      </div>
+
       <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:5px;padding:8px 12px;margin-bottom:16px;font-size:11px;color:#FCD34D;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
         <span>Admin Panel — Only visible to you</span>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -1196,11 +1200,11 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
           <div class="ulist" id="admin-users"></div>
         </div>
       </div>
-    </div>
+    
 
 
   </main>
-</div>
+
 
 <!-- EDIT MODAL -->
 <div class="modal-bg" id="edit-modal">
@@ -2036,7 +2040,6 @@ function renderInv() {
         '<div style="flex:1;min-width:0;">' +
           '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' +
             '<span style="font-size:13px;font-weight:700;color:var(--text);">' + (r.player||'--') + '</span>' +
-            (r.parallel?'<span style="font-size:11px;font-weight:600;color:var(--red);background:rgba(204,0,0,.1);border:1px solid rgba(204,0,0,.2);border-radius:3px;padding:1px 5px;">'+r.parallel+'</span>':'') +
             '<span style="font-size:11px;color:var(--text-muted);">' + (r.year||'') + (r.set_name?' · '+r.set_name:'') + (r.parallel?' · '+r.parallel:'') + (r.card_no?' #'+r.card_no:'') + '</span>' +
           '</div>' +
           '<div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;">' +
@@ -2054,11 +2057,6 @@ function renderInv() {
       // EXPANDED DETAIL
       '<div class="inv-body' + (isOpen?' open':'') + '" data-id="' + r.id + '" style="' + (isOpen?'':'display:none;') + 'border-top:1px solid var(--border);padding:14px;">' +
         '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:14px;">' +
-          detailCell('SCC Score', r.scc_score!=null?'<span style="font-weight:800;color:'+sccColor(r.scc_score)+';">'+r.scc_score+'/100</span>':'--') +
-          detailCell('Actual Gem Rate', r.actual_gem_rate!=null?Math.round(r.actual_gem_rate*1000)/10+'%':'--') +
-          detailCell('Implied Gem Rate', r.implied_gem_rate!=null?Math.round(r.implied_gem_rate*1000)/10+'%':'--') +
-          detailCell('Edge', (r.actual_gem_rate&&r.implied_gem_rate&&r.implied_gem_rate>0)?'×'+(r.actual_gem_rate/r.implied_gem_rate).toFixed(2):'--') +
-          detailCell('Parallel', r.parallel||'Base') +
           detailCell('Sport', r.sport) +
           detailCell('Date Acquired', fmtDate(r.date_acquired)) +
           detailCell('Source', r.source) +
@@ -3487,13 +3485,6 @@ function fmtDate(d) {
 function calcEV(r){const n10=r.psa10*0.865,n9=(r.psa9||0)*0.865;return r.gem_rate*n10+(1-r.gem_rate)*n9-(r.total_cost||0);}
 function f$(v){if(v==null||isNaN(v))return'--';return(v<0?'-$':'$')+Math.abs(v).toFixed(2);}
 function evBar(p){const pct=p*100,w=Math.min(Math.max(pct,0),200)/2,c=pct>=100?'#22C55E':pct>=40?'#F59E0B':'#CC0000';return`<div class="evw"><div class="evb"><div class="evf" style="width:${w.toFixed(0)}%;background:${c};"></div></div><span style="font-size:10px;color:${c};font-family:'Courier New',monospace;">${pct.toFixed(0)}%</span></div>`;}
-function sccColor(score){
-  if(score>=80) return 'var(--green)';
-  if(score>=60) return '#22c55e';
-  if(score>=40) return 'var(--amber)';
-  return 'var(--text-muted)';
-}
-
 function sBdg(s){const m={Raw:'b-raw',Submitted:'b-sub',Graded:'b-grd',Listed:'b-lst',Sold:'b-sld'};return`<span class="bdg ${m[s]||'b-raw'}">${s||'--'}</span>`;}
 function dBdg(d){if(!d)return'--';if(d==='Grade')return`<span class="bdg b-grade">Grade</span>`;if(d==='Sell Raw')return`<span class="bdg b-sld">Sell Raw</span>`;if(d==='Hold')return`<span class="bdg b-hold">Hold</span>`;return`<span class="bdg b-raw">${d}</span>`;}
 function g(id){return document.getElementById(id);}
@@ -4066,7 +4057,7 @@ async function copyCard(id){
 var SCANNER_DATA=[],SCANNER_FILTERED=[];
 async function loadScanner(){
   if(!CU||CU.email!==ADMIN){g('sc-list').innerHTML='<div class="empty"><div class="empty-icon">&#128274;</div><div class="empty-title">Access Denied</div></div>';return;}
-  const {data,error}=await sb.from('ev_scanner').select('*').order('ev_pct',{ascending:false});
+  const {data,error}=await sb.from('ev_scanner').select('*').order('scc_score',{ascending:false,nullsFirst:false});
   if(error){console.error('Scanner load error:',error);return;}
   SCANNER_DATA=data||[];SCANNER_FILTERED=[...SCANNER_DATA];renderScanner();
 }
@@ -4091,7 +4082,7 @@ function previewGemRateCSV() {
     }
     
     GR_PARSED_DATA = [];
-    const setName = ''; // Will be set from SCP detection
+    const setName = (g('gr-set').value || '').trim();
     const year = (g('gr-year').value || '').trim();
     const sport = (g('gr-sport').value || 'Football');
     
@@ -4125,7 +4116,7 @@ function previewGemRateCSV() {
         gems, total, gem_rate: gemRate,
         gem_rate_month: gemRateMonth,
         psa_cert: psaCert,
-        set_name: '', year, sport, // set_name applied at import time
+        set_name: setName, year, sport,
         last_updated: new Date().toISOString()
       });
     }
@@ -4135,67 +4126,8 @@ function previewGemRateCSV() {
       Sample: ${GR_PARSED_DATA.slice(0,3).map(r=>r.player+' '+r.parallel+' #'+r.card_no+' ('+Math.round(r.gem_rate*100)+'%)').join(', ')}`;
     g('gr-import-btn').style.display = 'inline-block';
     g('gr-status').textContent = '';
-
-    // Auto-detect SCP set name - use hint field if provided, else player+year
-    const detYear = (g('gr-year').value || '').trim();
-    const hintField = (g('gr-hint') ? g('gr-hint').value : '').trim();
-    const firstPlayer = GR_PARSED_DATA.length > 0 ? GR_PARSED_DATA[0].player : '';
-    const hint = hintField || ((detYear ? detYear + ' ' : '') + firstPlayer);
-    g('gr-status').textContent = 'Detecting set name from SCP...';
-    detectSCPSetName(hint);
-  const name = btn.dataset.name;
   };
   reader.readAsText(file);
-}
-
-function selectSCPName(btn) {
-  const el = g('gr-scp-detect');
-  if (el) el.dataset.scpName = name;
-  // Highlight selected button
-  el.querySelectorAll('button').forEach(b => b.style.background = 'var(--surface)');
-  btn.style.background = 'var(--red)';
-  btn.style.color = '#fff';
-}
-
-async function detectSCPSetName(setName) {
-  if (!setName) return;
-  const statusEl = g('gr-status');
-  statusEl.textContent = 'Checking SCP for matching set name...';
-  try {
-    const res = await fetch(
-      'https://lmwqizcflhikvtoqehzj.supabase.co/functions/v1/rapid-endpoint?detect=1&q=' + encodeURIComponent(setName),
-      { method: 'POST', headers: { 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.95XMeRWGeCcD_KxN40ciJi_QjB9GG4sVJexzBEhJ9NM', 'Content-Type': 'application/json' } }
-    );
-    const data = await res.json();
-    if (data.scp_set_name) {
-      const matches = data.scp_set_name === setName;
-      const el = g('gr-scp-detect');
-      if (el) {
-        el.style.display = 'block';
-        if (matches) {
-          el.innerHTML = '<span style="color:var(--green);">&#10003; SCP name confirmed: <strong>' + data.scp_set_name + '</strong></span>';
-          el.dataset.scpName = data.scp_set_name;
-        } else {
-          const allNames = data.all_names || [data.scp_set_name];
-          let html = '<div style="margin-bottom:8px;"><span style="color:var(--amber);">&#9888; Multiple set names found on SCP</span></div>';
-          // Always show dropdown so user can confirm or change
-          html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Select the correct SCP set name:</div>';
-          html += '<select id="gr-scp-select" class="fi" style="width:100%;" onchange="document.getElementById(\'gr-scp-detect\').dataset.scpName=this.value;">';
-          allNames.forEach(function(name, i) {
-            html += '<option value="' + name.replace(/"/g,'&quot;') + '"' + (i===0?' selected':'') + '>' + name + '</option>';
-          });
-          html += '</select>';
-          el.innerHTML = html;
-          el.dataset.scpName = data.scp_set_name;
-        }
-      }
-      statusEl.textContent = '';
-    } else {
-      statusEl.textContent = 'Could not detect SCP set name - import will use your entered name.';
-    }
-  } catch(e) {
-    statusEl.textContent = '';
-  }
 }
 
 function parseCSVLine(line) {
@@ -4212,48 +4144,10 @@ function parseCSVLine(line) {
   return result;
 }
 
-function toggleGRImport() {
-  const body = g('gr-import-body');
-  const chev = g('gr-chevron');
-  const open = body.style.display === 'none';
-  body.style.display = open ? 'block' : 'none';
-  if (chev) chev.style.transform = open ? 'rotate(90deg)' : '';
-}
-
-function grDropzoneClick() {
-  g('gr-csv').click();
-}
-
-function grDragOver(e) {
-  e.preventDefault();
-  g('gr-dropzone').style.borderColor = 'var(--red)';
-  g('gr-dropzone').style.background = 'rgba(204,0,0,.05)';
-}
-
-function grDragLeave(e) {
-  g('gr-dropzone').style.borderColor = 'var(--border)';
-  g('gr-dropzone').style.background = 'var(--surface-2)';
-}
-
-function grDrop(e) {
-  e.preventDefault();
-  grDragLeave(e);
-  const file = e.dataTransfer.files[0];
-  if (!file || !file.name.endsWith('.csv')) { toast('Please drop a CSV file', true); return; }
-  // Feed the dropped file into the existing handler
-  const dt = new DataTransfer();
-  dt.items.add(file);
-  g('gr-csv').files = dt.files;
-  previewGemRateCSV();
-}
-
 async function importGemRateCSV() {
   if (!GR_PARSED_DATA.length) { toast('No data to import', true); return; }
-  // Use SCP-detected name - required before import
-  const detectEl = g('gr-scp-detect');
-  const setName = detectEl ? detectEl.dataset.scpName : '';
-  if (!setName) { toast('Please wait for SCP set name detection to complete', true); return; }
-  console.log('Using SCP set name:', setName);
+  const setName = (g('gr-set').value || '').trim();
+  if (!setName) { toast('Please enter a set name', true); return; }
   
   g('gr-status').textContent = `Importing ${GR_PARSED_DATA.length} cards...`;
   g('gr-import-btn').disabled = true;
@@ -4262,18 +4156,11 @@ async function importGemRateCSV() {
   const CHUNK = 50;
   
   for (let i = 0; i < GR_PARSED_DATA.length; i += CHUNK) {
-    const chunk = GR_PARSED_DATA.slice(i, i + CHUNK).map(r => ({
-      ...r,
-      set_name: setName,
-      year: (g('gr-year').value||'').trim() || r.year,
-      sport: g('gr-sport').value || r.sport
-    }));
-    // Delete existing records for this set+player combo then insert fresh
+    const chunk = GR_PARSED_DATA.slice(i, i + CHUNK);
     const {error} = await sb.from('gem_rates').upsert(chunk, {
-      onConflict: 'player,parallel,card_no,set_name',
-      ignoreDuplicates: true
+      onConflict: 'player,parallel,card_no,set_name'
     });
-    if (error) { console.error('Import error:', error.message); g('gr-status').textContent = 'Error: '+error.message; errors += chunk.length; }
+    if (error) { console.error('Import error:', error.message); errors += chunk.length; }
     else imported += chunk.length;
     g('gr-status').textContent = `Importing... ${imported}/${GR_PARSED_DATA.length}`;
   }
@@ -4286,7 +4173,117 @@ async function importGemRateCSV() {
 
 async function loadGemRateCount() {
   const {count} = await sb.from('gem_rates').select('*', {count:'exact',head:true});
-  if (g('gr-count')) g('gr-count').textContent = `${count||0} gem rates loaded`;
+  if (g('gr-count')) g('gr-count').textContent = `${count||0} gem rates in database`;
+}
+
+
+// ── GEMRATE IMPORT ──
+var GR_PARSED_DATA = [];
+function previewGemRateCSV(){
+  const file=g('gr-csv').files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const text=e.target.result;
+    const lines=text.split('\n').filter(l=>l.trim());
+    let dataStart=0;
+    for(let i=0;i<Math.min(5,lines.length);i++){
+      if(lines[i].includes('Gemrate_id')||lines[i].includes('Name')){dataStart=i+1;break;}
+    }
+    GR_PARSED_DATA=[];
+    for(let i=dataStart;i<lines.length;i++){
+      const cols=parseCSVLine(lines[i]);
+      if(!cols||cols.length<10)continue;
+      const player=(cols[2]||'').trim(),parallel=(cols[3]||'').trim();
+      const cardNo=(cols[4]||'').trim(),cardDesc=(cols[5]||'').trim();
+      const gems=parseInt((cols[6]||'0').replace(/,/g,''))||0;
+      const total=parseInt((cols[7]||'0').replace(/,/g,''))||0;
+      const gemRate=parseFloat((cols[8]||'0%').replace('%','').trim())/100||0;
+      const gmMonth=cols[9]?parseFloat((cols[9]||'').replace('%','').trim())/100:null;
+      const certUrl=(cols[17]||'');
+      const certMatch=certUrl.match(/\/cert\/(\d+)\//);
+      if(!player||!cardNo||total<5)continue;
+      GR_PARSED_DATA.push({gemrate_id:(cols[0]||'').trim(),player,parallel,card_no:cardNo,
+        card_description:cardDesc,gems,total,gem_rate:gemRate,gem_rate_month:gmMonth,
+        psa_cert:certMatch?certMatch[1]:null,set_name:'',last_updated:new Date().toISOString()});
+    }
+    const det=g('gr-scp-detect');
+    if(det){det.style.display='none';det.dataset.scpName='';}
+    g('gr-preview').style.display='block';
+    g('gr-preview-text').innerHTML='<strong>'+GR_PARSED_DATA.length+' cards parsed</strong> from '+file.name;
+    g('gr-import-btn').style.display='inline-block';
+    g('gr-status').textContent='';
+    const hint=(g('gr-hint')?g('gr-hint').value:'').trim()||(GR_PARSED_DATA[0]?GR_PARSED_DATA[0].player:'');
+    if(hint){g('gr-status').textContent='Detecting set name...';detectSCPSetName(hint);}
+  };
+  reader.readAsText(file);
+}
+function parseCSVLine(line){
+  const result=[];let current='';let inQuotes=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(ch==='"'){inQuotes=!inQuotes;}
+    else if(ch===','&&!inQuotes){result.push(current);current='';}
+    else{current+=ch;}
+  }
+  result.push(current);return result;
+}
+async function detectSCPSetName(q){
+  try{
+    const res=await fetch('https://lmwqizcflhikvtoqehzj.supabase.co/functions/v1/rapid-endpoint?detect=1&q='+encodeURIComponent(q),
+      {method:'POST',headers:{'Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.95XMeRWGeCcD_KxN40ciJi_QjB9GG4sVJexzBEhJ9NM','Content-Type':'application/json'}});
+    const data=await res.json();
+    const el=g('gr-scp-detect');
+    if(!el||!data.scp_set_name){if(g('gr-status'))g('gr-status').textContent='';return;}
+    el.style.display='block';
+    const allNames=data.all_names||[data.scp_set_name];
+    let h='<div style="margin-bottom:8px;font-size:12px;color:var(--amber);">&#9888; Select correct SCP set name:</div>';
+    h+='<select id="gr-scp-select" class="fi" style="width:100%;" onchange="document.getElementById(\'gr-scp-detect\').dataset.scpName=this.value;">';
+    allNames.forEach(function(n,i){h+='<option value="'+n.replace(/"/g,'&quot;')+'"'+(i===0?' selected':'')+'>'+n+'</option>';});
+    h+='</select>';
+    el.innerHTML=h;el.dataset.scpName=data.scp_set_name;
+    if(g('gr-status'))g('gr-status').textContent='';
+  }catch(e){if(g('gr-status'))g('gr-status').textContent='';}
+}
+function grDropzoneClick(){g('gr-csv').click();}
+function grDragOver(e){e.preventDefault();const dz=g('gr-dropzone');if(dz){dz.style.borderColor='var(--red)';dz.style.background='rgba(204,0,0,.05)';}}
+function grDragLeave(e){const dz=g('gr-dropzone');if(dz){dz.style.borderColor='var(--border)';dz.style.background='var(--surface-2)';}}
+function grDrop(e){
+  e.preventDefault();grDragLeave(e);
+  const file=e.dataTransfer.files[0];
+  if(!file||!file.name.endsWith('.csv')){toast('Please drop a CSV file',true);return;}
+  const dt=new DataTransfer();dt.items.add(file);g('gr-csv').files=dt.files;previewGemRateCSV();
+}
+function toggleGRImport(){
+  const body=g('gr-import-body'),chev=g('gr-chevron');
+  const open=body.style.display==='none';
+  body.style.display=open?'block':'none';
+  if(chev)chev.style.transform=open?'rotate(90deg)':'';
+}
+async function importGemRateCSV(){
+  if(!GR_PARSED_DATA.length){toast('No data to import',true);return;}
+  const detectEl=g('gr-scp-detect');
+  const setName=detectEl?detectEl.dataset.scpName:'';
+  if(!setName){toast('Please wait for SCP detection or enter a hint and re-upload',true);return;}
+  g('gr-status').textContent='Importing '+GR_PARSED_DATA.length+' cards...';
+  g('gr-import-btn').disabled=true;
+  let imported=0,errors=0;
+  await sb.from('gem_rates').delete().eq('set_name',setName);
+  for(let i=0;i<GR_PARSED_DATA.length;i+=50){
+    const chunk=GR_PARSED_DATA.slice(i,i+50).map(r=>({...r,set_name:setName}));
+    const {error}=await sb.from('gem_rates').insert(chunk);
+    if(error){g('gr-status').textContent='Error: '+error.message;errors+=chunk.length;}
+    else imported+=chunk.length;
+    g('gr-status').textContent='Importing... '+imported+'/'+GR_PARSED_DATA.length;
+  }
+  g('gr-import-btn').disabled=false;
+  g('gr-status').textContent='';
+  toast('Imported '+imported+' gem rates'+(errors?', '+errors+' errors':'')+'!');
+  loadGemRateCount();
+}
+async function loadGemRateCount(){
+  const {count}=await sb.from('gem_rates').select('*',{count:'exact',head:true});
+  if(g('gr-count'))g('gr-count').textContent=(count||0)+' gem rates loaded';
 }
 
 // ── SCANNER PLAYER TAGS ──
@@ -4416,13 +4413,19 @@ function filterScanner(){
     return mp&&ms&&mPrice&&mEV&&mVol;
   });
   SCANNER_FILTERED.sort((a,b)=>
-    sort==='scc_score'?(b.scc_score||0)-(a.scc_score||0):
     sort==='ev_pct'?(b.ev_pct||0)-(a.ev_pct||0):
     sort==='ev_dollar'?(b.ev_dollar||0)-(a.ev_dollar||0):
     sort==='raw_price'?(a.raw_price||0)-(b.raw_price||0):
     (b.sales_volume||0)-(a.sales_volume||0)
   );
   renderScanner();
+}
+function sccColor(s){
+  if(!s) return 'var(--text-muted)';
+  if(s>=80) return 'var(--green)';
+  if(s>=60) return '#22c55e';
+  if(s>=40) return 'var(--amber)';
+  return 'var(--text-muted)';
 }
 function renderScanner(){
   const buys=SCANNER_DATA.filter(r=>r.decision==='BUY').length;
@@ -4443,7 +4446,6 @@ function renderScanner(){
         '<div style="flex:1;min-width:0;">'+
           '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'+
             '<span style="font-size:13px;font-weight:700;color:var(--text);">'+(r.player||'--')+'</span>'+
-            (r.parallel?'<span style="font-size:11px;font-weight:600;color:var(--red);background:rgba(204,0,0,.1);border:1px solid rgba(204,0,0,.2);border-radius:3px;padding:1px 5px;">'+r.parallel+'</span>':'')+
             '<span style="font-size:11px;color:var(--text-muted);">'+(r.set_name||'')+(r.card_no?' #'+r.card_no:'')+'</span>'+
             '<span class="scanner-badge '+bc+'">'+r.decision+'</span>'+
           '</div>'+
@@ -4456,13 +4458,13 @@ function renderScanner(){
         '</div>'+
       '</div>'+
       '<div class="scanner-body" data-scid="'+r.id+'">'+
-      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:14px;">' +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:14px;">' +
           '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">SCC Score</div><div style="font-size:20px;font-weight:800;color:'+sccColor(r.scc_score||0)+';">'+(r.scc_score!=null?r.scc_score:'--')+'</div></div>'+
           '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">EV$</div><div style="font-size:20px;font-weight:700;color:'+evColor+';">'+f$(r.ev_dollar)+'</div></div>'+
           '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">EV%</div><div style="font-size:20px;font-weight:700;color:'+evColor+';">'+evPct.toFixed(1)+'%</div></div>'+
           '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Raw Price</div><div style="font-size:20px;font-weight:600;color:var(--text);">'+f$(r.raw_price)+'</div></div>'+
           '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Max Buy</div><div style="font-size:20px;font-weight:600;color:var(--amber);">'+f$(r.max_buy_40)+'</div></div>'+
-          (CU&&CU.email===ADMIN ? (
+          (CU&&CU.email===ADMIN?
             '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Actual Gem%</div><div style="font-size:14px;font-weight:700;color:var(--green);">'+(r.actual_gem_rate!=null?(r.actual_gem_rate*100).toFixed(1)+'%':'--')+'</div></div>'+
             '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Implied Gem%</div><div style="font-size:14px;font-weight:600;color:var(--text);">'+(r.implied_gem_rate!=null?(r.implied_gem_rate*100).toFixed(1)+'%':'--')+'</div></div>'+
             '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Edge</div><div style="font-size:14px;font-weight:700;color:var(--amber);">'+(r.actual_gem_rate&&r.implied_gem_rate&&r.implied_gem_rate>0?'x'+(r.actual_gem_rate/r.implied_gem_rate).toFixed(2):'--')+'</div></div>'+
@@ -4470,65 +4472,9 @@ function renderScanner(){
             '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">PSA 9</div><div style="font-size:14px;font-weight:600;color:var(--text);">'+f$(r.psa9_price)+'</div></div>'+
             '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Volume</div><div style="font-size:14px;font-weight:600;color:var(--text);">'+(r.sales_volume||'--')+'</div></div>'+
             '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Max Buy @35%</div><div style="font-size:14px;font-weight:600;color:var(--amber);">'+f$(r.max_buy_35)+'</div></div>'
-          ) : '') +
+          :'') +
         '</div>'+
         '<button class="btn-a" style="font-size:11px;padding:6px 14px;" data-scanid="'+r.id+'">&#9658; Add to Quick Add</button>'+
-      '</div>'+
-    '</div>';
-  }).join('');
-  list.querySelectorAll('[data-scanid]').forEach(btn=>btn.addEventListener('click',function(e){e.stopPropagation();scannerToBuy(this.dataset.scanid);}));
-  if(SCANNER_DATA.length){const latest=SCANNER_DATA.reduce((a,b)=>new Date(a.scanned_at)>new Date(b.scanned_at)?a:b);const el=g('scanner-last-run');if(el&&latest.scanned_at)el.textContent='Last run: '+fmtDate(latest.scanned_at);}
-  const cnt=g('sc-cnt'); if(cnt) cnt.textContent=SCANNER_FILTERED.length+' cards';
-}
-
-function updateScanner(){
-  const buys=SCANNER_DATA.filter(r=>r.decision==='BUY').length;
-  const avgEV=SCANNER_DATA.length?SCANNER_DATA.reduce((s,r)=>s+(r.ev_pct||0),0)/SCANNER_DATA.length:0;
-  const topEV=SCANNER_DATA.length?Math.max(...SCANNER_DATA.map(r=>r.ev_pct||0)):0;
-  if(g('sc-total'))g('sc-total').textContent=SCANNER_DATA.length;
-  if(g('sc-buys'))g('sc-buys').textContent=buys;
-  if(g('sc-avgev'))g('sc-avgev').textContent=(avgEV*100).toFixed(1)+'%';
-  if(g('sc-topev'))g('sc-topev').textContent=(topEV*100).toFixed(1)+'%';
-  if(g('sc-cnt'))g('sc-cnt').textContent=SCANNER_FILTERED.length+' cards';
-  const list=g('sc-list');if(!list)return;
-  if(!SCANNER_FILTERED.length){list.innerHTML='<div class="empty"><div class="empty-icon">&#9889;</div><div class="empty-title">No results</div><div style="font-size:12px;">Run the scanner or adjust filters</div></div>';return;}
-  list.innerHTML=SCANNER_FILTERED.map(r=>{
-    const evPct=(r.ev_pct||0)*100,evColor=r.decision==='BUY'?'var(--green)':'var(--amber)',bc=r.decision==='BUY'?'sb-buy':'sb-caution';
-    return '<div class="scanner-row">'+
-      '<div class="scanner-header" onclick="toggleScannerRow(this)" data-scid="'+r.id+'">'+
-        '<i style="font-style:normal;font-size:10px;color:var(--text-muted);flex-shrink:0;">&#9658;</i>'+
-        '<div style="flex:1;min-width:0;">'+
-          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'+
-            '<span style="font-size:13px;font-weight:700;color:var(--text);">'+(r.player||'--')+'</span>'+
-            (r.parallel?'<span style="font-size:11px;font-weight:600;color:var(--red);background:rgba(204,0,0,.1);border:1px solid rgba(204,0,0,.2);border-radius:3px;padding:1px 5px;">'+r.parallel+'</span>':'')+
-            '<span style="font-size:11px;color:var(--text-muted);">'+(r.set_name||'')+(r.card_no?' #'+r.card_no:'')+'</span>'+
-            '<span class="scanner-badge '+bc+'">'+r.decision+'</span>'+
-          '</div>'+
-          '<div style="display:flex;align-items:center;gap:10px;margin-top:4px;flex-wrap:wrap;">'+
-            '<span style="font-size:11px;font-weight:700;color:'+evColor+';">EV: '+evPct.toFixed(1)+'%</span>'+
-            '<span style="font-size:11px;color:var(--text-muted);">Raw: <strong style="color:var(--text);">'+f$(r.raw_price)+'</strong></span>'+
-            '<span style="font-size:11px;color:var(--text-muted);">Max Buy: <strong style="color:var(--text);">'+f$(r.max_buy_40)+'</strong></span>'+
-            '<span style="font-size:11px;color:var(--text-muted);">Vol: '+(r.sales_volume||'--')+'</span>'+
-          '</div>'+
-        '</div>'+
-      '</div>'+
-      '<div class="scanner-body" data-scid="'+r.id+'">'+
-        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:14px;">'+
-          '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">EV$</div><div style="font-size:14px;font-weight:700;color:'+evColor+';">'+f$(r.ev_dollar)+'</div></div>'+
-          '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">EV%</div><div style="font-size:14px;font-weight:700;color:'+evColor+';">'+evPct.toFixed(1)+'%</div></div>'+
-          '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">PSA 10</div><div style="font-size:14px;font-weight:600;color:var(--text);">'+f$(r.psa10_price)+'</div></div>'+
-          '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">PSA 9</div><div style="font-size:14px;font-weight:600;color:var(--text);">'+f$(r.psa9_price)+'</div></div>'+
-          '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Raw Price</div><div style="font-size:14px;font-weight:600;color:var(--text);">'+f$(r.raw_price)+'</div></div>'+
-          '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Actual Gem%</div><div style="font-size:14px;font-weight:700;color:var(--green);">'+(r.actual_gem_rate!=null?((r.actual_gem_rate*100).toFixed(1)+'%'):'--')+'</div></div>'+
-          '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Implied Gem%</div><div style="font-size:14px;font-weight:600;color:var(--text);">'+(r.implied_gem_rate!=null?((r.implied_gem_rate*100).toFixed(1)+'%'):'--')+'</div></div>'+
-          '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Edge ×</div><div style="font-size:14px;font-weight:700;color:var(--amber);">'+(r.actual_gem_rate&&r.implied_gem_rate&&r.implied_gem_rate>0?'×'+(r.actual_gem_rate/r.implied_gem_rate).toFixed(2):'--')+'</div></div>'+
-          '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">SCC Score</div><div style="font-size:14px;font-weight:800;color:'+sccColor(r.scc_score||0)+';">'+(r.scc_score!=null?r.scc_score+'/100':'--')+'</div></div>'+
-          '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Volume/Yr</div><div style="font-size:14px;font-weight:600;color:var(--text);">'+(r.sales_volume||'--')+'</div></div>'+
-          '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Grading Cost</div><div style="font-size:14px;font-weight:600;color:var(--text-muted);">$30</div></div>'+
-          '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Max Buy @40%</div><div style="font-size:14px;font-weight:600;color:var(--amber);">'+f$(r.max_buy_40)+'</div></div>'+
-          '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Max Buy @35%</div><div style="font-size:14px;font-weight:600;color:var(--amber);">'+f$(r.max_buy_35)+'</div></div>'+
-        '</div>'+
-        '<button class="btn-a" style="font-size:11px;padding:6px 14px;background:var(--green);" data-scanid="'+r.id+'">&#9654; Add to Quick Add</button>'+
       '</div>'+
     '</div>';
   }).join('');
