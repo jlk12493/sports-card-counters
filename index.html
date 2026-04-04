@@ -937,51 +937,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
         <button class="btn-a" style="background:var(--red);" onclick="runScanner()">&#9654; Run Scanner Now</button>
       </div>
 
-      <!-- GemRate CSV Import -->
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:20px;overflow:hidden;">
-        <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;user-select:none;" onclick="toggleGRImport()">
-          <span style="font-size:14px;">&#128202;</span>
-          <strong style="font-size:13px;">GemRate CSV Import</strong>
-          <span style="font-size:11px;color:var(--text-muted);flex:1;">Upload CSVs from gemrate.com to power the scanner</span>
-          <span id="gr-count" style="font-size:11px;color:var(--green);font-weight:700;"></span>
-          <span id="gr-chevron" style="font-size:10px;color:var(--text-muted);transition:transform .2s;">&#9658;</span>
-        </div>
-        <div id="gr-import-body" style="display:none;padding:0 16px 16px;border-top:1px solid var(--border);">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;align-items:end;">
-          <div class="ff"><label>Sport</label>
-            <select class="fi" id="gr-sport" style="width:100%;">
-              <option value="Football">Football</option>
-              <option value="Baseball">Baseball</option>
-              <option value="Basketball">Basketball</option>
-            </select>
-          </div>
-          <div class="ff"><label>Year</label><input class="fi" id="gr-year" placeholder="2024" style="width:100%;"></div>
-          <div class="ff"><label>Set Search Hint <span style="font-size:10px;color:var(--text-muted);font-weight:400;">e.g. 2025 Panini Mosaic</span></label><input class="fi" id="gr-hint" placeholder="Helps SCP detection" style="width:100%;"></div>
-        </div>
-        <div id="gr-dropzone" ondragover="grDragOver(event)" ondragleave="grDragLeave(event)" ondrop="grDrop(event)" onclick="grDropzoneClick()" style="border:2px dashed var(--border);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:12px;background:var(--surface-2);">
-          <div style="font-size:28px;margin-bottom:6px;">&#128202;</div>
-          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Drop GemRate CSV here</div>
-          <div style="font-size:11px;color:var(--text-muted);">or click to browse</div>
-          <input type="file" id="gr-csv" accept=".csv" style="display:none;" onchange="previewGemRateCSV()">
-        </div>
-          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Drop GemRate CSV here</div>
-          <div style="font-size:11px;color:var(--text-muted);">or click to browse</div>
-          <input type="file" id="gr-csv" accept=".csv" style="display:none;" onchange="previewGemRateCSV()">
-        </div>
-        <div id="gr-scp-detect" style="display:none;background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:10px;font-size:12px;margin-bottom:10px;"></div>
-        <div id="gr-preview" style="display:none;margin-bottom:12px;">
-          <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:10px;font-size:12px;">
-            <span id="gr-preview-text"></span>
-          </div>
-        </div>
-        <div style="display:flex;gap:10px;align-items:center;">
-          <button class="btn-a" onclick="importGemRateCSV()" id="gr-import-btn" style="display:none;">&#9650; Import to Database</button>
-          <span id="gr-status" style="font-size:12px;color:var(--text-muted);"></span>
-        </div>
-        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
-          <button class="btn-c" style="font-size:11px;padding:3px 8px;" onclick="loadGemRateCount()">&#8635; Refresh Count</button>
-        </div><!-- end gr-import-body -->
-      </div>
+      
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:20px;">
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;"><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Total Opps</div><div style="font-size:22px;font-weight:800;color:var(--text);" id="sc-total">--</div></div>
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px;"><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">BUY Signals</div><div style="font-size:22px;font-weight:800;color:var(--green);" id="sc-buys">--</div></div>
@@ -1057,7 +1013,45 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
     </div>
 
     <!-- FINANCIALS -->
-    <div class="sec" id="sec-financials" style="min-height:100px;">
+    <div clas<!-- GemRate CSV Import -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:20px;overflow:hidden;">
+        <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;user-select:none;" onclick="toggleGRImport()">
+          <span style="font-size:14px;">&#128202;</span>
+          <strong style="font-size:13px;">GemRate CSV Import</strong>
+          <span style="font-size:11px;color:var(--text-muted);flex:1;">Upload CSVs from gemrate.com to power the scanner</span>
+          <span id="gr-count" style="font-size:11px;color:var(--green);font-weight:700;"></span>
+          <span id="gr-chevron" style="font-size:10px;color:var(--text-muted);transition:transform .2s;">&#9658;</span>
+        </div>
+        <div id="gr-import-body" style="display:none;padding:0 16px 16px;border-top:1px solid var(--border);">
+        <div style="margin-bottom:12px;">
+          <div class="ff"><label>Set Search Hint <span style="font-size:10px;color:var(--text-muted);font-weight:400;">e.g. 2025 Panini Mosaic</span></label><input class="fi" id="gr-hint" placeholder="Type set name to detect from SCP..." style="width:100%;"></div>
+        </div>
+        <div id="gr-dropzone" ondragover="grDragOver(event)" ondragleave="grDragLeave(event)" ondrop="grDrop(event)" onclick="grDropzoneClick()" style="border:2px dashed var(--border);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:12px;background:var(--surface-2);">
+          <div style="font-size:28px;margin-bottom:6px;">&#128202;</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Drop GemRate CSV here</div>
+          <div style="font-size:11px;color:var(--text-muted);">or click to browse</div>
+          <input type="file" id="gr-csv" accept=".csv" style="display:none;" onchange="previewGemRateCSV()">
+        </div>
+          <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Drop GemRate CSV here</div>
+          <div style="font-size:11px;color:var(--text-muted);">or click to browse</div>
+          <input type="file" id="gr-csv" accept=".csv" style="display:none;" onchange="previewGemRateCSV()">
+        </div>
+        <div id="gr-scp-detect" style="display:none;background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:10px;font-size:12px;margin-bottom:10px;"></div>
+        <div id="gr-preview" style="display:none;margin-bottom:12px;">
+          <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:10px;font-size:12px;">
+            <span id="gr-preview-text"></span>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <button class="btn-a" onclick="importGemRateCSV()" id="gr-import-btn" style="display:none;">&#9650; Import to Database</button>
+          <span id="gr-status" style="font-size:12px;color:var(--text-muted);"></span>
+        </div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+          <button class="btn-c" style="font-size:11px;padding:3px 8px;" onclick="loadGemRateCount()">&#8635; Refresh Count</button>
+        </div><!-- end gr-import-body -->
+      </div>
+
+    s="sec" id="sec-financials" style="min-height:100px;">
 
       <!-- TAX YEAR SELECTOR -->
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
@@ -2050,7 +2044,7 @@ function renderInv() {
             '<span style="font-size:11px;color:var(--text-muted);">Cost: <strong style="color:var(--text);">' + (r.total_cost!=null?f$(r.total_cost):'--') + '</strong></span>' +
             (evp !== null ? '<div style="display:flex;align-items:center;gap:4px;"><div style="width:50px;height:3px;background:var(--border);border-radius:2px;overflow:hidden;"><div style="height:100%;width:' + evBarW.toFixed(0) + '%;background:' + evColor + ';border-radius:2px;"></div></div><span style="font-size:11px;font-weight:700;color:' + evColor + ';">' + (evp*100).toFixed(0) + '%</span></div>' : '') +
             (r.scc_score!=null?'<span style="font-size:11px;font-weight:800;padding:1px 6px;border-radius:3px;background:rgba(0,0,0,.2);color:'+sccColor(r.scc_score)+'">SCC '+r.scc_score+'</span>':'') +
-            (r.actual_gem_rate!=null?'<span style="font-size:11px;color:var(--text-muted);">Gem: <strong style="color:var(--green);">'+(r.actual_gem_rate*100).toFixed(1)+'%</strong></span>':'') +
+            (CU&&CU.email===ADMIN&&r.actual_gem_rate!=null?'<span style="font-size:11px;color:var(--text-muted);">Gem: <strong style="color:var(--green);">'+(r.actual_gem_rate*100).toFixed(1)+'%</strong></span>':'') +
             (isStaleComps(r) ? '<span style="font-size:9px;background:rgba(245,158,11,.2);color:var(--amber);border:1px solid rgba(245,158,11,.3);border-radius:3px;padding:1px 5px;font-weight:700;">STALE</span>' : '') +
           '</div>' +
         '</div>' +
@@ -4431,6 +4425,63 @@ function filterScanner(){
   renderScanner();
 }
 function renderScanner(){
+  const buys=SCANNER_DATA.filter(r=>r.decision==='BUY').length;
+  const avgEV=SCANNER_DATA.length?SCANNER_DATA.reduce((s,r)=>s+(r.ev_pct||0),0)/SCANNER_DATA.length:0;
+  const topEV=SCANNER_DATA.length?Math.max(...SCANNER_DATA.map(r=>r.ev_pct||0)):0;
+  if(g('sc-total'))g('sc-total').textContent=SCANNER_DATA.length;
+  if(g('sc-buys'))g('sc-buys').textContent=buys;
+  if(g('sc-avgev'))g('sc-avgev').textContent=(avgEV*100).toFixed(1)+'%';
+  if(g('sc-topev'))g('sc-topev').textContent=(topEV*100).toFixed(1)+'%';
+  if(g('sc-cnt'))g('sc-cnt').textContent=SCANNER_FILTERED.length+' cards';
+  const list=g('sc-list');if(!list)return;
+  if(!SCANNER_FILTERED.length){list.innerHTML='<div class="empty"><div class="empty-icon">&#9889;</div><div class="empty-title">No results</div><div style="font-size:12px;">Run the scanner or adjust filters</div></div>';return;}
+  list.innerHTML=SCANNER_FILTERED.map(r=>{
+    const evPct=(r.ev_pct||0)*100,evColor=r.decision==='BUY'?'var(--green)':'var(--amber)',bc=r.decision==='BUY'?'sb-buy':'sb-caution';
+    return '<div class="scanner-row">'+
+      '<div class="scanner-header" onclick="toggleScannerRow(this)" data-scid="'+r.id+'">'+
+        '<i style="font-style:normal;font-size:10px;color:var(--text-muted);flex-shrink:0;">&#9658;</i>'+
+        '<div style="flex:1;min-width:0;">'+
+          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'+
+            '<span style="font-size:13px;font-weight:700;color:var(--text);">'+(r.player||'--')+'</span>'+
+            (r.parallel?'<span style="font-size:11px;font-weight:600;color:var(--red);background:rgba(204,0,0,.1);border:1px solid rgba(204,0,0,.2);border-radius:3px;padding:1px 5px;">'+r.parallel+'</span>':'')+
+            '<span style="font-size:11px;color:var(--text-muted);">'+(r.set_name||'')+(r.card_no?' #'+r.card_no:'')+'</span>'+
+            '<span class="scanner-badge '+bc+'">'+r.decision+'</span>'+
+          '</div>'+
+          '<div style="display:flex;align-items:center;gap:10px;margin-top:4px;flex-wrap:wrap;">'+
+            '<span style="font-size:11px;font-weight:700;color:'+evColor+';">EV: '+evPct.toFixed(1)+'%</span>'+
+            '<span style="font-size:11px;color:var(--text-muted);">Raw: <strong style="color:var(--text);">'+f$(r.raw_price)+'</strong></span>'+
+            '<span style="font-size:11px;color:var(--text-muted);">Max Buy: <strong style="color:var(--text);">'+f$(r.max_buy_40)+'</strong></span>'+
+            '<span style="font-size:11px;color:var(--text-muted);">Vol: '+(r.sales_volume||'--')+'</span>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="scanner-body" data-scid="'+r.id+'">'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:14px;">' +
+          '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">SCC Score</div><div style="font-size:20px;font-weight:800;color:'+sccColor(r.scc_score||0)+';">'+(r.scc_score!=null?r.scc_score:'--')+'</div></div>'+
+          '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">EV$</div><div style="font-size:20px;font-weight:700;color:'+evColor+';">'+f$(r.ev_dollar)+'</div></div>'+
+          '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">EV%</div><div style="font-size:20px;font-weight:700;color:'+evColor+';">'+evPct.toFixed(1)+'%</div></div>'+
+          '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Raw Price</div><div style="font-size:20px;font-weight:600;color:var(--text);">'+f$(r.raw_price)+'</div></div>'+
+          '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Max Buy</div><div style="font-size:20px;font-weight:600;color:var(--amber);">'+f$(r.max_buy_40)+'</div></div>'+
+          (CU&&CU.email===ADMIN ? (
+            '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Actual Gem%</div><div style="font-size:14px;font-weight:700;color:var(--green);">'+(r.actual_gem_rate!=null?(r.actual_gem_rate*100).toFixed(1)+'%':'--')+'</div></div>'+
+            '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Implied Gem%</div><div style="font-size:14px;font-weight:600;color:var(--text);">'+(r.implied_gem_rate!=null?(r.implied_gem_rate*100).toFixed(1)+'%':'--')+'</div></div>'+
+            '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Edge</div><div style="font-size:14px;font-weight:700;color:var(--amber);">'+(r.actual_gem_rate&&r.implied_gem_rate&&r.implied_gem_rate>0?'x'+(r.actual_gem_rate/r.implied_gem_rate).toFixed(2):'--')+'</div></div>'+
+            '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">PSA 10</div><div style="font-size:14px;font-weight:600;color:var(--text);">'+f$(r.psa10_price)+'</div></div>'+
+            '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">PSA 9</div><div style="font-size:14px;font-weight:600;color:var(--text);">'+f$(r.psa9_price)+'</div></div>'+
+            '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Volume</div><div style="font-size:14px;font-weight:600;color:var(--text);">'+(r.sales_volume||'--')+'</div></div>'+
+            '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Max Buy @35%</div><div style="font-size:14px;font-weight:600;color:var(--amber);">'+f$(r.max_buy_35)+'</div></div>'
+          ) : '') +
+        '</div>'+
+        '<button class="btn-a" style="font-size:11px;padding:6px 14px;" data-scanid="'+r.id+'">&#9658; Add to Quick Add</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+  list.querySelectorAll('[data-scanid]').forEach(btn=>btn.addEventListener('click',function(e){e.stopPropagation();scannerToBuy(this.dataset.scanid);}));
+  if(SCANNER_DATA.length){const latest=SCANNER_DATA.reduce((a,b)=>new Date(a.scanned_at)>new Date(b.scanned_at)?a:b);const el=g('scanner-last-run');if(el&&latest.scanned_at)el.textContent='Last run: '+fmtDate(latest.scanned_at);}
+  const cnt=g('sc-cnt'); if(cnt) cnt.textContent=SCANNER_FILTERED.length+' cards';
+}
+
+function updateScanner(){
   const buys=SCANNER_DATA.filter(r=>r.decision==='BUY').length;
   const avgEV=SCANNER_DATA.length?SCANNER_DATA.reduce((s,r)=>s+(r.ev_pct||0),0)/SCANNER_DATA.length:0;
   const topEV=SCANNER_DATA.length?Math.max(...SCANNER_DATA.map(r=>r.ev_pct||0)):0;
