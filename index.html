@@ -1123,11 +1123,42 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
           <span id="registry-chevron" style="font-size:10px;color:var(--text-muted);transition:transform .2s;">&#9658;</span>
         </div>
         <div id="registry-body" style="display:none;padding:0 16px 16px;border-top:1px solid var(--border);">
+          <!-- Single add -->
           <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:12px;align-items:end;">
             <div class="ff"><label>Your Import Name</label><input class="fi" id="reg-import-name" placeholder="e.g. Topps Chrome" style="width:100%;"></div>
             <div class="ff"><label>SCP Set Name</label><input class="fi" id="reg-scp-name" placeholder="e.g. Baseball Cards 2018 Topps Chrome" style="width:100%;"></div>
             <button class="btn-a" style="padding:7px 14px;font-size:12px;" onclick="addSetMapping()">+ Add</button>
           </div>
+
+          <!-- Bulk import from set list CSV -->
+          <div style="border-top:1px solid var(--border);padding-top:12px;margin-bottom:12px;">
+            <div style="font-size:12px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Bulk Import from Set List CSV</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:10px;align-items:end;">
+              <div class="ff"><label>Year</label><input class="fi" id="bulk-year" placeholder="e.g. 2018" style="width:100%;"></div>
+              <div class="ff"><label>Sport</label>
+                <select class="fi" id="bulk-sport" style="width:100%;">
+                  <option value="Baseball">Baseball</option>
+                  <option value="Football">Football</option>
+                  <option value="Basketball">Basketball</option>
+                </select>
+              </div>
+              <div class="ff"><label>&nbsp;</label>
+                <label class="btn-c" style="cursor:pointer;display:block;text-align:center;padding:7px 14px;font-size:12px;">
+                  &#128196; Upload Set List
+                  <input type="file" id="bulk-csv" accept=".csv" style="display:none;" onchange="parseBulkSetList()">
+                </label>
+              </div>
+            </div>
+            <div id="bulk-preview" style="display:none;">
+              <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Review detected SCP names — correct any that are wrong then click Register All:</div>
+              <div id="bulk-table" style="font-size:12px;margin-bottom:10px;max-height:300px;overflow-y:auto;"></div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <button class="btn-a" style="font-size:12px;padding:6px 14px;" onclick="registerAllSets()">&#10003; Register All</button>
+                <span id="bulk-status" style="font-size:12px;color:var(--text-muted);"></span>
+              </div>
+            </div>
+          </div>
+
           <div id="registry-list" style="font-size:12px;"></div>
         </div>
       </div>
@@ -4329,6 +4360,109 @@ async function addSetMapping() {
   g('reg-scp-name').value = '';
   toast('Set mapping added!');
   loadSetRegistry();
+}
+
+// ── BULK SET LIST IMPORT ──
+var BULK_SETS = [];
+
+function parseBulkSetList() {
+  const file = g('bulk-csv').files[0];
+  if (!file) return;
+  const year = (g('bulk-year').value || '').trim();
+  const sport = g('bulk-sport').value || 'Baseball';
+  if (!year) { toast('Please enter a year first', true); return; }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const lines = e.target.result.split('\n').filter(l => l.trim());
+    BULK_SETS = [];
+
+    // Parse set names from CSV (column index 1 = Name)
+    for (let i = 1; i < lines.length; i++) {
+      const cols = parseCSVLine(lines[i]);
+      const name = (cols[1] || '').trim();
+      if (!name) continue;
+      BULK_SETS.push({
+        import_name: name,
+        hint: year + ' ' + name + ' ' + sport,
+        scp_name: '',
+        detecting: true
+      });
+    }
+
+    if (!BULK_SETS.length) { toast('No sets found in CSV', true); return; }
+
+    // Show the table immediately
+    g('bulk-preview').style.display = 'block';
+    renderBulkTable();
+
+    // Auto-detect SCP names one by one
+    detectBulkSets(year, sport);
+  };
+  reader.readAsText(file);
+}
+
+async function detectBulkSets(year, sport) {
+  const status = g('bulk-status');
+  for (let i = 0; i < BULK_SETS.length; i++) {
+    if (status) status.textContent = 'Detecting ' + (i+1) + '/' + BULK_SETS.length + '...';
+    const set = BULK_SETS[i];
+    try {
+      const res = await fetch(
+        'https://lmwqizcflhikvtoqehzj.supabase.co/functions/v1/rapid-endpoint?detect=1&q=' + encodeURIComponent(set.hint),
+        {method:'POST',headers:{'Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.95XMeRWGeCcD_KxN40ciJi_QjB9GG4sVJexzBEhJ9NM','Content-Type':'application/json'}}
+      );
+      const data = await res.json();
+      set.scp_name = data.scp_set_name || '';
+      set.all_names = data.all_names || [];
+    } catch(e) {
+      set.scp_name = '';
+    }
+    set.detecting = false;
+    renderBulkTable();
+    // Small delay to avoid hammering SCP
+    await new Promise(r => setTimeout(r, 500));
+  }
+  if (status) status.textContent = 'Detection complete. Review and register.';
+}
+
+function renderBulkTable() {
+  const el = g('bulk-table');
+  if (!el) return;
+  el.innerHTML = BULK_SETS.map((s, i) =>
+    '<div style="display:grid;grid-template-columns:180px 1fr;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);">' +
+    '<span style="font-size:12px;color:var(--text);">' + s.import_name + '</span>' +
+    (s.detecting
+      ? '<span style="font-size:11px;color:var(--text-muted);">Detecting...</span>'
+      : s.all_names && s.all_names.length > 1
+        ? '<select class="fi" style="font-size:11px;padding:3px 6px;" onchange="BULK_SETS[' + i + '].scp_name=this.value">' +
+          s.all_names.map(n => '<option value="' + n.replace(/"/g,'&quot;') + '"' + (n===s.scp_name?' selected':'') + '>' + n + '</option>').join('') +
+          '</select>'
+        : '<input class="fi" style="font-size:11px;padding:3px 6px;" value="' + (s.scp_name||'').replace(/"/g,'&quot;') + '" oninput="BULK_SETS[' + i + '].scp_name=this.value" placeholder="Not found - enter manually">'
+    ) +
+    '</div>'
+  ).join('');
+}
+
+async function registerAllSets() {
+  const toRegister = BULK_SETS.filter(s => s.scp_name && s.scp_name.trim());
+  if (!toRegister.length) { toast('No sets with SCP names to register', true); return; }
+  const status = g('bulk-status');
+  if (status) status.textContent = 'Registering ' + toRegister.length + ' sets...';
+
+  const rows = toRegister.map(s => ({import_name: s.import_name, scp_name: s.scp_name.trim()}));
+  const {error} = await sb.from('set_registry').upsert(rows, {onConflict: 'scp_name'});
+
+  if (error) {
+    toast('Error: ' + error.message, true);
+    if (status) status.textContent = 'Error: ' + error.message;
+  } else {
+    toast('Registered ' + toRegister.length + ' sets!');
+    if (status) status.textContent = '';
+    g('bulk-preview').style.display = 'none';
+    BULK_SETS = [];
+    loadSetRegistry();
+  }
 }
 
 async function deleteSetMapping(id) {
