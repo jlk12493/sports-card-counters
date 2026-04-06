@@ -1,5 +1,5 @@
 <!DOC
-<!-- v30 -->
+<!-- v31 -->
 YPE html>
 <html lang="en">
 <head>
@@ -1187,10 +1187,15 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
           <div style="margin-bottom:12px;margin-top:12px;">
             <div class="ff">
               <label>Select from Registry <span style="font-size:10px;color:var(--text-muted);font-weight:400;">or type a search hint</span></label>
-              <input class="fi" id="gr-registry-search" placeholder="Search registered sets..." style="width:100%;margin-bottom:6px;" oninput="filterRegistryDropdown(this.value)">
-              <select class="fi" id="gr-registry-select" style="width:100%;margin-bottom:8px;" onchange="grRegistrySelect(this.value)">
-                <option value="">-- Pick a registered set --</option>
-              </select>
+              <div style="position:relative;margin-bottom:8px;">
+              <input class="fi" id="gr-registry-search" placeholder="Type to search registered sets..." style="width:100%;" autocomplete="off"
+                oninput="filterRegistryDropdown(this.value)"
+                onfocus="filterRegistryDropdown(this.value)"
+                onblur="setTimeout(()=>{const d=g('gr-registry-results');if(d)d.style.display='none';},200)">
+              <div id="gr-registry-results" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:0 0 6px 6px;max-height:200px;overflow-y:auto;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,.3);"></div>
+            </div>
+            <div id="gr-selected-set" style="display:none;padding:8px 10px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:5px;font-size:12px;margin-bottom:8px;"></div>
+            <input type="hidden" id="gr-registry-select" value="">
               <input class="fi" id="gr-hint" placeholder="Or type set name hint e.g. 2018 Topps Chrome..." style="width:100%;">
             </div>
           </div>
@@ -4347,24 +4352,49 @@ function renderSetRegistry() {
 }
 
 function populateRegistryDropdown() {
-  const sel = g('gr-registry-select');
-  if (!sel) return;
-  const current = sel.value;
-  sel.innerHTML = '<option value="">-- Pick a registered set --</option>' +
-    SET_REGISTRY.map(r => '<option value="' + r.scp_name.replace(/"/g,'&quot;') + '">' + r.import_name + ' → ' + r.scp_name + '</option>').join('');
-  if (current) sel.value = current;
+  // No-op - autocomplete handles display
 }
 
 function filterRegistryDropdown(q) {
-  const sel = g('gr-registry-select');
-  if (!sel) return;
-  const current = sel.value;
-  const filtered = q
-    ? SET_REGISTRY.filter(r => r.import_name.toLowerCase().includes(q.toLowerCase()) || r.scp_name.toLowerCase().includes(q.toLowerCase()))
-    : SET_REGISTRY;
-  sel.innerHTML = '<option value="">-- Pick a registered set --</option>' +
-    filtered.map(r => '<option value="' + r.scp_name.replace(/"/g,'&quot;') + '">' + r.import_name + ' → ' + r.scp_name + '</option>').join('');
-  if (current) sel.value = current;
+  const results = g('gr-registry-results');
+  if (!results) return;
+  const filtered = q.trim()
+    ? SET_REGISTRY.filter(r =>
+        r.import_name.toLowerCase().includes(q.toLowerCase()) ||
+        r.scp_name.toLowerCase().includes(q.toLowerCase()))
+    : SET_REGISTRY.slice(0, 20); // Show first 20 when empty/focused
+
+  if (!filtered.length) {
+    results.innerHTML = '<div style="padding:10px;color:var(--text-muted);font-size:12px;">No sets found</div>';
+  } else {
+    results.innerHTML = filtered.map(function(r) {
+      var div = document.createElement('div');
+      div.style.cssText = 'padding:8px 12px;cursor:pointer;font-size:12px;border-bottom:1px solid rgba(255,255,255,.05);';
+      div.dataset.scp = r.scp_name;
+      div.dataset.imp = r.import_name;
+      div.onmousedown = function(){ pickRegistrySet(this); };
+      div.innerHTML = '<span style="color:var(--text);">' + r.import_name + '</span><span style="color:var(--text-muted);margin-left:6px;">→ ' + r.scp_name + '</span>';
+      return div.outerHTML;
+    }).join('');
+  }
+  results.style.display = 'block';
+}
+
+function pickRegistrySet(el) {
+  const scpName = el.dataset.scp;
+  const importName = el.dataset.imp;
+  const hidden = g('gr-registry-select');
+  if (hidden) hidden.value = scpName;
+  const search = g('gr-registry-search');
+  if (search) search.value = importName;
+  const results = g('gr-registry-results');
+  if (results) results.style.display = 'none';
+  const selectedDiv = g('gr-selected-set');
+  if (selectedDiv) {
+    selectedDiv.style.display = 'block';
+    selectedDiv.innerHTML = '&#10003; <strong>' + importName + '</strong> → ' + scpName;
+  }
+  grRegistrySelect(scpName);
 }
 
 function grRegistrySelect(val) {
