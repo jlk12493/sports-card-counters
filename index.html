@@ -1,5 +1,5 @@
 <!DOC
-<!-- v32 -->
+<!-- v33 -->
 YPE html>
 <html lang="en">
 <head>
@@ -1196,7 +1196,10 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
             </div>
             <div id="gr-selected-set" style="display:none;padding:8px 10px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:5px;font-size:12px;margin-bottom:8px;"></div>
             <input type="hidden" id="gr-registry-select" value="">
-              <input class="fi" id="gr-hint" placeholder="Or type set name hint e.g. 2018 Topps Chrome..." style="width:100%;">
+              <div style="display:flex;gap:6px;align-items:center;">
+              <input class="fi" id="gr-hint" placeholder="Or type hint e.g. 2018 Topps Chrome..." style="flex:1;">
+              <button class="btn-c" style="font-size:11px;padding:5px 10px;white-space:nowrap;" onclick="manualDetect()">&#128269; Detect</button>
+            </div>
             </div>
           </div>
           <div id="gr-dropzone" ondragover="grDragOver(event)" ondragleave="grDragLeave(event)" ondrop="grDrop(event)" onclick="grDropzoneClick()" style="border:2px dashed var(--border);border-radius:8px;padding:24px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:12px;background:var(--surface-2);">
@@ -4219,8 +4222,10 @@ function previewGemRateCSV(){
     } else {
       // No registry selection - clear and auto-detect
       if(det){det.style.display='none';det.dataset.scpName='';}
-      const hint=(g('gr-hint')?g('gr-hint').value:'').trim()||(GR_PARSED_DATA[0]?GR_PARSED_DATA[0].player:'');
-      if(hint){g('gr-status').textContent='Detecting set name...';detectSCPSetName(hint);}
+      const hintVal = (g('gr-hint')?g('gr-hint').value:'').trim();
+      // Only auto-detect if user typed a hint - don't use player name (too unreliable)
+      if(hintVal){g('gr-status').textContent='Detecting set name...';detectSCPSetName(hintVal);}
+      else{g('gr-status').textContent='Type a set name hint above and re-upload to detect, or pick from registry.';}
     }
   };
   reader.readAsText(file);
@@ -4236,6 +4241,9 @@ function parseCSVLine(line){
   result.push(current);return result;
 }
 async function detectSCPSetName(q){
+  // Never run detection if a registry set is already confirmed
+  const existingEl = g('gr-scp-detect');
+  if (existingEl && existingEl.dataset.scpName) return;
   try{
     const res=await fetch('https://lmwqizcflhikvtoqehzj.supabase.co/functions/v1/rapid-endpoint?detect=1&q='+encodeURIComponent(q),
       {method:'POST',headers:{'Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.95XMeRWGeCcD_KxN40ciJi_QjB9GG4sVJexzBEhJ9NM','Content-Type':'application/json'}});
@@ -4554,6 +4562,22 @@ function toggleSetRegistry() {
   body.style.display = open ? 'block' : 'none';
   if (chev) chev.style.transform = open ? 'rotate(90deg)' : '';
   if (open) loadSetRegistry();
+}
+
+function manualDetect(){
+  const hint = (g('gr-hint')?g('gr-hint').value:'').trim();
+  if (!hint) { toast('Type a set name hint first', true); return; }
+  // Clear existing detection so new one can run
+  const det = g('gr-scp-detect');
+  if (det) { det.dataset.scpName = ''; det.style.display = 'none'; }
+  const sel = g('gr-selected-set');
+  if (sel) sel.style.display = 'none';
+  const regSel = g('gr-registry-select');
+  if (regSel) regSel.value = '';
+  const regSearch = g('gr-registry-search');
+  if (regSearch) regSearch.value = '';
+  g('gr-status').textContent = 'Detecting...';
+  detectSCPSetName(hint);
 }
 
 function toggleGRImport(){
