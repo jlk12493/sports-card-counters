@@ -1,5 +1,5 @@
 <!DOC
-<!-- v33 -->
+<!-- v34 -->
 YPE html>
 <html lang="en">
 <head>
@@ -1188,14 +1188,17 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
             <div class="ff">
               <label>Select from Registry <span style="font-size:10px;color:var(--text-muted);font-weight:400;">or type a search hint</span></label>
               <div style="position:relative;margin-bottom:8px;">
-              <input class="fi" id="gr-registry-search" placeholder="Type to search registered sets..." style="width:100%;" autocomplete="off"
+              <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">Search registered sets</label>
+              <input class="fi" id="gr-registry-search" placeholder="Type to search e.g. Bowman Chrome..." style="width:100%;" autocomplete="off"
                 oninput="filterRegistryDropdown(this.value)"
                 onfocus="filterRegistryDropdown(this.value)"
                 onblur="setTimeout(()=>{const d=g('gr-registry-results');if(d)d.style.display='none';},200)">
               <div id="gr-registry-results" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:0 0 6px 6px;max-height:200px;overflow-y:auto;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,.3);"></div>
             </div>
-            <div id="gr-selected-set" style="display:none;padding:8px 10px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:5px;font-size:12px;margin-bottom:8px;"></div>
-            <input type="hidden" id="gr-registry-select" value="">
+            <div class="ff" style="margin-bottom:8px;">
+              <label style="font-size:11px;color:var(--text-muted);">Selected SCP Set Name <span style="color:var(--red);">*</span> <span style="font-weight:400;">— this is what gets saved</span></label>
+              <input class="fi" id="gr-confirmed-name" placeholder="Pick from search above, or type SCP name manually..." style="width:100%;border-color:var(--border);" oninput="grConfirmedNameChanged(this.value)">
+            </div>
               <div style="display:flex;gap:6px;align-items:center;">
               <input class="fi" id="gr-hint" placeholder="Or type hint e.g. 2018 Topps Chrome..." style="flex:1;">
               <button class="btn-c" style="font-size:11px;padding:5px 10px;white-space:nowrap;" onclick="manualDetect()">&#128269; Detect</button>
@@ -4209,23 +4212,15 @@ function previewGemRateCSV(){
         card_description:cardDesc,gems,total,gem_rate:gemRate,gem_rate_month:gmMonth,
         psa_cert:certMatch?certMatch[1]:null,set_name:'',last_updated:new Date().toISOString()});
     }
-    // Check if registry set already selected BEFORE touching the detect element
-    const det=g('gr-scp-detect');
-    const existingName = (det && det.dataset.scpName) || '';
     g('gr-preview').style.display='block';
     g('gr-preview-text').innerHTML='<strong>'+GR_PARSED_DATA.length+' cards parsed</strong> from '+file.name;
     g('gr-import-btn').style.display='inline-block';
     g('gr-status').textContent='';
-    if (existingName) {
-      // Registry set already selected - keep it, don't detect
-      if(det){det.style.display='block';}
-    } else {
-      // No registry selection - clear and auto-detect
-      if(det){det.style.display='none';det.dataset.scpName='';}
+    // Only auto-detect if no set name already confirmed
+    const confirmedVal = (g('gr-confirmed-name')?g('gr-confirmed-name').value:'').trim();
+    if (!confirmedVal) {
       const hintVal = (g('gr-hint')?g('gr-hint').value:'').trim();
-      // Only auto-detect if user typed a hint - don't use player name (too unreliable)
       if(hintVal){g('gr-status').textContent='Detecting set name...';detectSCPSetName(hintVal);}
-      else{g('gr-status').textContent='Type a set name hint above and re-upload to detect, or pick from registry.';}
     }
   };
   reader.readAsText(file);
@@ -4241,22 +4236,32 @@ function parseCSVLine(line){
   result.push(current);return result;
 }
 async function detectSCPSetName(q){
-  // Never run detection if a registry set is already confirmed
-  const existingEl = g('gr-scp-detect');
-  if (existingEl && existingEl.dataset.scpName) return;
+  // Never run detection if a set is already confirmed
+  const confirmedEl = g('gr-confirmed-name');
+  if (confirmedEl && confirmedEl.value.trim()) return;
   try{
     const res=await fetch('https://lmwqizcflhikvtoqehzj.supabase.co/functions/v1/rapid-endpoint?detect=1&q='+encodeURIComponent(q),
       {method:'POST',headers:{'Authorization':'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.95XMeRWGeCcD_KxN40ciJi_QjB9GG4sVJexzBEhJ9NM','Content-Type':'application/json'}});
     const data=await res.json();
     const el=g('gr-scp-detect');
     if(!el||!data.scp_set_name){if(g('gr-status'))g('gr-status').textContent='';return;}
-    el.style.display='block';
-    const allNames=data.all_names||[data.scp_set_name];
-    let h='<div style="margin-bottom:8px;font-size:12px;color:var(--amber);">&#9888; Select correct SCP set name:</div>';
-    h+='<select id="gr-scp-select" class="fi" style="width:100%;" onchange="document.getElementById(\'gr-scp-detect\').dataset.scpName=this.value;">';
-    allNames.forEach(function(n,i){h+='<option value="'+n.replace(/"/g,'&quot;')+'"'+(i===0?' selected':'')+'>'+n+'</option>';});
-    h+='</select>';
-    el.innerHTML=h;el.dataset.scpName=data.scp_set_name;
+    const confirmed = g('gr-confirmed-name');
+    const allNames = data.all_names || [data.scp_set_name];
+    // If multiple names found show a select, otherwise just set the field
+    if (allNames.length > 1) {
+      el.style.display = 'block';
+      let h = '<div style="font-size:11px;color:var(--amber);margin-bottom:6px;">&#9888; Multiple found — pick one or edit above:</div>';
+      h += '<select class="fi" style="font-size:11px;" onchange="const c=g(\'gr-confirmed-name\');if(c){c.value=this.value;c.style.borderColor=\'var(--green)\';}"><option value="">-- select --</option>';
+      allNames.forEach(function(n){h+='<option value="'+n.replace(/"/g,'&quot;')+'">'+n+'</option>';});
+      h += '</select>';
+      el.innerHTML = h;
+    } else {
+      el.style.display = 'none';
+    }
+    if (confirmed && data.scp_set_name) {
+      confirmed.value = data.scp_set_name;
+      confirmed.style.borderColor = 'var(--green)';
+    }
     if(g('gr-status'))g('gr-status').textContent='';
   }catch(e){if(g('gr-status'))g('gr-status').textContent='';}
 }
@@ -4391,32 +4396,27 @@ function filterRegistryDropdown(q) {
 function pickRegistrySet(el) {
   const scpName = el.dataset.scp;
   const importName = el.dataset.imp;
-  const hidden = g('gr-registry-select');
-  if (hidden) hidden.value = scpName;
   const search = g('gr-registry-search');
   if (search) search.value = importName;
   const results = g('gr-registry-results');
   if (results) results.style.display = 'none';
-  const selectedDiv = g('gr-selected-set');
-  if (selectedDiv) {
-    selectedDiv.style.display = 'block';
-    selectedDiv.innerHTML = '&#10003; <strong>' + importName + '</strong> → ' + scpName;
+  // Set the confirmed name field directly - this is the source of truth
+  const confirmed = g('gr-confirmed-name');
+  if (confirmed) {
+    confirmed.value = scpName;
+    confirmed.style.borderColor = 'var(--green)';
   }
-  grRegistrySelect(scpName);
 }
 
 function grRegistrySelect(val) {
-  const el = g('gr-scp-detect');
-  if (!el) return;
-  if (!val) {
-    el.style.display = 'none';
-    el.dataset.scpName = '';
-    return;
-  }
-  el.style.display = 'block';
-  el.dataset.scpName = val;
-  el.innerHTML = '<span style="color:var(--green);">&#10003; Set confirmed: <strong>' + val + '</strong></span>' +
-    '<div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Drop your GemRate CSV below to import into this set.</div>';
+  // Legacy - use gr-confirmed-name instead
+  const confirmed = g('gr-confirmed-name');
+  if (confirmed && val) confirmed.value = val;
+}
+
+function grConfirmedNameChanged(val) {
+  const confirmed = g('gr-confirmed-name');
+  if (confirmed) confirmed.style.borderColor = val.trim() ? 'var(--green)' : 'var(--border)';
 }
 
 // ── BULK SET LIST IMPORT ──
@@ -4567,13 +4567,11 @@ function toggleSetRegistry() {
 function manualDetect(){
   const hint = (g('gr-hint')?g('gr-hint').value:'').trim();
   if (!hint) { toast('Type a set name hint first', true); return; }
-  // Clear existing detection so new one can run
+  // Clear confirmed name so detection can run
+  const confirmed = g('gr-confirmed-name');
+  if (confirmed) { confirmed.value = ''; confirmed.style.borderColor = 'var(--border)'; }
   const det = g('gr-scp-detect');
-  if (det) { det.dataset.scpName = ''; det.style.display = 'none'; }
-  const sel = g('gr-selected-set');
-  if (sel) sel.style.display = 'none';
-  const regSel = g('gr-registry-select');
-  if (regSel) regSel.value = '';
+  if (det) det.style.display = 'none';
   const regSearch = g('gr-registry-search');
   if (regSearch) regSearch.value = '';
   g('gr-status').textContent = 'Detecting...';
@@ -4589,9 +4587,9 @@ function toggleGRImport(){
 }
 async function importGemRateCSV(){
   if(!GR_PARSED_DATA.length){toast('No data to import',true);return;}
-  const detectEl=g('gr-scp-detect');
-  const setName=detectEl?detectEl.dataset.scpName:'';
-  if(!setName){toast('Please wait for SCP detection or enter a hint and re-upload',true);return;}
+  const confirmedEl = g('gr-confirmed-name');
+  const setName = confirmedEl ? confirmedEl.value.trim() : '';
+  if(!setName){toast('Please select or enter a set name first',true);return;}
   g('gr-status').textContent='Importing '+GR_PARSED_DATA.length+' cards...';
   g('gr-import-btn').disabled=true;
   let imported=0,errors=0;
