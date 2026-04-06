@@ -1,5 +1,5 @@
 <!DOC
-<!-- v31 -->
+<!-- v32 -->
 YPE html>
 <html lang="en">
 <head>
@@ -4497,16 +4497,27 @@ function renderBulkTable() {
   const el = g('bulk-table');
   if (!el) return;
   el.innerHTML = BULK_SETS.map((s, i) =>
-    '<div style="display:grid;grid-template-columns:180px 1fr;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);">' +
-    '<span style="font-size:12px;color:var(--text);">' + s.import_name + '</span>' +
+    '<div style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);">' +
+    '<div style="display:grid;grid-template-columns:180px 1fr;gap:8px;align-items:center;margin-bottom:' + (s.detecting?'0':'4px') + ';">' +
+    '<span style="font-size:12px;color:var(--text);font-weight:600;">' + s.import_name + '</span>' +
     (s.detecting
-      ? '<span style="font-size:11px;color:var(--text-muted);">Detecting...</span>'
+      ? '<span style="font-size:11px;color:var(--text-muted);">&#8987; Detecting...</span>'
       : s.all_names && s.all_names.length > 1
-        ? '<select class="fi" style="font-size:11px;padding:3px 6px;" onchange="BULK_SETS[' + i + '].scp_name=this.value">' +
+        ? '<select class="fi" style="font-size:11px;padding:3px 6px;" onchange="BULK_SETS[' + i + '].scp_name=this.value;g(\'bulk-custom-' + i + '\').value=this.value;">' +
           s.all_names.map(n => '<option value="' + n.replace(/"/g,'&quot;') + '"' + (n===s.scp_name?' selected':'') + '>' + n + '</option>').join('') +
           '</select>'
-        : '<input class="fi" style="font-size:11px;padding:3px 6px;" value="' + (s.scp_name||'').replace(/"/g,'&quot;') + '" oninput="BULK_SETS[' + i + '].scp_name=this.value" placeholder="Not found - enter manually">'
+        : '<span style="font-size:11px;color:' + (s.scp_name?'var(--green)':'var(--text-muted)') + ';">' + (s.scp_name||'Not detected') + '</span>'
     ) +
+    '</div>' +
+    (!s.detecting
+      ? '<div style="display:grid;grid-template-columns:180px 1fr;gap:8px;align-items:center;">' +
+        '<span style="font-size:10px;color:var(--text-muted);">Custom name:</span>' +
+        '<input class="fi" id="bulk-custom-' + i + '" style="font-size:11px;padding:3px 6px;" ' +
+        'value="' + (s.scp_name||'').replace(/"/g,'&quot;') + '" ' +
+        'oninput="BULK_SETS[' + i + '].scp_name=this.value" ' +
+        'placeholder="Type custom SCP name to override...">' +
+        '</div>'
+      : '') +
     '</div>'
   ).join('');
 }
