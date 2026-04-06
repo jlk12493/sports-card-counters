@@ -1,5 +1,5 @@
 <!DOC
-<!-- v29 -->
+<!-- v30 -->
 YPE html>
 <html lang="en">
 <head>
@@ -1157,6 +1157,23 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
         </div>
       </div>
 
+      <!-- Imported Sets -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:20px;overflow:hidden;">
+        <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;user-select:none;" onclick="toggleImportedSets()">
+          <span style="font-size:14px;">&#128230;</span>
+          <strong style="font-size:13px;">Imported Sets</strong>
+          <span style="font-size:11px;color:var(--text-muted);flex:1;">Sets currently in gem_rates database</span>
+          <span id="imported-sets-count" style="font-size:11px;color:var(--green);font-weight:700;"></span>
+          <span id="imported-sets-chevron" style="font-size:10px;color:var(--text-muted);transition:transform .2s;">&#9658;</span>
+        </div>
+        <div id="imported-sets-body" style="display:none;padding:0 16px 16px;border-top:1px solid var(--border);">
+          <div style="margin-top:12px;">
+            <input class="fi" id="imported-sets-search" placeholder="Search sets..." style="width:100%;margin-bottom:10px;" oninput="filterImportedSets(this.value)">
+            <div id="imported-sets-list" style="font-size:12px;max-height:300px;overflow-y:auto;"></div>
+          </div>
+        </div>
+      </div>
+
       <!-- GemRate CSV Import -->
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:20px;overflow:hidden;">
         <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;user-select:none;" onclick="toggleGRImport()">
@@ -1170,6 +1187,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
           <div style="margin-bottom:12px;margin-top:12px;">
             <div class="ff">
               <label>Select from Registry <span style="font-size:10px;color:var(--text-muted);font-weight:400;">or type a search hint</span></label>
+              <input class="fi" id="gr-registry-search" placeholder="Search registered sets..." style="width:100%;margin-bottom:6px;" oninput="filterRegistryDropdown(this.value)">
               <select class="fi" id="gr-registry-select" style="width:100%;margin-bottom:8px;" onchange="grRegistrySelect(this.value)">
                 <option value="">-- Pick a registered set --</option>
               </select>
@@ -4238,6 +4256,64 @@ function grDrop(e){
   if(!file||!file.name.endsWith('.csv')){toast('Please drop a CSV file',true);return;}
   const dt=new DataTransfer();dt.items.add(file);g('gr-csv').files=dt.files;previewGemRateCSV();
 }
+// ── IMPORTED SETS ──
+async function loadImportedSets() {
+  try {
+    const {data} = await sb.from('gem_rates')
+      .select('set_name')
+      .not('set_name', 'is', null);
+    
+    // Count by set name
+    const counts = {};
+    (data||[]).forEach(r => { counts[r.set_name] = (counts[r.set_name]||0) + 1; });
+    const sets = Object.entries(counts).sort((a,b) => a[0].localeCompare(b[0]));
+    
+    const cnt = g('imported-sets-count');
+    if (cnt) cnt.textContent = sets.length + ' sets · ' + (data||[]).length + ' cards';
+    
+    renderImportedSets(sets, '');
+  } catch(e) { console.error('Imported sets error:', e); }
+}
+
+function renderImportedSets(sets, filter) {
+  const el = g('imported-sets-list');
+  if (!el) return;
+  const filtered = filter ? sets.filter(([name]) => name.toLowerCase().includes(filter.toLowerCase())) : sets;
+  if (!filtered.length) {
+    el.innerHTML = '<div style="color:var(--text-muted);padding:8px 0;">No sets found.</div>';
+    return;
+  }
+  el.innerHTML = filtered.map(([name, count]) =>
+    '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);">' +
+    '<span style="font-size:12px;color:var(--text);">' + name + '</span>' +
+    '<span style="font-size:11px;color:var(--text-muted);background:var(--surface-2);padding:1px 7px;border-radius:10px;">' + count + ' cards</span>' +
+    '</div>'
+  ).join('');
+}
+
+var ALL_IMPORTED_SETS = [];
+async function loadImportedSetsFiltered() {
+  const {data} = await sb.from('gem_rates').select('set_name').not('set_name','is',null);
+  const counts = {};
+  (data||[]).forEach(r => { counts[r.set_name] = (counts[r.set_name]||0) + 1; });
+  ALL_IMPORTED_SETS = Object.entries(counts).sort((a,b) => a[0].localeCompare(b[0]));
+  const cnt = g('imported-sets-count');
+  if (cnt) cnt.textContent = ALL_IMPORTED_SETS.length + ' sets · ' + (data||[]).length + ' cards';
+  filterImportedSets('');
+}
+
+function filterImportedSets(q) {
+  renderImportedSets(ALL_IMPORTED_SETS, q);
+}
+
+function toggleImportedSets() {
+  const body = g('imported-sets-body'), chev = g('imported-sets-chevron');
+  const open = body.style.display === 'none';
+  body.style.display = open ? 'block' : 'none';
+  if (chev) chev.style.transform = open ? 'rotate(90deg)' : '';
+  if (open) loadImportedSetsFiltered();
+}
+
 // ── SET REGISTRY ──
 var SET_REGISTRY = [];
 
@@ -4276,7 +4352,18 @@ function populateRegistryDropdown() {
   const current = sel.value;
   sel.innerHTML = '<option value="">-- Pick a registered set --</option>' +
     SET_REGISTRY.map(r => '<option value="' + r.scp_name.replace(/"/g,'&quot;') + '">' + r.import_name + ' → ' + r.scp_name + '</option>').join('');
-  // Restore previous selection if still valid
+  if (current) sel.value = current;
+}
+
+function filterRegistryDropdown(q) {
+  const sel = g('gr-registry-select');
+  if (!sel) return;
+  const current = sel.value;
+  const filtered = q
+    ? SET_REGISTRY.filter(r => r.import_name.toLowerCase().includes(q.toLowerCase()) || r.scp_name.toLowerCase().includes(q.toLowerCase()))
+    : SET_REGISTRY;
+  sel.innerHTML = '<option value="">-- Pick a registered set --</option>' +
+    filtered.map(r => '<option value="' + r.scp_name.replace(/"/g,'&quot;') + '">' + r.import_name + ' → ' + r.scp_name + '</option>').join('');
   if (current) sel.value = current;
 }
 
