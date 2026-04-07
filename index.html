@@ -2114,6 +2114,7 @@ function renderInv() {
           '</div>' +
           '<div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;">' +
             sBdg(r.status) + dBdg(r.disposition) +
+            (r.psa_grade!=null ? '<span style="font-size:11px;font-weight:700;padding:1px 7px;border-radius:3px;background:'+(r.psa_grade===10?'rgba(34,197,94,.2)':r.psa_grade>=8?'rgba(234,179,8,.2)':'rgba(248,113,113,.2)')+';color:'+(r.psa_grade===10?'var(--green)':r.psa_grade>=8?'var(--yellow)':'#F87171')+';border:1px solid '+(r.psa_grade===10?'rgba(34,197,94,.3)':r.psa_grade>=8?'rgba(234,179,8,.3)':'rgba(248,113,113,.3)')+';"> PSA '+r.psa_grade+'</span>' : '') +
             '<span style="font-size:11px;color:var(--text-muted);">Cost: <strong style="color:var(--text);">' + (r.total_cost!=null?f$(r.total_cost):'--') + '</strong></span>' +
             (evp !== null ? '<div style="display:flex;align-items:center;gap:4px;"><div style="width:50px;height:3px;background:var(--border);border-radius:2px;overflow:hidden;"><div style="height:100%;width:' + evBarW.toFixed(0) + '%;background:' + evColor + ';border-radius:2px;"></div></div><span style="font-size:11px;font-weight:700;color:' + evColor + ';">' + (evp*100).toFixed(0) + '%</span></div>' : '') +
             (r.scc_score!=null?'<span style="font-size:11px;font-weight:800;padding:1px 6px;border-radius:3px;background:rgba(0,0,0,.2);color:'+sccColor(r.scc_score)+'">SCC '+r.scc_score+'</span>':'') +
@@ -2132,6 +2133,7 @@ function renderInv() {
           detailCell('Source', r.source) +
           detailCell('Card ID', r.card_id) +
           detailCell('Batch ID', r.batch_id) +
+          (r.psa_grade!=null ? detailCell('PSA Grade', 'PSA ' + r.psa_grade, r.psa_grade===10?'var(--green)':r.psa_grade>=8?'var(--yellow)':'#F87171') : '') +
           detailCell('Purchase Price', r.price!=null?f$(r.price):null) +
           detailCell('Ship / Tax', r.ship!=null?f$(r.ship):null) +
           detailCell('Grading Cost', r.grading!=null?f$(r.grading):null) +
@@ -3585,15 +3587,22 @@ async function bulkUpdateBatch(batchId) {
   const modal = document.createElement('div');
   modal.className = 'modal-bg open';
   modal.id = 'bulk-modal';
-  modal.innerHTML = '<div class="modal" style="max-width:360px;"><div class="modal-title">Bulk Update Batch #' + batchId + '<button class="modal-close" id="bulk-close-btn">x</button></div><div style="font-size:13px;color:var(--text-2);margin-bottom:14px;">Update all <strong>' + cards.length + ' cards</strong> to:</div><select id="bulk-stat" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:6px;font-size:14px;outline:none;margin-bottom:16px;">' + statuses.map(s => '<option value="' + s + '">' + s + '</option>').join('') + '</select><div class="factions"><button class="btn-a" id="bulk-confirm-btn">Update All Cards</button><button class="btn-c" id="bulk-cancel-btn">Cancel</button></div></div>';
+  modal.innerHTML = '<div class="modal" style="max-width:400px;"><div class="modal-title">Bulk Update Batch #' + batchId + '<button class="modal-close" id="bulk-close-btn">x</button></div><div style="font-size:13px;color:var(--text-2);margin-bottom:14px;">Update all <strong>' + cards.length + ' cards</strong> to:</div><select id="bulk-stat" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:6px;font-size:14px;outline:none;margin-bottom:16px;">' + statuses.map(s => '<option value="' + s + '">' + s + '</option>').join('') + '</select><div class="factions"><button class="btn-a" id="bulk-confirm-btn">Update All Cards</button><button class="btn-c" id="bulk-cancel-btn">Cancel</button></div></div>';
   document.body.appendChild(modal);
   document.getElementById('bulk-close-btn').onclick = function(){ modal.remove(); };
   document.getElementById('bulk-cancel-btn').onclick = function(){ modal.remove(); };
-  document.getElementById('bulk-confirm-btn').onclick = function(){ confirmBulkUpdate(batchId); };
+  document.getElementById('bulk-confirm-btn').onclick = function(){
+    const newStatus = document.getElementById('bulk-stat').value;
+    if (newStatus === 'Graded') {
+      modal.remove();
+      openBatchGradeEntry(batchId);
+    } else {
+      confirmBulkUpdate(batchId, newStatus);
+    }
+  };
 }
 
-async function confirmBulkUpdate(batchId) {
-  const newStatus = document.getElementById('bulk-stat').value;
+async function confirmBulkUpdate(batchId, newStatus) {
   const modal = document.getElementById('bulk-modal');
   const cards = INV.filter(r => r.batch_id === batchId);
   const ids = cards.map(r => r.id);
@@ -3603,6 +3612,140 @@ async function confirmBulkUpdate(batchId) {
   if (modal) modal.remove();
   renderAll();
   toast(cards.length + ' cards updated to ' + newStatus + '!');
+}
+
+function calcGradeProfit(card, grade, shipOut, updatedPsa10, updatedPsa9) {
+  const p10 = updatedPsa10 != null ? updatedPsa10 : (card.psa10 || 0);
+  const p9  = updatedPsa9  != null ? updatedPsa9  : (card.psa9  || 0);
+  const totalCost = (card.price || 0) + (card.ship || 0) + (card.grading || 0);
+  let compPrice = 0;
+  if (grade === 10) compPrice = p10;
+  else if (grade === 9) compPrice = p9;
+  else if (grade === 8) compPrice = p9 * 0.55;
+  else if (grade <= 7)  compPrice = p9 * 0.30;
+  const netProceeds = compPrice * 0.865 - (shipOut || 0);
+  const projProfit  = netProceeds - totalCost;
+  const roi         = totalCost > 0 ? (projProfit / totalCost) * 100 : 0;
+  return { compPrice, netProceeds, projProfit, roi, totalCost };
+}
+
+function updateGradeRow(cardId, cards) {
+  const card = cards.find(c => c.id === cardId);
+  if (!card) return;
+  const gradeEl   = document.getElementById('bg-grade-' + cardId);
+  const shipEl    = document.getElementById('bg-ship-' + cardId);
+  const p10El     = document.getElementById('bg-p10-' + cardId);
+  const p9El      = document.getElementById('bg-p9-' + cardId);
+  const summaryEl = document.getElementById('bg-summary-' + cardId);
+  if (!gradeEl || !summaryEl) return;
+  const grade   = parseInt(gradeEl.value) || 0;
+  const shipOut = parseFloat(shipEl?.value) || 0;
+  const updP10  = p10El?.value !== '' ? parseFloat(p10El.value) : null;
+  const updP9   = p9El?.value  !== '' ? parseFloat(p9El.value)  : null;
+  if (!grade) { summaryEl.innerHTML = ''; return; }
+  const {compPrice, netProceeds, projProfit, roi, totalCost} = calcGradeProfit(card, grade, shipOut, updP10, updP9);
+  const profColor = projProfit >= 0 ? 'var(--green)' : 'var(--red)';
+  summaryEl.innerHTML =
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-top:8px;padding:10px;background:var(--surface-2);border-radius:6px;font-size:12px;">' +
+    '<div><div style="color:var(--text-muted);font-size:10px;margin-bottom:2px;">COMP USED</div><div>' + f$(compPrice) + '</div></div>' +
+    '<div><div style="color:var(--text-muted);font-size:10px;margin-bottom:2px;">NET PROCEEDS</div><div>' + f$(netProceeds) + '</div></div>' +
+    '<div><div style="color:var(--text-muted);font-size:10px;margin-bottom:2px;">TOTAL COST</div><div>' + f$(totalCost) + '</div></div>' +
+    '<div><div style="color:var(--text-muted);font-size:10px;margin-bottom:2px;">PROJ PROFIT</div><div style="color:' + profColor + ';font-weight:700;">' + f$(projProfit) + ' (' + roi.toFixed(1) + '%)</div></div>' +
+    '</div>';
+}
+
+function openBatchGradeEntry(batchId) {
+  const cards = INV.filter(r => r.batch_id === batchId);
+  if (!cards.length) return toast('No inventory cards linked to this batch', true);
+  const modal = document.createElement('div');
+  modal.className = 'modal-bg open';
+  modal.id = 'grade-entry-modal';
+
+  const gradeOptions = [10,9,8,7,6,5,4,3,2,1].map(g =>
+    '<option value="' + g + '">PSA ' + g + '</option>'
+  ).join('');
+
+  const rows = cards.map(function(c) {
+    const hasP10 = c.psa10 != null;
+    const hasP9  = c.psa9  != null;
+    const totalCost = (c.price||0)+(c.ship||0)+(c.grading||0);
+    return '<div style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:12px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">' +
+        '<div>' +
+          '<div style="font-weight:600;font-size:14px;">' + (c.player||'Unknown') + (c.parallel?' <span style="font-size:11px;color:var(--text-muted);">'+c.parallel+'</span>':'') + '</div>' +
+          '<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">' + (c.year||'') + ' ' + (c.set_name||'') + (c.card_no?' #'+c.card_no:'') + '</div>' +
+          '<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Total Cost: <strong>' + f$(totalCost) + '</strong>' +
+            (hasP10 ? ' &nbsp;|&nbsp; PSA 10 Comp: <strong>' + f$(c.psa10) + '</strong>' : '') +
+            (hasP9  ? ' &nbsp;|&nbsp; PSA 9 Comp: <strong>' + f$(c.psa9) + '</strong>' : '') +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;">' +
+        '<div><label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">Grade Received</label>' +
+          '<select id="bg-grade-' + c.id + '" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:6px;font-size:13px;outline:none;" onchange="updateGradeRow(\'' + c.id + '\', window._batchGradeCards)">' +
+          '<option value="">Select...</option>' + gradeOptions + '</select></div>' +
+        '<div><label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">Ship Out ($)</label>' +
+          '<input type="number" step="0.01" id="bg-ship-' + c.id + '" placeholder="0.00" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:6px;font-size:13px;outline:none;box-sizing:border-box;" oninput="updateGradeRow(\'' + c.id + '\', window._batchGradeCards)"></div>' +
+        '<div><label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">PSA 10 Comp <span style="color:var(--red);font-size:10px;">(edit)</span></label>' +
+          '<input type="number" step="0.01" id="bg-p10-' + c.id + '" placeholder="' + (hasP10 ? c.psa10 : 'no comp') + '" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:6px;font-size:13px;outline:none;box-sizing:border-box;" oninput="updateGradeRow(\'' + c.id + '\', window._batchGradeCards)"></div>' +
+        '<div><label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">PSA 9 Comp <span style="color:var(--red);font-size:10px;">(edit)</span></label>' +
+          '<input type="number" step="0.01" id="bg-p9-' + c.id + '" placeholder="' + (hasP9 ? c.psa9 : 'no comp') + '" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px;border-radius:6px;font-size:13px;outline:none;box-sizing:border-box;" oninput="updateGradeRow(\'' + c.id + '\', window._batchGradeCards)"></div>' +
+      '</div>' +
+      '<div id="bg-summary-' + c.id + '"></div>' +
+    '</div>';
+  }).join('');
+
+  modal.innerHTML =
+    '<div class="modal" style="max-width:700px;max-height:90vh;overflow-y:auto;">' +
+    '<div class="modal-title">Grade Entry — Batch #' + batchId +
+      '<button class="modal-close" id="ge-close-btn">x</button></div>' +
+    '<div style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">' +
+      'Enter the grade received for each card. Projected profit calculates live. Update comps if market has moved.' +
+    '</div>' +
+    rows +
+    '<div class="factions" style="margin-top:16px;">' +
+      '<button class="btn-a" id="ge-save-btn">Save Grades & Update to Graded</button>' +
+      '<button class="btn-c" id="ge-cancel-btn">Cancel</button>' +
+    '</div>' +
+    '</div>';
+
+  window._batchGradeCards = cards;
+  document.body.appendChild(modal);
+  document.getElementById('ge-close-btn').onclick  = function(){ modal.remove(); delete window._batchGradeCards; };
+  document.getElementById('ge-cancel-btn').onclick = function(){ modal.remove(); delete window._batchGradeCards; };
+  document.getElementById('ge-save-btn').onclick   = function(){ saveBatchGrades(batchId, cards, modal); };
+}
+
+async function saveBatchGrades(batchId, cards, modal) {
+  const updates = [];
+  for (const c of cards) {
+    const gradeEl = document.getElementById('bg-grade-' + c.id);
+    const p10El   = document.getElementById('bg-p10-' + c.id);
+    const p9El    = document.getElementById('bg-p9-' + c.id);
+    const grade   = gradeEl ? parseInt(gradeEl.value) : null;
+    const updP10  = p10El?.value !== '' ? parseFloat(p10El.value) : null;
+    const updP9   = p9El?.value  !== '' ? parseFloat(p9El.value)  : null;
+    const updateObj = { status: 'Graded', psa_grade: grade || null };
+    if (updP10 != null) updateObj.psa10 = updP10;
+    if (updP9  != null) updateObj.psa9  = updP9;
+    updates.push({ id: c.id, ...updateObj });
+  }
+  let hasError = false;
+  for (const u of updates) {
+    const {id, ...fields} = u;
+    const {error} = await sb.from('inventory').update(fields).eq('id', id);
+    if (error) { hasError = true; toast('Error saving ' + id + ': ' + error.message, true); }
+  }
+  if (!hasError) {
+    INV = INV.map(function(r) {
+      const u = updates.find(x => x.id === r.id);
+      return u ? {...r, ...u} : r;
+    });
+    modal.remove();
+    delete window._batchGradeCards;
+    renderAll();
+    toast(cards.length + ' cards updated to Graded with grades saved!');
+  }
 }
 
 
