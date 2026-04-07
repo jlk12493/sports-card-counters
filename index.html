@@ -1,5 +1,5 @@
 <!DOC
-<!-- v34 -->
+<!-- v35 -->
 YPE html>
 <html lang="en">
 <head>
@@ -4135,55 +4135,7 @@ async function loadScanner(){
 var GR_PARSED_DATA = [];
 
 
-function parseCSVLine(line) {
-  const result = [];
-  let current = '';
-  let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (ch === '"') { inQuotes = !inQuotes; }
-    else if (ch === ',' && !inQuotes) { result.push(current); current = ''; }
-    else { current += ch; }
-  }
-  result.push(current);
-  return result;
-}
 
-async function importGemRateCSV() {
-  if (!GR_PARSED_DATA.length) { toast('No data to import', true); return; }
-  const setName = (g('gr-set').value || '').trim();
-  if (!setName) { toast('Please enter a set name', true); return; }
-  
-  g('gr-status').textContent = `Importing ${GR_PARSED_DATA.length} cards...`;
-  g('gr-import-btn').disabled = true;
-  
-  let imported = 0, errors = 0;
-  const CHUNK = 50;
-  
-  for (let i = 0; i < GR_PARSED_DATA.length; i += CHUNK) {
-    const chunk = GR_PARSED_DATA.slice(i, i + CHUNK);
-    const {error} = await sb.from('gem_rates').upsert(chunk, {
-      onConflict: 'player,parallel,card_no,set_name'
-    });
-    if (error) { console.error('Import error:', error.message); errors += chunk.length; }
-    else imported += chunk.length;
-    g('gr-status').textContent = `Importing... ${imported}/${GR_PARSED_DATA.length}`;
-  }
-  
-  g('gr-import-btn').disabled = false;
-  g('gr-status').textContent = '';
-  toast(`Imported ${imported} gem rates${errors ? ', '+errors+' errors' : ''}!`);
-  loadGemRateCount();
-}
-
-async function loadGemRateCount() {
-  const {count} = await sb.from('gem_rates').select('*', {count:'exact',head:true});
-  if (g('gr-count')) g('gr-count').textContent = `${count||0} gem rates in database`;
-}
-
-
-// ── GEMRATE IMPORT ──
-var GR_PARSED_DATA = [];
 function previewGemRateCSV(){
   const file=g('gr-csv').files[0];
   if(!file)return;
