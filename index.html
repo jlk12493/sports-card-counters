@@ -2447,8 +2447,9 @@ function renderSoldRows(sold){
     html+=soldDCell('Net Proceeds',f$(proc));
     html+=soldDCell('Realized Profit',f$(prof),profColor);
     html+=soldDCell('EV% Returned',evr!=null?((evr*100).toFixed(0)+'%'):null,evColor);
-    html+=soldDCell('Reinvest',r.reinvest_amount!=null?f$(r.reinvest_amount):null,'var(--green)');
-    html+=soldDCell('Take Home',r.takehome_amount!=null?f$(r.takehome_amount):null,'#3B82F6');
+    html+=soldDCell('🔴 Tax Reserve',r.tax_reserve_amount!=null?f$(r.tax_reserve_amount):null,'#F87171');
+    html+=soldDCell('🟢 Reinvest',r.reinvest_amount!=null?f$(r.reinvest_amount):null,'var(--green)');
+    html+=soldDCell('🔵 Take Home',r.takehome_amount!=null?f$(r.takehome_amount):null,'#3B82F6');
     html+='</div>';
     html+='<button class="btn-s" style="font-size:10px;padding:3px 10px;" data-edit-id="'+r.id+'">Edit</button>';
     html+='</div></td></tr>';
@@ -3046,10 +3047,14 @@ async function saveEdit() {
     const evRet = calcEVReturned(tempCard);
     if (evRet !== null) {
       updates.ev_pct_returned = evRet;
+      const taxPct = (USER_SETTINGS.tax_reserve_pct || 0) / 100;
+      const taxReserve = parseFloat((updates.realized_profit * taxPct).toFixed(2));
+      const afterTax = updates.realized_profit - taxReserve;
+      updates.tax_reserve_amount = taxReserve;
       const reinvestPct = getReinvestPct(evRet);
       if (reinvestPct !== null) {
-        updates.reinvest_amount = parseFloat((updates.realized_profit * reinvestPct).toFixed(2));
-        updates.takehome_amount = parseFloat((updates.realized_profit * (1 - reinvestPct)).toFixed(2));
+        updates.reinvest_amount = parseFloat((afterTax * reinvestPct).toFixed(2));
+        updates.takehome_amount = parseFloat((afterTax * (1 - reinvestPct)).toFixed(2));
       }
     }
   }
@@ -3069,7 +3074,7 @@ async function saveEdit() {
     const evp = (data.ev_pct_returned * 100).toFixed(0);
     const ri = data.reinvest_amount != null ? f$(data.reinvest_amount) : '--';
     const th = data.takehome_amount != null ? f$(data.takehome_amount) : '--';
-    showSaleSummary(data, evp, ri, th);
+    showSaleSummary(data, evp, ri, th, data.tax_reserve_amount != null ? f$(data.tax_reserve_amount) : '--');
   } else {
     toast('Card updated!');
   }
@@ -3078,7 +3083,7 @@ async function saveEdit() {
 // - SALE SUMMARY MODAL -
 function closeSaleSummary(){const m=document.getElementById('sale-summary-modal');if(m)m.remove();toast('Card updated!');}
 
-function showSaleSummary(card, evPct, reinvest, takehome) {
+function showSaleSummary(card, evPct, reinvest, takehome, taxReserve) {
   const modal = document.createElement('div');
   modal.className = 'modal-bg open';
   modal.id = 'sale-summary-modal';
@@ -3086,6 +3091,7 @@ function showSaleSummary(card, evPct, reinvest, takehome) {
   const tierLabel = getReinvestTierLabel(card.ev_pct_returned);
   const modeNote = USER_SETTINGS.reinvest_mode === 'flat' ? 'Flat ' + USER_SETTINGS.reinvest_flat_pct + '%' :
                    USER_SETTINGS.reinvest_mode === 'manual' ? 'Manual mode — set your own split' : tierLabel;
+  const taxPct = USER_SETTINGS.tax_reserve_pct || 0;
   modal.innerHTML = '<div class="modal" style="max-width:420px;">' +
     '<div class="modal-title">Sale Summary <button class="modal-close" onclick="closeSaleSummary()">✕</button></div>' +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">' +
@@ -3108,18 +3114,25 @@ function showSaleSummary(card, evPct, reinvest, takehome) {
     '</div>' +
     '<div style="background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--r);padding:14px;margin-bottom:16px;">' +
       '<div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Recommended Allocation</div>' +
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">' +
-        '<div>' +
-          '<div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Reinvest</div>' +
-          '<div style="font-size:20px;font-weight:800;color:var(--green);">' + reinvest + '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">' +
+        '<div style="background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.2);border-radius:6px;padding:10px;">' +
+          '<div style="font-size:9px;color:#F87171;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;font-weight:700;">🔴 Tax Reserve</div>' +
+          '<div style="font-size:17px;font-weight:800;color:#F87171;">' + (taxReserve||'--') + '</div>' +
+          '<div style="font-size:9px;color:var(--text-muted);margin-top:2px;">' + taxPct + '% of profit</div>' +
         '</div>' +
-        '<div>' +
-          '<div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Take Home</div>' +
-          '<div style="font-size:20px;font-weight:800;color:#3B82F6;">' + takehome + '</div>' +
+        '<div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);border-radius:6px;padding:10px;">' +
+          '<div style="font-size:9px;color:var(--green);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;font-weight:700;">🟢 Reinvest</div>' +
+          '<div style="font-size:17px;font-weight:800;color:var(--green);">' + reinvest + '</div>' +
+          '<div style="font-size:9px;color:var(--text-muted);margin-top:2px;">After-tax split</div>' +
+        '</div>' +
+        '<div style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);border-radius:6px;padding:10px;">' +
+          '<div style="font-size:9px;color:#3B82F6;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;font-weight:700;">🔵 Take Home</div>' +
+          '<div style="font-size:17px;font-weight:800;color:#3B82F6;">' + takehome + '</div>' +
+          '<div style="font-size:9px;color:var(--text-muted);margin-top:2px;">After-tax split</div>' +
         '</div>' +
       '</div>' +
     '</div>' +
-    '<div style="font-size:11px;color:var(--text-muted);margin-bottom:14px;text-align:center;">Adjust your reinvestment settings in the Financials tab</div>' +
+    '<div style="font-size:11px;color:var(--text-muted);margin-bottom:14px;text-align:center;">Adjust tax rate & reinvestment settings in the Financials tab</div>' +
     '<button class="btn-a" style="width:100%;" onclick="closeSaleSummary()">Got it</button>' +
   '</div>';
   document.body.appendChild(modal);
@@ -3203,14 +3216,21 @@ function renderReinvestTracker(sold) {
   const withData = sold.filter(r => r.ev_pct_returned != null && r.reinvest_amount != null);
   const totalReinvest = withData.reduce((s,r) => s+(r.reinvest_amount||0), 0);
   const totalTakehome = withData.reduce((s,r) => s+(r.takehome_amount||0), 0);
+  const totalTaxReserve = sold.reduce((s,r) => s+(r.tax_reserve_amount||0), 0);
   const totalProfit = sold.reduce((s,r) => s+(r.realized_profit||0), 0);
+  const taxPct = USER_SETTINGS.tax_reserve_pct || 0;
 
   el.innerHTML =
-    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:16px;">' +
       '<div class="kcard" style="border-top-color:var(--green);">' +
         '<div class="klbl">Total Profit</div>' +
         '<div class="kval g">' + f$(totalProfit) + '</div>' +
         '<div class="ksub">This year</div>' +
+      '</div>' +
+      '<div class="kcard" style="border-top-color:#F87171;">' +
+        '<div class="klbl">Tax Reserve</div>' +
+        '<div class="kval" style="color:#F87171;">' + f$(totalTaxReserve) + '</div>' +
+        '<div class="ksub">Set aside (' + taxPct + '%)</div>' +
       '</div>' +
       '<div class="kcard" style="border-top-color:#22C55E;">' +
         '<div class="klbl">Reinvest Pool</div>' +
@@ -3222,6 +3242,16 @@ function renderReinvestTracker(sold) {
         '<div class="kval" style="color:#3B82F6;">' + f$(totalTakehome) + '</div>' +
         '<div class="ksub">Your earnings</div>' +
       '</div>' +
+    '</div>' +
+
+    '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:14px;">' +
+      '<div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">Tax Reserve Rate</div>' +
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">' +
+        '<label style="font-size:11px;color:var(--text-muted);white-space:nowrap;">Set aside %</label>' +
+        '<input type="range" min="0" max="50" step="1" value="' + taxPct + '" id="tax-rate-slider" oninput="updateTaxRate(this.value)" style="flex:1;accent-color:#F87171;">' +
+        '<span style="font-size:13px;font-weight:700;color:#F87171;min-width:40px;" id="tax-rate-val">' + taxPct + '%</span>' +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--text-muted);">Applied to realized profit before the reinvest/take-home split. Consult a tax professional for your actual rate.</div>' +
     '</div>' +
 
     '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:14px;">' +
@@ -3260,6 +3290,14 @@ function updateFlatPct(val) {
   g('flat-pct-val').textContent = val + '%';
   clearTimeout(window._fpTimer);
   window._fpTimer = setTimeout(() => saveUserSettings(), 800);
+}
+
+function updateTaxRate(val) {
+  USER_SETTINGS.tax_reserve_pct = parseInt(val);
+  const el = g('tax-rate-val');
+  if (el) el.textContent = val + '%';
+  clearTimeout(window._taxTimer);
+  window._taxTimer = setTimeout(() => saveUserSettings(), 800);
 }
 
 function renderExpenseList(expenses) {
@@ -3988,10 +4026,14 @@ async function saveMarkSold(){
   var evRet=calcEVReturned({...r,...updates});
   if(evRet!==null){
     updates.ev_pct_returned=evRet;
+    var taxPct=(USER_SETTINGS.tax_reserve_pct||0)/100;
+    var taxReserve=parseFloat((prof*taxPct).toFixed(2));
+    var afterTax=prof-taxReserve;
+    updates.tax_reserve_amount=taxReserve;
     var reinvestPct=getReinvestPct(evRet);
     if(reinvestPct!==null){
-      updates.reinvest_amount=parseFloat((prof*reinvestPct).toFixed(2));
-      updates.takehome_amount=parseFloat((prof*(1-reinvestPct)).toFixed(2));
+      updates.reinvest_amount=parseFloat((afterTax*reinvestPct).toFixed(2));
+      updates.takehome_amount=parseFloat((afterTax*(1-reinvestPct)).toFixed(2));
     }
   }
   var res=await sb.from('inventory').update(updates).eq('id',id).select().single();
@@ -4001,7 +4043,7 @@ async function saveMarkSold(){
   closeModal('sold-modal');
   renderAll();
   if(evRet!==null&&updates.reinvest_amount!=null){
-    showSaleSummary(res.data,(evRet*100).toFixed(0),f$(updates.reinvest_amount),f$(updates.takehome_amount));
+    showSaleSummary(res.data,(evRet*100).toFixed(0),f$(updates.reinvest_amount),f$(updates.takehome_amount),f$(updates.tax_reserve_amount||0));
   } else {
     toast('Card marked as sold!');
   }
@@ -4941,7 +4983,7 @@ loadTheme();
 initAuth();
 
 // ══════════ REINVESTMENT LOGIC ══════════
-let USER_SETTINGS = { reinvest_mode: 'ev_based', reinvest_flat_pct: 65 };
+let USER_SETTINGS = { reinvest_mode: 'ev_based', reinvest_flat_pct: 65, tax_reserve_pct: 25 };
 
 async function loadUserSettings() {
   if (!CU) return;
@@ -4954,6 +4996,7 @@ async function saveUserSettings() {
     id: CU.id,
     reinvest_mode: USER_SETTINGS.reinvest_mode,
     reinvest_flat_pct: USER_SETTINGS.reinvest_flat_pct,
+    tax_reserve_pct: USER_SETTINGS.tax_reserve_pct,
     updated_at: new Date().toISOString()
   });
 }
