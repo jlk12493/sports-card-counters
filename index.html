@@ -1966,7 +1966,7 @@ function renderAll() {
 function renderDash() {
   const sold = INV.filter(r => r.status === 'Sold');
   const onHand = INV.filter(r => r.status !== 'Sold');
-  const profit = sold.reduce((s,r) => s+(r.sale_price||0)-(r.price||0)-(r.ship||0)-(r.fees||0)-(r.ship_out||0), 0);
+  const profit = sold.reduce((s,r) => s+(r.sale_price||0)-(r.price||0)-(r.ship||0)-(r.grading||0)-(r.fees||0)-(r.ship_out||0), 0);
   const invCost = onHand.reduce((s,r) => s+(r.price||0)+(r.ship||0), 0);
   const graders = onHand.filter(r => r.disposition === 'Grade' && r.gem_rate && r.psa10);
   const evVals = graders.map(r => calcEV(r));
@@ -2005,7 +2005,7 @@ function renderDash() {
 
   // Sold KPIs
   const proc = sold.reduce((s,r) => s+(r.sale_price||0)-(r.fees||0)-(r.ship_out||0), 0);
-  const prof = sold.reduce((s,r) => s+(r.sale_price||0)-(r.price||0)-(r.ship||0)-(r.fees||0)-(r.ship_out||0), 0);
+  const prof = sold.reduce((s,r) => s+(r.sale_price||0)-(r.price||0)-(r.ship||0)-(r.grading||0)-(r.fees||0)-(r.ship_out||0), 0);
   g('s-cnt').textContent = sold.length;
   g('s-proc').textContent = f$(proc);
   g('s-prof').textContent = f$(prof);
@@ -2458,7 +2458,7 @@ function renderSoldRows(sold){
     btn.addEventListener('click',function(e){e.stopPropagation();openEdit(this.dataset.editId);});
   });
   const proc=sold.reduce((s,r)=>s+(r.sale_price||0)-(r.fees||0)-(r.ship_out||0),0);
-  const prof=sold.reduce((s,r)=>s+(r.sale_price||0)-(r.price||0)-(r.ship||0)-(r.fees||0)-(r.ship_out||0),0);
+  const prof=sold.reduce((s,r)=>s+(r.sale_price||0)-(r.price||0)-(r.ship||0)-(r.grading||0)-(r.fees||0)-(r.ship_out||0),0);
   g('s-cnt').textContent=sold.length;
   g('s-proc').textContent=f$(proc);
   g('s-prof').textContent=f$(prof);
@@ -3005,7 +3005,7 @@ function calcSoldPreview() {
   if (!sp) { g('sold-preview').style.display = 'none'; return; }
   const proc = sp - fees - shipout;
   const basis = price + ship + grade;
-  const prof = proc - price - ship;
+  const prof = proc - price - ship - grade;
   const roi = basis > 0 ? (prof/basis*100) : 0;
   g('sold-preview').style.display = 'block';
   g('sp-proc').textContent = f$(proc);
@@ -3040,7 +3040,7 @@ async function saveEdit() {
     updates.ship_out = pf('e-shipout');
     const proc = (updates.sale_price || 0) - (updates.fees || 0) - (updates.ship_out || 0);
     updates.net_proceeds = proc;
-    updates.realized_profit = proc - price - ship;
+    updates.realized_profit = proc - price - ship - (pf('e-grade') || 0);
     // Calculate EV% Returned and reinvestment
     const tempCard = {...(INV.find(c=>c.id===id)||{}), ...updates};
     const evRet = calcEVReturned(tempCard);
@@ -3757,7 +3757,7 @@ function filterSold() {
   renderSoldRows(filtered);
   // Update KPIs to reflect filtered view
   const proc = filtered.reduce((s,r)=>s+(r.sale_price||0)-(r.fees||0)-(r.ship_out||0),0);
-  const prof = filtered.reduce((s,r)=>s+(r.sale_price||0)-(r.price||0)-(r.ship||0)-(r.fees||0)-(r.ship_out||0),0);
+  const prof = filtered.reduce((s,r)=>s+(r.sale_price||0)-(r.price||0)-(r.ship||0)-(r.grading||0)-(r.fees||0)-(r.ship_out||0),0);
   g('s-cnt').textContent = filtered.length;
   g('s-proc').textContent = f$(proc);
   g('s-prof').textContent = f$(prof);
