@@ -2421,7 +2421,7 @@ function renderSoldRows(sold){
   tb.querySelectorAll('.sold-body.open').forEach(el=>openIds.add(el.dataset.sid));
   tb.innerHTML=sold.map(function(r){
     const proc=(r.sale_price||0)-(r.fees||0)-(r.ship_out||0);
-    const prof=proc-(r.price||0)-(r.ship||0);
+    const prof=proc-(r.price||0)-(r.ship||0)-(r.grading||0);
     const evr=r.ev_pct_returned;
     const evColor=evr!=null?(evr>=1.01?'var(--green)':evr>=0.61?'var(--amber)':'var(--text-2)'):'var(--text-muted)';
     const isOpen=openIds.has(r.id);
