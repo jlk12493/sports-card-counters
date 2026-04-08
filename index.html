@@ -4860,12 +4860,14 @@ function renderScanner(){
   if(!SCANNER_FILTERED.length){list.innerHTML='<div class="empty"><div class="empty-icon">&#9889;</div><div class="empty-title">No results</div><div style="font-size:12px;">Run the scanner or adjust filters</div></div>';return;}
   list.innerHTML=SCANNER_FILTERED.map(r=>{
     const evPct=(r.ev_pct||0)*100,evColor=r.decision==='BUY'?'var(--green)':'var(--amber)',bc=r.decision==='BUY'?'sb-buy':'sb-caution';
+    const parallelDisplay = r.parallel ? r.parallel.split(' ').map((w,i)=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ') : null;
     return '<div class="scanner-row">'+
       '<div class="scanner-header" onclick="toggleScannerRow(this)" data-scid="'+r.id+'">'+
         '<i style="font-style:normal;font-size:10px;color:var(--text-muted);flex-shrink:0;">&#9658;</i>'+
         '<div style="flex:1;min-width:0;">'+
           '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'+
             '<span style="font-size:13px;font-weight:700;color:var(--text);">'+(r.player||'--')+'</span>'+
+            (parallelDisplay?'<span style="font-size:11px;font-weight:600;padding:1px 6px;border-radius:3px;background:rgba(239,68,68,.15);color:#F87171;border:1px solid rgba(239,68,68,.3);">'+parallelDisplay+'</span>':'')+
             '<span style="font-size:11px;color:var(--text-muted);">'+(r.set_name||'')+(r.card_no?' #'+r.card_no:'')+'</span>'+
             '<span class="scanner-badge '+bc+'">'+r.decision+'</span>'+
           '</div>'+
@@ -4879,6 +4881,7 @@ function renderScanner(){
       '</div>'+
       '<div class="scanner-body" data-scid="'+r.id+'">'+
         '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:14px;">' +
+          (parallelDisplay?'<div style="grid-column:1/-1;"><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">Parallel</div><div style="font-size:14px;font-weight:700;color:#F87171;">'+parallelDisplay+'</div></div>':'')+
           '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">SCC Score</div><div style="font-size:20px;font-weight:800;color:'+sccColor(r.scc_score||0)+';">'+(r.scc_score!=null?r.scc_score:'--')+'</div></div>'+
           '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">EV$</div><div style="font-size:20px;font-weight:700;color:'+evColor+';">'+f$(r.ev_dollar)+'</div></div>'+
           '<div><div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">EV%</div><div style="font-size:20px;font-weight:700;color:'+evColor+';">'+evPct.toFixed(1)+'%</div></div>'+
