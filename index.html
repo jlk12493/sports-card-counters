@@ -1089,10 +1089,13 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
         </div>
       </div>
 
-      <!-- REINVESTMENT TRACKER -->
+      <!-- CASH FLOW DASHBOARD -->
       <div class="panel" style="margin-top:16px;">
-        <div class="ptitle">Reinvestment Tracker</div>
-        <div id="reinvest-tracker"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
+          <div class="ptitle" style="margin-bottom:0;">Cash Flow Dashboard</div>
+          <div style="font-size:11px;color:var(--text-muted);">Live view — updates as you adjust settings below</div>
+        </div>
+        <div id="cashflow-dashboard"></div>
       </div>
 
     </div>
@@ -3206,77 +3209,134 @@ function renderFinancials() {
   // Expense list
   renderExpenseList(expenses);
 
-  // Reinvestment tracker
-  renderReinvestTracker(sold);
+  // Cash Flow Dashboard
+  renderCashFlowDashboard(sold, yr);
 }
 
-function renderReinvestTracker(sold) {
-  let el = g('reinvest-tracker');
+function renderCashFlowDashboard(sold, yr) {
+  const el = g('cashflow-dashboard');
   if (!el) return;
-  const withData = sold.filter(r => r.ev_pct_returned != null && r.reinvest_amount != null);
-  const totalReinvest = withData.reduce((s,r) => s+(r.reinvest_amount||0), 0);
-  const totalTakehome = withData.reduce((s,r) => s+(r.takehome_amount||0), 0);
-  const totalTaxReserve = sold.reduce((s,r) => s+(r.tax_reserve_amount||0), 0);
+
+  const taxPct = (USER_SETTINGS.tax_reserve_pct || 0) / 100;
+  const reinvestMode = USER_SETTINGS.reinvest_mode || 'ev_based';
+  const flatPct = (USER_SETTINGS.reinvest_flat_pct || 65) / 100;
+
+  // Core profit numbers
   const totalProfit = sold.reduce((s,r) => s+(r.realized_profit||0), 0);
-  const taxPct = USER_SETTINGS.tax_reserve_pct || 0;
+  const taxJar = Math.round(totalProfit * taxPct * 100) / 100;
+  const afterTax = totalProfit - taxJar;
+
+  // Reinvest split — applied to after-tax profit
+  // For EV-based, use average EV% returned across sold cards with data
+  let reinvestPct = flatPct;
+  if (reinvestMode === 'ev_based') {
+    const withEV = sold.filter(r => r.ev_pct_returned != null);
+    if (withEV.length) {
+      const avgEV = withEV.reduce((s,r) => s+(r.ev_pct_returned||0), 0) / withEV.length;
+      reinvestPct = avgEV >= 1.51 ? 0.80 : avgEV >= 1.01 ? 0.75 : avgEV >= 0.61 ? 0.65 : 0.50;
+    } else { reinvestPct = 0.65; }
+  } else if (reinvestMode === 'manual') {
+    reinvestPct = null;
+  }
+
+  const suggestedReinvest = reinvestPct !== null ? Math.round(afterTax * reinvestPct * 100) / 100 : null;
+  const suggestedTakeHome = reinvestPct !== null ? Math.round(afterTax * (1 - reinvestPct) * 100) / 100 : null;
+
+  // Capital deployed — cards bought this year (all inventory purchases in yr)
+  const deployed = INV.filter(r => {
+    const d = r.date_acquired || r.created_at;
+    return d && new Date(d).getFullYear() === yr && r.status !== 'Sold';
+  }).reduce((s,r) => s+(r.total_cost||0), 0);
+
+  const availableToDeploy = suggestedReinvest !== null ? Math.max(0, suggestedReinvest - deployed) : null;
+
+  // Flow diagram: Profit → Tax Jar | After-Tax → Reinvest | Take Home
+  const flowBar = totalProfit > 0 ? [
+    { label: 'Tax Jar', val: taxJar, pct: taxPct * 100, color: '#F87171' },
+    { label: 'Reinvest', val: suggestedReinvest || afterTax, pct: reinvestPct !== null ? reinvestPct * (1-taxPct) * 100 : (1-taxPct)*100, color: 'var(--green)' },
+    { label: 'Take Home', val: suggestedTakeHome || 0, pct: reinvestPct !== null ? (1-reinvestPct) * (1-taxPct) * 100 : 0, color: '#3B82F6' },
+  ] : [];
+
+  const modeLabel = reinvestMode === 'ev_based' ? 'EV-Based Tiers' : reinvestMode === 'flat' ? 'Flat ' + (USER_SETTINGS.reinvest_flat_pct||65) + '%' : 'Manual';
 
   el.innerHTML =
-    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:16px;">' +
-      '<div class="kcard" style="border-top-color:var(--green);">' +
-        '<div class="klbl">Total Profit</div>' +
-        '<div class="kval g">' + f$(totalProfit) + '</div>' +
-        '<div class="ksub">This year</div>' +
-      '</div>' +
-      '<div class="kcard" style="border-top-color:#F87171;">' +
-        '<div class="klbl">Tax Reserve</div>' +
-        '<div class="kval" style="color:#F87171;">' + f$(totalTaxReserve) + '</div>' +
-        '<div class="ksub">Set aside (' + taxPct + '%)</div>' +
-      '</div>' +
-      '<div class="kcard" style="border-top-color:#22C55E;">' +
-        '<div class="klbl">Reinvest Pool</div>' +
-        '<div class="kval" style="color:#22C55E;">' + f$(totalReinvest) + '</div>' +
-        '<div class="ksub">Back into cards</div>' +
-      '</div>' +
-      '<div class="kcard" style="border-top-color:#3B82F6;">' +
-        '<div class="klbl">Take Home</div>' +
-        '<div class="kval" style="color:#3B82F6;">' + f$(totalTakehome) + '</div>' +
-        '<div class="ksub">Your earnings</div>' +
-      '</div>' +
+    // ── FOUR KPI CARDS ──
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;">' +
+      kpiCard('Total Profit', f$(totalProfit), 'This year', 'var(--green)') +
+      kpiCard('🔴 Tax Jar', f$(taxJar), taxPct*100 + '% — set this aside', '#F87171') +
+      kpiCard('🟢 Suggested Reinvest', suggestedReinvest !== null ? f$(suggestedReinvest) : 'Manual', 'Of after-tax profit', '#22C55E') +
+      kpiCard('🔵 Suggested Take Home', suggestedTakeHome !== null ? f$(suggestedTakeHome) : 'Manual', 'Of after-tax profit', '#3B82F6') +
     '</div>' +
 
-    '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:14px;">' +
-      '<div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">Tax Reserve Rate</div>' +
-      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">' +
-        '<label style="font-size:11px;color:var(--text-muted);white-space:nowrap;">Set aside %</label>' +
-        '<input type="range" min="0" max="50" step="1" value="' + taxPct + '" id="tax-rate-slider" oninput="updateTaxRate(this.value)" style="flex:1;accent-color:#F87171;">' +
-        '<span style="font-size:13px;font-weight:700;color:#F87171;min-width:40px;" id="tax-rate-val">' + taxPct + '%</span>' +
+    // ── FLOW BAR ──
+    (totalProfit > 0 ?
+    '<div style="margin-bottom:20px;">' +
+      '<div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Where Your Profit Goes</div>' +
+      '<div style="display:flex;border-radius:6px;overflow:hidden;height:28px;margin-bottom:8px;">' +
+        flowBar.map(b => b.pct > 0 ? '<div style="width:'+b.pct.toFixed(1)+'%;background:'+b.color+';opacity:0.85;transition:width .3s;"></div>' : '').join('') +
       '</div>' +
-      '<div style="font-size:11px;color:var(--text-muted);">Applied to realized profit before the reinvest/take-home split. Consult a tax professional for your actual rate.</div>' +
+      '<div style="display:flex;gap:16px;flex-wrap:wrap;">' +
+        flowBar.map(b => '<div style="display:flex;align-items:center;gap:5px;"><div style="width:10px;height:10px;border-radius:2px;background:'+b.color+';opacity:0.85;flex-shrink:0;"></div><span style="font-size:11px;color:var(--text-muted);">'+b.label+': <strong style="color:var(--text);">'+f$(b.val)+'</strong></span></div>').join('') +
+      '</div>' +
+    '</div>' : '') +
+
+    // ── CAPITAL DEPLOYMENT ──
+    '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:16px;">' +
+      '<div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">Capital Deployment — ' + yr + '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">' +
+        '<div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Suggested Reinvest</div><div style="font-size:18px;font-weight:800;color:#22C55E;">' + (suggestedReinvest !== null ? f$(suggestedReinvest) : '--') + '</div></div>' +
+        '<div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Cards Bought This Year</div><div style="font-size:18px;font-weight:800;color:var(--amber);">' + f$(deployed) + '</div></div>' +
+        '<div><div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Still Available to Deploy</div><div style="font-size:18px;font-weight:800;color:' + (availableToDeploy !== null && availableToDeploy > 0 ? 'var(--green)' : 'var(--text-muted)') + ';">' + (availableToDeploy !== null ? f$(availableToDeploy) : '--') + '</div></div>' +
+      '</div>' +
+      '<div style="margin-top:12px;background:var(--surface);border-radius:5px;overflow:hidden;height:8px;">' +
+        (suggestedReinvest > 0 ? '<div style="height:100%;width:'+Math.min(deployed/suggestedReinvest*100,100).toFixed(0)+'%;background:var(--amber);border-radius:5px;transition:width .3s;"></div>' : '') +
+      '</div>' +
+      '<div style="font-size:10px;color:var(--text-muted);margin-top:4px;">' + (suggestedReinvest > 0 ? Math.min(Math.round(deployed/suggestedReinvest*100),100) + '% of reinvest pool deployed' : 'No sales yet this year') + '</div>' +
     '</div>' +
 
-    '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:14px;">' +
-      '<div style="font-size:10px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">Reinvestment Mode</div>' +
-      '<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">' +
-        '<button onclick="setReinvestMode(\'ev_based\')" class="pbtn' + (USER_SETTINGS.reinvest_mode==='ev_based'?' active':'') + '" style="font-size:11px;padding:6px 14px;">EV-Based Tiers</button>' +
-        '<button onclick="setReinvestMode(\'flat\')" class="pbtn' + (USER_SETTINGS.reinvest_mode==='flat'?' active':'') + '" style="font-size:11px;padding:6px 14px;">Flat %</button>' +
-        '<button onclick="setReinvestMode(\'manual\')" class="pbtn' + (USER_SETTINGS.reinvest_mode==='manual'?' active':'') + '" style="font-size:11px;padding:6px 14px;">Manual</button>' +
+    // ── SETTINGS ──
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">' +
+
+      // Tax Rate
+      '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);padding:14px;">' +
+        '<div style="font-size:10px;font-weight:700;color:#F87171;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">🔴 Tax Reserve Rate</div>' +
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">' +
+          '<input type="range" min="0" max="50" step="5" value="' + (taxPct*100) + '" id="tax-rate-slider" oninput="updateTaxRate(this.value)" style="flex:1;accent-color:#F87171;">' +
+          '<span style="font-size:14px;font-weight:800;color:#F87171;min-width:40px;" id="tax-rate-val">' + (taxPct*100) + '%</span>' +
+        '</div>' +
+        '<div style="font-size:10px;color:var(--text-muted);">Consult a tax professional for your actual rate. Short-term gains typically taxed as ordinary income.</div>' +
       '</div>' +
-      '<div id="flat-pct-wrap" style="display:' + (USER_SETTINGS.reinvest_mode==='flat'?'block':'none') + ';margin-bottom:10px;">' +
-        '<div style="display:flex;align-items:center;gap:12px;">' +
-          '<label style="font-size:11px;color:var(--text-muted);">Reinvest %</label>' +
-          '<input type="range" min="0" max="100" step="5" value="' + (USER_SETTINGS.reinvest_flat_pct||65) + '" id="flat-pct-slider" oninput="updateFlatPct(this.value)" style="flex:1;">' +
-          '<span style="font-size:13px;font-weight:700;color:var(--text);min-width:40px;" id="flat-pct-val">' + (USER_SETTINGS.reinvest_flat_pct||65) + '%</span>' +
+
+      // Reinvest Mode
+      '<div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);padding:14px;">' +
+        '<div style="font-size:10px;font-weight:700;color:#22C55E;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">🟢 Reinvestment Mode</div>' +
+        '<div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">' +
+          '<button onclick="setReinvestMode(\'ev_based\')" class="pbtn' + (reinvestMode==='ev_based'?' active':'') + '" style="font-size:10px;padding:4px 10px;">EV-Based</button>' +
+          '<button onclick="setReinvestMode(\'flat\')" class="pbtn' + (reinvestMode==='flat'?' active':'') + '" style="font-size:10px;padding:4px 10px;">Flat %</button>' +
+          '<button onclick="setReinvestMode(\'manual\')" class="pbtn' + (reinvestMode==='manual'?' active':'') + '" style="font-size:10px;padding:4px 10px;">Manual</button>' +
+        '</div>' +
+        (reinvestMode==='flat' ?
+          '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">' +
+            '<input type="range" min="0" max="100" step="5" value="' + (USER_SETTINGS.reinvest_flat_pct||65) + '" id="flat-pct-slider" oninput="updateFlatPct(this.value)" style="flex:1;">' +
+            '<span style="font-size:14px;font-weight:800;color:var(--text);min-width:40px;" id="flat-pct-val">' + (USER_SETTINGS.reinvest_flat_pct||65) + '%</span>' +
+          '</div>' : '') +
+        '<div style="font-size:10px;color:var(--text-muted);">' +
+          (reinvestMode==='ev_based' ? 'Split based on avg EV% performance: 50/50 → 80/20 as EV improves.' :
+           reinvestMode==='flat' ? 'Same split on every sale regardless of performance.' :
+           'No recommendation — you decide what to do with after-tax profit.') +
         '</div>' +
       '</div>' +
-      '<div style="font-size:11px;color:var(--text-muted);">' +
-        (USER_SETTINGS.reinvest_mode==='ev_based' ? '40–60% EV → 50/50 · 61–100% → 65/35 · 101–150% → 75/25 · 151%+ → 80/20' :
-         USER_SETTINGS.reinvest_mode==='flat' ? 'Same split applied to every sale regardless of EV performance.' :
-         'No automatic recommendation — decide manually for each card.') +
-      '</div>' +
     '</div>' +
 
-    (withData.length === 0 ? '<div style="font-size:12px;color:var(--text-muted);">No sold cards with EV data yet for this year</div>' :
-    '<div style="font-size:11px;color:var(--text-muted);">Based on ' + withData.length + ' of ' + sold.length + ' sold cards with EV data</div>');
+    (sold.length === 0 ? '<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:20px;">No sales this year yet. Make your first sale to see your cash flow dashboard.</div>' : '');
+}
+
+function kpiCard(label, val, sub, color) {
+  return '<div class="kcard" style="border-top-color:' + color + ';">' +
+    '<div class="klbl">' + label + '</div>' +
+    '<div class="kval" style="color:' + color + ';font-size:18px;">' + val + '</div>' +
+    '<div class="ksub">' + sub + '</div>' +
+  '</div>';
 }
 
 async function setReinvestMode(mode) {
@@ -3287,7 +3347,12 @@ async function setReinvestMode(mode) {
 
 function updateFlatPct(val) {
   USER_SETTINGS.reinvest_flat_pct = parseInt(val);
-  g('flat-pct-val').textContent = val + '%';
+  const el = g('flat-pct-val');
+  if (el) el.textContent = val + '%';
+  // Live re-render dashboard
+  const yr = parseInt(g('fin-year')?.value || new Date().getFullYear());
+  const sold = INV.filter(r => r.status==='Sold' && r.date_sold && new Date(r.date_sold).getFullYear()===yr);
+  renderCashFlowDashboard(sold, yr);
   clearTimeout(window._fpTimer);
   window._fpTimer = setTimeout(() => saveUserSettings(), 800);
 }
@@ -3296,6 +3361,10 @@ function updateTaxRate(val) {
   USER_SETTINGS.tax_reserve_pct = parseInt(val);
   const el = g('tax-rate-val');
   if (el) el.textContent = val + '%';
+  // Live re-render dashboard
+  const yr = parseInt(g('fin-year')?.value || new Date().getFullYear());
+  const sold = INV.filter(r => r.status==='Sold' && r.date_sold && new Date(r.date_sold).getFullYear()===yr);
+  renderCashFlowDashboard(sold, yr);
   clearTimeout(window._taxTimer);
   window._taxTimer = setTimeout(() => saveUserSettings(), 800);
 }
