@@ -4998,7 +4998,7 @@ function renderScanner(){
         '</div>'+
         '<div style="display:flex;gap:8px;flex-wrap:wrap;">'+
           '<button class="btn-a" style="font-size:11px;padding:6px 14px;" data-scanid="'+r.id+'">&#9658; Add to Quick Add</button>'+
-          '<button class="btn-s" style="font-size:11px;padding:6px 14px;" data-ebayid="'+r.id+'">&#128269; Check eBay Sales</button>'+
+          '<button class="btn-s" style="font-size:11px;padding:6px 14px;" data-ebayid="'+r.id+'">&#128722; Find Raw on eBay</button>'+
         '</div>'+
       '</div>'+
     '</div>';
@@ -5013,18 +5013,18 @@ function scannerToBuy(id){const r=SCANNER_DATA.find(x=>x.id===id);if(!r)return;o
 function openEbaySales(id){
   const r=SCANNER_DATA.find(x=>x.id===id);
   if(!r) return;
-  // Build a search query: "Player Parallel Year Set #CardNo PSA"
+  // Build raw card search query — exclude graded slabs
   const parts=[r.player];
   if(r.parallel) parts.push(r.parallel);
   if(r.year) parts.push(r.year);
-  // Strip "Baseball Cards / Football Cards" prefix from set name
   const setShort=(r.set_name||'').replace(/^(Baseball|Football|Basketball) Cards /i,'');
   if(setShort) parts.push(setShort);
   if(r.card_no) parts.push('#'+r.card_no);
-  parts.push('PSA');
+  // Exclude graded cards — raw only
+  parts.push('-psa -sgc -bgs');
   const query=parts.join(' ');
-  // eBay sold listings URL
-  const url='https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(query)+'&LH_Sold=1&LH_Complete=1&_sop=13';
+  // eBay active listings (not sold) so user can find raw cards to buy
+  const url='https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(query)+'&_sop=12&LH_BIN=1';
   window.open(url,'_blank');
 }
 async function runScanner(){
