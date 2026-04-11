@@ -547,6 +547,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
       </div>
       <nav class="hnav" id="main-nav">
         <button class="ntab active" onclick="goSec('dashboard',this)">Dashboard</button>
+        <button class="ntab" onclick="goSec('gradeiq',this)" style="color:var(--green);" id="gradeiq-nav-btn">&#9889; GradeIQ</button>
         <button class="ntab" onclick="goSec('inventory',this)">Inventory</button>
         <button class="ntab" onclick="goSec('submissions',this)">Submissions</button>
         <button class="ntab" onclick="goSec('sold',this)">Sold</button>
@@ -558,6 +559,7 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
       <div class="mobile-nav" id="mobile-nav">
         <button class="mob-close" onclick="toggleMobileNav()">&#10005;</button>
         <button class="mntab" onclick="goSec('dashboard',null);toggleMobileNav()">Dashboard</button>
+        <button class="mntab" style="border-color:var(--green);color:var(--green);" onclick="goSec('gradeiq',null);toggleMobileNav()">&#9889; GradeIQ</button>
         <button class="mntab" onclick="goSec('inventory',null);toggleMobileNav()">Inventory</button>
         <button class="mntab" onclick="goSec('submissions',null);toggleMobileNav()">Submissions</button>
         <button class="mntab" onclick="goSec('sold',null);toggleMobileNav()">Sold</button>
@@ -655,6 +657,61 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
         </div>
       </div>
 
+    </div>
+
+    <!-- GRADEIQ PUBLIC BUY SIGNALS -->
+    <div class="sec" id="sec-gradeiq">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+        <div>
+          <h2 style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:4px;">&#9889; GradeIQ Buy Signals</h2>
+          <div style="font-size:12px;color:var(--text-muted);">Cards our algorithm flagged as grading opportunities. Updated nightly.</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <select class="fi" id="giq-sport" onchange="filterGradeIQ()" style="width:130px;">
+            <option value="">All Sports</option>
+            <option value="Baseball">Baseball</option>
+            <option value="Football">Football</option>
+            <option value="Basketball">Basketball</option>
+          </select>
+          <select class="fi" id="giq-sort" onchange="filterGradeIQ()" style="width:150px;">
+            <option value="scc_score">SCC Score High→Low</option>
+            <option value="ev_pct">EV% High→Low</option>
+            <option value="raw_price">Raw Price Low→High</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- KPI STRIP -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:20px;">
+        <div class="kcard" style="border-top-color:var(--green);">
+          <div class="klbl">Buy Signals</div>
+          <div class="kval g" id="giq-count">--</div>
+          <div class="ksub">Active opportunities</div>
+        </div>
+        <div class="kcard" style="border-top-color:#3B82F6;">
+          <div class="klbl">Sets Covered</div>
+          <div class="kval" style="color:#3B82F6;" id="giq-sets">--</div>
+          <div class="ksub">Across all sports</div>
+        </div>
+        <div class="kcard" style="border-top-color:var(--amber);">
+          <div class="klbl">Avg SCC Score</div>
+          <div class="kval" style="color:var(--amber);" id="giq-avgscc">--</div>
+          <div class="ksub">Of buy signals</div>
+        </div>
+        <div class="kcard" style="border-top-color:var(--green);">
+          <div class="klbl">Top EV%</div>
+          <div class="kval g" id="giq-topev">--</div>
+          <div class="ksub">Highest opportunity</div>
+        </div>
+      </div>
+
+      <!-- DISCLAIMER -->
+      <div style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:var(--r);padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--text-muted);">
+        &#8505;&#65039; These are <strong style="color:var(--text);">grading opportunities</strong> — raw cards worth submitting to PSA based on gem rate data and current market pricing. Always verify raw card prices before purchasing. Premium members can see full EV calculations, max buy prices, and use the complete GradeIQ scanner.
+      </div>
+
+      <!-- BUY SIGNALS LIST -->
+      <div id="giq-list"></div>
     </div>
 
     <!-- INVENTORY -->
@@ -928,11 +985,11 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
 
     </div>
 
-    <!-- EV SCANNER (ADMIN ONLY) -->
+    <!-- GRADEIQ (ADMIN ONLY) -->
     <div class="sec" id="sec-scanner">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
         <div>
-          <h2 style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:4px;">&#9889; EV Scanner</h2>
+          <h2 style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:4px;">&#9889; GradeIQ Scanner</h2>
           <div style="font-size:12px;color:var(--text-muted);">Auto-scanned opportunities ranked by EV%. Last run: <span id="scanner-last-run">Never</span></div>
         </div>
         <button class="btn-a" style="background:var(--red);" onclick="runScanner()">&#9654; Run Scanner Now</button>
@@ -1930,7 +1987,7 @@ async function loadApp() {
       btn.onclick=function(){goSec('admin',this);};
       nav.appendChild(btn);
       const sbtn=document.createElement('button');
-      sbtn.className='ntab atab';sbtn.innerHTML='&#9889; Scanner';
+      sbtn.className='ntab atab';sbtn.innerHTML='&#9889; GradeIQ Admin';
       sbtn.style.color='var(--amber)';sbtn.style.borderColor='var(--amber)';
       sbtn.onclick=function(){goSec('scanner',this);loadScanner();};
       nav.appendChild(sbtn);
@@ -1967,6 +2024,7 @@ function goSec(name,btn) {
   if (btn) btn.classList.add('active');
   if (name==='admin') { loadAdmin(); setTimeout(loadSetRegistry, 500); loadGemRateCount(); }
   if (name==='financials') renderFinancials();
+  if (name==='gradeiq') loadGradeIQ();
   if (name==='scanner'){if(!CU||CU.email!==ADMIN){goSec('dashboard',null);return;}loadScanner().then(()=>{loadSavedScannerFilter();filterScanner();});}
   if (name==='help') renderHelp();
 }
@@ -4389,6 +4447,105 @@ async function copyCard(id){
   if(res.error)return toast('Error: '+res.error.message,true);
   INV.unshift(res.data);renderAll();toast('Card copied! New ID: '+newID);
 }
+// ── GRADEIQ PUBLIC BUY SIGNALS ──
+var GRADEIQ_DATA = [], GRADEIQ_FILTERED = [];
+
+async function loadGradeIQ() {
+  const { data, error } = await sb.from('ev_scanner')
+    .select('player, parallel, year, set_name, card_no, sport, ev_pct, scc_score, raw_price, max_buy_40, decision, actual_gem_rate, sales_volume, scanned_at')
+    .eq('decision', 'BUY')
+    .order('scc_score', { ascending: false, nullsFirst: false });
+  GRADEIQ_DATA = data || [];
+  GRADEIQ_FILTERED = [...GRADEIQ_DATA];
+  renderGradeIQ();
+}
+
+function filterGradeIQ() {
+  const sport = (g('giq-sport') || {value:''}).value;
+  const sort = (g('giq-sort') || {value:'scc_score'}).value;
+  GRADEIQ_FILTERED = GRADEIQ_DATA.filter(r => !sport || r.sport === sport);
+  GRADEIQ_FILTERED.sort((a,b) =>
+    sort === 'scc_score' ? (b.scc_score||0) - (a.scc_score||0) :
+    sort === 'ev_pct' ? (b.ev_pct||0) - (a.ev_pct||0) :
+    (a.raw_price||0) - (b.raw_price||0)
+  );
+  renderGradeIQ();
+}
+
+function renderGradeIQ() {
+  const buys = GRADEIQ_FILTERED;
+  const allBuys = GRADEIQ_DATA;
+  const sets = new Set(allBuys.map(r => r.set_name)).size;
+  const avgSCC = allBuys.length ? (allBuys.reduce((s,r)=>s+(r.scc_score||0),0)/allBuys.length).toFixed(1) : '--';
+  const topEV = allBuys.length ? Math.max(...allBuys.map(r=>r.ev_pct||0)) : 0;
+
+  if(g('giq-count')) g('giq-count').textContent = buys.length;
+  if(g('giq-sets')) g('giq-sets').textContent = sets;
+  if(g('giq-avgscc')) g('giq-avgscc').textContent = avgSCC;
+  if(g('giq-topev')) g('giq-topev').textContent = (topEV*100).toFixed(0)+'%';
+
+  const list = g('giq-list');
+  if (!list) return;
+
+  if (!buys.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">&#9889;</div><div class="empty-title">No buy signals yet</div><div style="font-size:12px;">Check back soon — scanner runs nightly</div></div>';
+    return;
+  }
+
+  list.innerHTML = buys.map(r => {
+    const setShort = (r.set_name||'').replace(/^(Baseball|Football|Basketball) Cards /i,'');
+    const parallel = r.parallel ? ' · ' + r.parallel.split(' ').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ') : '';
+    const sccColor = (r.scc_score||0)>=70?'var(--green)':(r.scc_score||0)>=50?'var(--amber)':'var(--text-muted)';
+    const sportBadge = r.sport==='Football'?'🏈':r.sport==='Baseball'?'⚾':r.sport==='Basketball'?'🏀':'';
+    const scannedDate = r.scanned_at ? new Date(r.scanned_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '--';
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--r);padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">' +
+      '<div style="flex:1;min-width:200px;">' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">' +
+          '<span style="font-size:15px;font-weight:800;color:var(--text);">' + (r.player||'--') + '</span>' +
+          '<span style="font-size:10px;font-weight:700;background:var(--green);color:#000;padding:2px 7px;border-radius:20px;">BUY</span>' +
+          '<span style="font-size:11px;">' + sportBadge + '</span>' +
+        '</div>' +
+        '<div style="font-size:11px;color:var(--text-muted);">' + (r.year||'') + ' ' + setShort + ' #' + (r.card_no||'') + parallel + '</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">' +
+        '<div style="text-align:center;">' +
+          '<div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">SCC Score</div>' +
+          '<div style="font-size:18px;font-weight:800;color:'+sccColor+';">' + (r.scc_score||'--') + '</div>' +
+        '</div>' +
+        '<div style="text-align:center;">' +
+          '<div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Gem Rate</div>' +
+          '<div style="font-size:18px;font-weight:800;color:var(--text);">' + (r.actual_gem_rate ? Math.round(r.actual_gem_rate*100)+'%' : '--') + '</div>' +
+        '</div>' +
+        '<div style="text-align:center;">' +
+          '<div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Raw Price</div>' +
+          '<div style="font-size:18px;font-weight:800;color:var(--text);">' + f$(r.raw_price) + '</div>' +
+        '</div>' +
+        '<div style="text-align:center;">' +
+          '<div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Max Buy</div>' +
+          '<div style="font-size:18px;font-weight:800;color:var(--green);">' + f$(r.max_buy_40) + '</div>' +
+        '</div>' +
+        '<div style="text-align:right;">' +
+          '<div style="font-size:9px;color:var(--text-muted);margin-bottom:2px;">Updated ' + scannedDate + '</div>' +
+          '<button class="btn-s" style="font-size:11px;padding:5px 12px;" onclick="openGradeIQEbay(\''+encodeURIComponent(JSON.stringify({player:r.player,parallel:r.parallel,year:r.year,set_name:r.set_name,card_no:r.card_no}))+'\')">&#128722; Find Raw on eBay</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function openGradeIQEbay(encodedCard) {
+  const r = JSON.parse(decodeURIComponent(encodedCard));
+  const parts = [r.player];
+  if (r.parallel) parts.push(r.parallel);
+  if (r.year) parts.push(r.year);
+  const setShort = (r.set_name||'').replace(/^(Baseball|Football|Basketball) Cards /i,'');
+  if (setShort) parts.push(setShort);
+  if (r.card_no) parts.push('#'+r.card_no);
+  parts.push('-psa -sgc -bgs');
+  const url = 'https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(parts.join(' '))+'&_sop=12&LH_BIN=1';
+  window.open(url,'_blank');
+}
+
 var SCANNER_DATA=[],SCANNER_FILTERED=[];
 async function loadScanner(){
   if(!CU||CU.email!==ADMIN){g('sc-list').innerHTML='<div class="empty"><div class="empty-icon">&#128274;</div><div class="empty-title">Access Denied</div></div>';return;}
@@ -5278,9 +5435,9 @@ function blCalc() {
 <div class="mob-tabbar">
   <div class="mob-tabs">
     <button class="mob-tab active" id="mobt-dashboard" onclick="mobGoSec('dashboard')"><span class="mob-icon">&#128202;</span><span>Dashboard</span></button>
-    <button class="mob-tab" id="mobt-inventory" onclick="mobGoSec('inventory')"><span class="mob-icon">&#128230;</span><span>Inventory</span></button>
+    <button class="mob-tab" id="mobt-gradeiq" onclick="mobGoSec('gradeiq')" style="color:var(--green);"><span class="mob-icon">&#9889;</span><span>GradeIQ</span></button>
     <button class="mob-tab-plus" onclick="openQuickAdd()"><div class="mob-plus-btn">+</div><span>Add Card</span></button>
-    <button class="mob-tab" id="mobt-buylog" onclick="mobGoSec('buylog')"><span class="mob-icon">&#128200;</span><span>EV Log</span></button>
+    <button class="mob-tab" id="mobt-inventory" onclick="mobGoSec('inventory')"><span class="mob-icon">&#128230;</span><span>Inventory</span></button>
     <button class="mob-tab" id="mobt-more" onclick="openMobMore()"><span class="mob-icon">&#9776;</span><span>More</span></button>
   </div>
 </div>
@@ -5290,6 +5447,7 @@ function blCalc() {
   <button class="mob-close" onclick="closeMobMore()">&#10005;</button>
   <button class="mntab" onclick="mobGoSec('submissions');closeMobMore()">&#128233; Submissions</button>
   <button class="mntab" onclick="mobGoSec('sold');closeMobMore()">&#128176; Sold</button>
+  <button class="mntab" onclick="mobGoSec('buylog');closeMobMore()">&#128200; EV Log</button>
   <button class="mntab" onclick="mobGoSec('financials');closeMobMore()">&#128188; Financials</button>
   <button class="mntab" style="border-color:#3B82F6;color:#3B82F6;" onclick="mobGoSec('help');closeMobMore()">&#127916; Help</button>
   <div id="mob-admin-link"></div>
