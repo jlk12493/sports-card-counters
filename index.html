@@ -4329,11 +4329,11 @@ async function saveEditBL(){
 // ── MOBILE NAV ──
 function mobGoSec(name){
   goSec(name,null);
-  ['dashboard','inventory','buylog','more'].forEach(function(t){
+  ['dashboard','gradeiq','inventory','buylog','more'].forEach(function(t){
     var el=document.getElementById('mobt-'+t);
     if(el)el.classList.toggle('active',t===name);
   });
-  var inBar=['dashboard','inventory','buylog'];
+  var inBar=['dashboard','gradeiq','inventory'];
   var moreBtn=document.getElementById('mobt-more');
   if(moreBtn)moreBtn.classList.toggle('active',!inBar.includes(name));
 }
