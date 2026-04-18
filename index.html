@@ -499,15 +499,14 @@ body.light-mode .help-vcard{background:#F0EDE9;border-color:#C8C4BF;}
       </div>
 
       <div id="tab-register" style="display:none;">
-        <div style="text-align:center;padding:8px 0 16px;">
-          <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px;line-height:1.6;">Access requires an active <strong style="color:var(--text);">Sports Card Counters</strong> Whop membership. Register through Whop to create your account.</div>
-          <button class="btn-p" onclick="loginWithWhop()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:16px;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-            Continue with Whop
-          </button>
-          <div class="auth-note">Don't have a membership? <a href="https://whop.com/sports-card-counters" target="_blank" style="color:var(--red);">Get access on Whop →</a></div>
-          <div class="amsg" id="re-msg"></div>
+        <div style="background:rgba(204,0,0,.08);border:1px solid rgba(204,0,0,.2);border-radius:6px;padding:10px 12px;margin-bottom:14px;font-size:11px;color:var(--text-muted);line-height:1.6;">
+          Use the <strong style="color:var(--text);">same email</strong> as your Whop membership. Active membership required to register.
         </div>
+        <div class="afield"><label>Email</label><input type="email" id="re-email" placeholder="your@email.com" autocomplete="email"></div>
+        <div class="afield"><label>Password</label><input type="password" id="re-pw" placeholder="Min 6 characters" autocomplete="new-password"></div>
+        <button class="btn-p" id="btn-re" onclick="doRegister()">Create Account</button>
+        <div class="amsg" id="re-msg"></div>
+        <div class="auth-note">No membership yet? <a href="https://whop.com/sports-card-counters" target="_blank" style="color:var(--red);">Get access on Whop →</a></div>
       </div>
     </div>
   </div>
@@ -1671,15 +1670,6 @@ async function handleWhopCallback() {
     console.log('Worker result:', JSON.stringify(result));
 
     if (result.error) {
-      // Handle missing email specifically — user signed up to Whop via social login
-      if (result.error === 'Missing email') {
-        msg('re-msg',
-          'Your Whop account doesn\'t have an email address attached. Please log in to <a href="https://whop.com/settings" target="_blank" style="color:var(--red);">whop.com/settings</a>, add and verify your email, then try again.',
-          'error'
-        );
-        switchTab('register');
-        return true;
-      }
       msg('re-msg', 'Whop error: ' + result.error + (result.detail ? ' — ' + JSON.stringify(result.detail) : ''), 'error');
       switchTab('register');
       return true;
