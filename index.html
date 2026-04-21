@@ -1,5 +1,5 @@
 <!DOC
-<!-- v37 -->
+<!-- v36 -->
 YPE html>
 <html lang="en">
 <head>
@@ -1735,47 +1735,14 @@ async function handleWhopCallback() {
   }
 }
 
-async function checkWhopAccess(email) {
-  if (email === ADMIN) return true;
-  try {
-    const res = await fetch('https://lmwqizcflhikvtoqehzj.supabase.co/functions/v1/quick-responder', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtd3FpemNmbGhpa3Z0b3FlaHpqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDQ5NDMsImV4cCI6MjA4OTk4MDk0M30.95XMeRWGeCcD_KxN40ciJi_QjB9GG4sVJexzBEhJ9NM'
-      },
-      body: JSON.stringify({ email })
-    });
-    const data = await res.json();
-    return data.has_access === true;
-  } catch(e) {
-    console.warn('Whop check failed:', e.message);
-    return false;
-  }
-}
-
 async function initAuth() {
+  // Check for Whop OAuth callback first
+  const isWhopCallback = await handleWhopCallback();
+  if (isWhopCallback) return;
   const isReset = await checkResetToken();
-  if (isReset) return;
-
-  // Check for existing persisted session
-  const { data: sessionData } = await sb.auth.getSession();
-  if (sessionData?.session?.user) {
-    CU = sessionData.session.user;
-    // Verify Whop membership is still active
-    const hasAccess = await checkWhopAccess(CU.email);
-    if (!hasAccess) {
-      await sb.auth.signOut();
-      CU = null;
-      g('auth-screen').style.display = 'flex';
-      msg('li-msg', 'Your Whop membership is inactive or expired. <a href="https://whop.com/sports-card-counters" target="_blank" style="color:var(--red);">Renew access here</a>', 'error');
-      return;
-    }
-    await loadApp();
-    return;
+  if (!isReset) {
+    g('auth-screen').style.display = 'flex';
   }
-
-  g('auth-screen').style.display = 'flex';
 }
 
 async function doLogin() {
@@ -1783,13 +1750,6 @@ async function doLogin() {
   const pw = g('li-pw').value;
   if (!email||!pw) return msg('li-msg','Please fill in all fields','error');
   g('btn-li').disabled=true; g('btn-li').textContent='Signing in...';
-
-  const hasAccess = await checkWhopAccess(email);
-  if (!hasAccess) {
-    g('btn-li').disabled=false; g('btn-li').textContent='Sign In';
-    return msg('li-msg','Your Whop membership is inactive or expired. <a href="https://whop.com/sports-card-counters" target="_blank" style="color:var(--red);">Renew access here</a>','error');
-  }
-
   const {data,error} = await sb.auth.signInWithPassword({email,password:pw});
   g('btn-li').disabled=false; g('btn-li').textContent='Sign In';
   if (error) return msg('li-msg',error.message,'error');
