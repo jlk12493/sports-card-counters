@@ -1,5 +1,5 @@
 <!DOC
-<!-- v39 -->
+<!-- v40 -->
 YPE html>
 <html lang="en">
 <head>
@@ -5244,12 +5244,14 @@ function renderScanner(){
         '<div style="display:flex;gap:8px;flex-wrap:wrap;">'+
           '<button class="btn-a" style="font-size:11px;padding:6px 14px;" data-scanid="'+r.id+'">&#9658; Add to Quick Add</button>'+
           '<button class="btn-s" style="font-size:11px;padding:6px 14px;" data-ebayid="'+r.id+'">&#128269; Check eBay Sales</button>'+
+          '<button class="btn-s" style="font-size:11px;padding:6px 14px;border-color:var(--amber);color:var(--amber);" data-editscid="'+r.id+'">&#9998; Edit Override</button>'+
         '</div>'+
       '</div>'+
     '</div>';
   }).join('');
   list.querySelectorAll('[data-scanid]').forEach(btn=>btn.addEventListener('click',function(e){e.stopPropagation();scannerToBuy(this.dataset.scanid);}));
   list.querySelectorAll('[data-ebayid]').forEach(btn=>btn.addEventListener('click',function(e){e.stopPropagation();openEbaySales(this.dataset.ebayid);}));
+  list.querySelectorAll('[data-editscid]').forEach(btn=>btn.addEventListener('click',function(e){e.stopPropagation();openScannerEdit(this.dataset.editscid);}));
   if(SCANNER_DATA.length){const latest=SCANNER_DATA.reduce((a,b)=>new Date(a.scanned_at)>new Date(b.scanned_at)?a:b);const el=g('scanner-last-run');if(el&&latest.scanned_at)el.textContent=new Date(latest.scanned_at).toLocaleString();}
 }
 function toggleScannerRow(el){const id=el.dataset.scid;const body=document.querySelector('.scanner-body[data-scid="'+id+'"]');const chev=el.querySelector('i');if(!body)return;const isOpen=body.classList.contains('open');body.classList.toggle('open',!isOpen);if(chev)chev.style.transform=isOpen?'':'rotate(90deg)';}
@@ -5272,6 +5274,80 @@ function openEbaySales(id){
   const url='https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(query)+'&LH_Sold=1&LH_Complete=1&_sop=13';
   window.open(url,'_blank');
 }
+function openScannerEdit(id) {
+  const r = SCANNER_DATA.find(x => x.id === id);
+  if (!r) return;
+  g('sce-id').value = id;
+  g('sce-player').textContent = (r.player||'--') + (r.parallel ? ' · ' + r.parallel : '') + ' #' + (r.card_no||'') + ' — ' + (r.set_name||'');
+  g('sce-raw').value = r.raw_price != null ? r.raw_price : '';
+  g('sce-p10').value = r.psa10_price != null ? r.psa10_price : '';
+  g('sce-p9').value = r.psa9_price != null ? r.psa9_price : '';
+  g('sce-gem').value = r.actual_gem_rate != null ? r.actual_gem_rate : '';
+  g('sce-vol').value = r.sales_volume != null ? r.sales_volume : '';
+  g('sce-msg').style.display = 'none';
+  g('scanner-edit-modal').classList.add('open');
+}
+
+async function saveScannerEdit() {
+  const id = g('sce-id').value;
+  const updates = {};
+  const raw = parseFloat(g('sce-raw').value); if (!isNaN(raw)) updates.raw_price = raw;
+  const p10 = parseFloat(g('sce-p10').value); if (!isNaN(p10)) updates.psa10_price = p10;
+  const p9 = parseFloat(g('sce-p9').value); if (!isNaN(p9)) updates.psa9_price = p9;
+  const gem = parseFloat(g('sce-gem').value); if (!isNaN(gem)) updates.actual_gem_rate = gem;
+  const vol = parseInt(g('sce-vol').value); if (!isNaN(vol)) updates.sales_volume = vol;
+
+  if (!Object.keys(updates).length) return toast('No changes to save', true);
+
+  // Recalculate EV if we have enough data
+  const r = SCANNER_DATA.find(x => x.id === id);
+  if (r) {
+    const newRaw = updates.raw_price ?? r.raw_price ?? 0;
+    const newP10 = updates.psa10_price ?? r.psa10_price ?? 0;
+    const newP9 = updates.psa9_price ?? r.psa9_price ?? 0;
+    const newGem = updates.actual_gem_rate ?? r.actual_gem_rate ?? 0;
+    if (newRaw && newP10 && newGem) {
+      const GRADING_COST = 24.99, PLATFORM_FEE = 0.135;
+      const n10 = newP10 * (1 - PLATFORM_FEE);
+      const n9 = newP9 ? newP9 * (1 - PLATFORM_FEE) : n10 * 0.30;
+      const totalCost = newRaw + GRADING_COST;
+      const ev = newGem * n10 + (1 - newGem) * n9 - totalCost;
+      const evPct = ev / totalCost;
+      updates.net_psa10 = Math.round(n10 * 100) / 100;
+      updates.net_psa9 = Math.round(n9 * 100) / 100;
+      updates.ev_dollar = Math.round(ev * 100) / 100;
+      updates.ev_pct = Math.round(evPct * 1000) / 1000;
+      updates.max_buy_40 = Math.max(0, Math.round((newGem * n10 + (1 - newGem) * n9 - GRADING_COST) / 1.40 * 100) / 100);
+      updates.max_buy_35 = Math.max(0, Math.round((newGem * n10 + (1 - newGem) * n9 - GRADING_COST) / 1.35 * 100) / 100);
+      updates.decision = evPct >= 0.40 ? 'BUY' : evPct >= 0.35 ? 'CAUTION' : 'PASS';
+    }
+  }
+
+  const btn = g('sce-save-btn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+  const { error } = await sb.from('ev_scanner').update(updates).eq('id', id);
+  btn.disabled = false; btn.textContent = 'Save Override';
+
+  if (error) { toast('Error: ' + error.message, true); return; }
+
+  // Update local data
+  const idx = SCANNER_DATA.findIndex(x => x.id === id);
+  if (idx !== -1) SCANNER_DATA[idx] = { ...SCANNER_DATA[idx], ...updates };
+
+  closeModal('scanner-edit-modal');
+  filterScanner();
+  toast('Override saved! EV recalculated.');
+}
+
+async function deleteScannerEntry(id) {
+  if (!confirm('Delete this entry from the scanner? It will be re-added on the next scan.')) return;
+  const { error } = await sb.from('ev_scanner').delete().eq('id', id);
+  if (error) return toast('Error: ' + error.message, true);
+  SCANNER_DATA = SCANNER_DATA.filter(x => x.id !== id);
+  filterScanner();
+  toast('Entry deleted.');
+}
+
 async function runScanner(){
   if(!CU||CU.email!==ADMIN)return toast('Access denied',true);
   toast('Scanner queued - results will appear in a few minutes. Check back shortly!');
@@ -5525,6 +5601,34 @@ function blCalc() {
         <div class="mob-ev-stat"><label>Max Buy @35%</label><div id="mev-mb35">--</div></div>
       </div>
       <button class="btn-a" style="width:100%;margin-top:16px;padding:14px;font-size:14px;" onclick="mobEVToLog()">&#128200; Save to EV Log</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCANNER EDIT OVERRIDE MODAL -->
+<div class="modal-bg" id="scanner-edit-modal">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-title">
+      &#9998; Edit Override
+      <button class="modal-close" onclick="closeModal('scanner-edit-modal')">&#10005;</button>
+    </div>
+    <input type="hidden" id="sce-id">
+    <div id="sce-player" style="background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-bottom:16px;font-size:12px;color:var(--text-muted);line-height:1.5;"></div>
+    <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:6px;padding:10px 12px;margin-bottom:16px;font-size:11px;color:var(--amber);">
+      &#9888; Overriding prices and gem rates will recalculate EV%, Max Buy, and Decision automatically. Leave fields blank to keep existing values.
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+      <div class="ff"><label>Raw Price $</label><input type="number" step="0.01" id="sce-raw" placeholder="Current raw price" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;"></div>
+      <div class="ff"><label>PSA 10 Price $</label><input type="number" step="0.01" id="sce-p10" placeholder="Current PSA 10" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;"></div>
+      <div class="ff"><label>PSA 9 Price $</label><input type="number" step="0.01" id="sce-p9" placeholder="Current PSA 9" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;"></div>
+      <div class="ff"><label>Gem Rate (0-1)</label><input type="number" step="0.01" id="sce-gem" placeholder="e.g. 0.62" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;"></div>
+      <div class="ff" style="grid-column:1/-1;"><label>Sales Volume</label><input type="number" id="sce-vol" placeholder="Number of recent sales" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;"></div>
+    </div>
+    <div class="amsg" id="sce-msg"></div>
+    <div class="factions">
+      <button class="btn-a" id="sce-save-btn" onclick="saveScannerEdit()">Save Override</button>
+      <button class="btn-c" onclick="closeModal('scanner-edit-modal')">Cancel</button>
+      <button class="btn-c" style="color:#F87171;border-color:#F87171;margin-left:auto;" onclick="deleteScannerEntry(g('sce-id').value)">Delete Entry</button>
     </div>
   </div>
 </div>
