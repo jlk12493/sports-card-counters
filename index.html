@@ -1,6 +1,5 @@
-<!DOC
-<!-- v41 -->
-YPE html>
+<!DOCTYPE html>
+<!-- v44 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -4519,10 +4518,11 @@ function renderGradeIQ() {
     const parallelDisplay = r.parallel ? r.parallel.split(' ').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1);}).join(' ') : null;
     const sccColor = (r.scc_score||0)>=70?'var(--green)':(r.scc_score||0)>=50?'var(--amber)':'var(--text-muted)';
     const evColor = (r.ev_pct||0)>=1?'var(--green)':(r.ev_pct||0)>=0.40?'var(--amber)':'var(--text-muted)';
-    const sportBadge = r.sport==='Football'?'\u{1F3C8}':r.sport==='Baseball'?'\u26BE':r.sport==='Basketball'?'\u{1F3C0}':'';
+    const sportBadge = r.sport==='Football'?'🏈':r.sport==='Baseball'?'⚾':r.sport==='Basketball'?'🏀':'';
     const scannedDate = r.scanned_at ? new Date(r.scanned_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '--';
     const cardId = 'giq-card-' + idx;
     const enc = encodeURIComponent(JSON.stringify({player:r.player,parallel:r.parallel,year:r.year,set_name:r.set_name,card_no:r.card_no}));
+    const cardIdx = String(idx);
 
     return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--r);margin-bottom:10px;overflow:hidden;">' +
       '<div style="padding:12px 16px;cursor:pointer;display:flex;align-items:center;gap:10px;" onclick="toggleGIQCard(this)" data-giqid="' + cardId + '">' +
@@ -4560,15 +4560,22 @@ function renderGradeIQ() {
           giqCell('Updated', scannedDate, 'var(--text-muted)', false) +
         '</div>' +
         '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
-          '<button class="btn-a" style="font-size:11px;padding:5px 12px;background:var(--green);" onclick="giqAddToInventory(\\\'\' + encodeURIComponent(JSON.stringify({player:r.player,parallel:r.parallel,year:r.year,set_name:r.set_name,card_no:r.card_no,sport:r.sport,psa10:r.psa10_price,psa9:r.psa9_price,gem_rate:r.actual_gem_rate})) + \'\\\')">&plus; Add to Inventory</button>' +
-          '<button class="btn-s" style="font-size:11px;padding:5px 12px;" onclick="openGradeIQEbay(\\\'\' + enc + \'\\\')">F6D2 Find Raw on eBay</button>' +
+          '<button class="btn-a" style="font-size:11px;padding:5px 12px;background:var(--green);border-color:var(--green);" data-giqadd="' + cardIdx + '">+ Add to Inventory</button>' +
+          '<button class="btn-s" style="font-size:11px;padding:5px 12px;" data-giqebay="' + enc + '">&#128722; Find Raw on eBay</button>' +
         '</div>' +
       '</div>' +
     '</div>';
   }).join('');
-}
 
-function giqCell(label, value, color, bold) {
+  list.querySelectorAll('[data-giqadd]').forEach(btn => btn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    giqAddToInventory(this.dataset.giqadd);
+  }));
+  list.querySelectorAll('[data-giqebay]').forEach(btn => btn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    openGradeIQEbay(this.dataset.giqebay);
+  }));
+}(label, value, color, bold) {
   if (value === '--' || value === null || value === undefined) return '';
   return '<div>' +
     '<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">' + label + '</div>' +
@@ -4587,24 +4594,27 @@ function toggleGIQCard(el) {
 }
 
 
-function giqAddToInventory(encodedCard) {
-  const r = JSON.parse(decodeURIComponent(encodedCard));
+function giqAddToInventory(idx) {
+  const r = GRADEIQ_FILTERED[parseInt(idx)];
+  if (!r) return toast('Card not found', true);
   openQuickAdd();
-  setTimeout(() => {
+  setTimeout(function() {
     if (r.player && g('qa-player')) g('qa-player').value = r.player;
     if (r.year && g('qa-year')) g('qa-year').value = r.year;
     if (r.sport && g('qa-sport')) g('qa-sport').value = r.sport;
     if (r.set_name) {
-      const parts = r.set_name.replace(/^(Baseball|Football|Basketball) Cards /i,'').split(' ');
+      var setClean = r.set_name.replace(/^(Baseball|Football|Basketball) Cards /i,'');
+      var parts = setClean.split(' ');
       if (g('qa-brand')) g('qa-brand').value = parts[0] || '';
       if (g('qa-set')) g('qa-set').value = parts.slice(1).join(' ') || '';
     }
     if (r.parallel && g('qa-parallel')) g('qa-parallel').value = r.parallel;
     if (r.card_no && g('qa-cno')) g('qa-cno').value = r.card_no;
-    if (r.psa10 && g('qa-p10')) g('qa-p10').value = r.psa10;
-    if (r.psa9 && g('qa-p9')) g('qa-p9').value = r.psa9;
-    if (r.gem_rate && g('qa-gem')) g('qa-gem').value = r.gem_rate;
+    if (r.psa10_price && g('qa-p10')) g('qa-p10').value = r.psa10_price;
+    if (r.psa9_price && g('qa-p9')) g('qa-p9').value = r.psa9_price;
+    if (r.actual_gem_rate && g('qa-gem')) g('qa-gem').value = r.actual_gem_rate;
     if (g('qa-grade')) g('qa-grade').value = 24.99;
+    g('qa-disp').value = 'Grade';
     qaCalcCost(); qaCalcEV(); qaShowStep(1);
     toast('Card pre-filled from GradeIQ — add your purchase price!');
   }, 250);
