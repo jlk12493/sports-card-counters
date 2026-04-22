@@ -1,5 +1,5 @@
 <!DOC
-<!-- v36 -->
+<!-- v39 -->
 YPE html>
 <html lang="en">
 <head>
@@ -4474,7 +4474,7 @@ var GRADEIQ_DATA = [], GRADEIQ_FILTERED = [];
 
 async function loadGradeIQ() {
   const { data, error } = await sb.from('ev_scanner')
-    .select('player, parallel, year, set_name, card_no, sport, ev_pct, scc_score, raw_price, max_buy_40, decision, actual_gem_rate, sales_volume, scanned_at')
+    .select('player, parallel, year, set_name, card_no, sport, ev_pct, ev_dollar, scc_score, raw_price, max_buy_40, max_buy_35, decision, actual_gem_rate, implied_gem_rate, psa10_price, psa9_price, net_psa10, net_psa9, sales_volume, scanned_at')
     .eq('decision', 'BUY')
     .order('scc_score', { ascending: false, nullsFirst: false });
   GRADEIQ_DATA = data || [];
@@ -4514,46 +4514,75 @@ function renderGradeIQ() {
     return;
   }
 
-  list.innerHTML = buys.map(r => {
+  list.innerHTML = buys.map(function(r, idx) {
     const setShort = (r.set_name||'').replace(/^(Baseball|Football|Basketball) Cards /i,'');
-    const parallel = r.parallel ? ' · ' + r.parallel.split(' ').map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ') : '';
+    const parallelDisplay = r.parallel ? r.parallel.split(' ').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1);}).join(' ') : null;
     const sccColor = (r.scc_score||0)>=70?'var(--green)':(r.scc_score||0)>=50?'var(--amber)':'var(--text-muted)';
-    const sportBadge = r.sport==='Football'?'🏈':r.sport==='Baseball'?'⚾':r.sport==='Basketball'?'🏀':'';
+    const evColor = (r.ev_pct||0)>=1?'var(--green)':(r.ev_pct||0)>=0.40?'var(--amber)':'var(--text-muted)';
+    const sportBadge = r.sport==='Football'?'\u{1F3C8}':r.sport==='Baseball'?'\u26BE':r.sport==='Basketball'?'\u{1F3C0}':'';
     const scannedDate = r.scanned_at ? new Date(r.scanned_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '--';
-    return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--r);padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">' +
-      '<div style="flex:1;min-width:200px;">' +
-        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">' +
-          '<span style="font-size:15px;font-weight:800;color:var(--text);">' + (r.player||'--') + '</span>' +
-          '<span style="font-size:10px;font-weight:700;background:var(--green);color:#000;padding:2px 7px;border-radius:20px;">BUY</span>' +
-          '<span style="font-size:11px;">' + sportBadge + '</span>' +
+    const cardId = 'giq-card-' + idx;
+    const enc = encodeURIComponent(JSON.stringify({player:r.player,parallel:r.parallel,year:r.year,set_name:r.set_name,card_no:r.card_no}));
+
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--r);margin-bottom:10px;overflow:hidden;">' +
+      '<div style="padding:12px 16px;cursor:pointer;display:flex;align-items:center;gap:10px;" onclick="toggleGIQCard(this)" data-giqid="' + cardId + '">' +
+        '<i id="chev-' + cardId + '" style="font-style:normal;font-size:10px;color:var(--text-muted);transition:transform .2s;flex-shrink:0;">&#9658;</i>' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">' +
+            '<span style="font-size:14px;font-weight:800;color:var(--text);">' + (r.player||'--') + '</span>' +
+            '<span style="font-size:10px;font-weight:700;background:var(--green);color:#000;padding:2px 7px;border-radius:20px;">BUY</span>' +
+            (parallelDisplay ? '<span style="font-size:11px;font-weight:600;padding:1px 6px;border-radius:3px;background:rgba(239,68,68,.15);color:#F87171;border:1px solid rgba(239,68,68,.3);">' + parallelDisplay + '</span>' : '') +
+          '</div>' +
+          '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">' +
+            '<span style="font-size:11px;color:var(--text-muted);">' + (r.year||'') + ' ' + setShort + ' #' + (r.card_no||'') + '</span>' +
+            '<span style="font-size:11px;font-weight:700;color:' + sccColor + ';">SCC ' + (r.scc_score||'--') + '</span>' +
+            '<span style="font-size:11px;font-weight:700;color:' + evColor + ';">EV ' + (r.ev_pct ? (r.ev_pct*100).toFixed(0)+'%' : '--') + '</span>' +
+            '<span style="font-size:11px;color:var(--text-muted);">Raw: <strong style="color:var(--text);">' + f$(r.raw_price) + '</strong></span>' +
+            '<span style="font-size:11px;color:var(--text-muted);">Max Buy: <strong style="color:var(--green);">' + f$(r.max_buy_40) + '</strong></span>' +
+          '</div>' +
         '</div>' +
-        '<div style="font-size:11px;color:var(--text-muted);">' + (r.year||'') + ' ' + setShort + ' #' + (r.card_no||'') + parallel + '</div>' +
       '</div>' +
-      '<div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">' +
-        '<div style="text-align:center;">' +
-          '<div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">SCC Score</div>' +
-          '<div style="font-size:18px;font-weight:800;color:'+sccColor+';">' + (r.scc_score||'--') + '</div>' +
+      '<div id="' + cardId + '" style="display:none;border-top:1px solid var(--border);padding:14px 16px;">' +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:14px;">' +
+          giqCell('SCC Score', r.scc_score||'--', sccColor, true) +
+          giqCell('EV%', r.ev_pct ? (r.ev_pct*100).toFixed(1)+'%' : '--', evColor, true) +
+          giqCell('EV$', f$(r.ev_dollar), (r.ev_dollar||0)>=0?'var(--green)':'#F87171', true) +
+          giqCell('Gem Rate', r.actual_gem_rate ? (r.actual_gem_rate*100).toFixed(0)+'%' : '--', 'var(--text)', true) +
+          giqCell('Implied Gem Rate', r.implied_gem_rate ? (r.implied_gem_rate*100).toFixed(0)+'%' : '--', 'var(--text-muted)', false) +
+          giqCell('Raw Price', f$(r.raw_price), 'var(--text)', false) +
+          giqCell('PSA 10 Price', f$(r.psa10_price), 'var(--text)', false) +
+          giqCell('PSA 9 Price', f$(r.psa9_price), 'var(--text-muted)', false) +
+          giqCell('Net PSA 10', f$(r.net_psa10), 'var(--text)', false) +
+          giqCell('Net PSA 9', f$(r.net_psa9), 'var(--text-muted)', false) +
+          giqCell('Max Buy @40%', f$(r.max_buy_40), 'var(--green)', true) +
+          giqCell('Max Buy @35%', f$(r.max_buy_35), 'var(--amber)', false) +
+          giqCell('Sales Volume', r.sales_volume!=null?String(r.sales_volume):'--', 'var(--text)', false) +
+          giqCell('Updated', scannedDate, 'var(--text-muted)', false) +
         '</div>' +
-        '<div style="text-align:center;">' +
-          '<div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Gem Rate</div>' +
-          '<div style="font-size:18px;font-weight:800;color:var(--text);">' + (r.actual_gem_rate ? Math.round(r.actual_gem_rate*100)+'%' : '--') + '</div>' +
-        '</div>' +
-        '<div style="text-align:center;">' +
-          '<div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Raw Price</div>' +
-          '<div style="font-size:18px;font-weight:800;color:var(--text);">' + f$(r.raw_price) + '</div>' +
-        '</div>' +
-        '<div style="text-align:center;">' +
-          '<div style="font-size:9px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Max Buy</div>' +
-          '<div style="font-size:18px;font-weight:800;color:var(--green);">' + f$(r.max_buy_40) + '</div>' +
-        '</div>' +
-        '<div style="text-align:right;">' +
-          '<div style="font-size:9px;color:var(--text-muted);margin-bottom:2px;">Updated ' + scannedDate + '</div>' +
-          '<button class="btn-s" style="font-size:11px;padding:5px 12px;" onclick="openGradeIQEbay(\''+encodeURIComponent(JSON.stringify({player:r.player,parallel:r.parallel,year:r.year,set_name:r.set_name,card_no:r.card_no}))+'\')">&#128722; Find Raw on eBay</button>' +
-        '</div>' +
+        '<button class="btn-s" style="font-size:11px;padding:5px 12px;" onclick="openGradeIQEbay(\'' + enc + '\')">&#128722; Find Raw on eBay</button>' +
       '</div>' +
     '</div>';
   }).join('');
 }
+
+function giqCell(label, value, color, bold) {
+  if (value === '--' || value === null || value === undefined) return '';
+  return '<div>' +
+    '<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">' + label + '</div>' +
+    '<div style="font-size:' + (bold?'18':'14') + 'px;font-weight:' + (bold?'800':'600') + ';color:' + (color||'var(--text)') + ';">' + value + '</div>' +
+  '</div>';
+}
+
+function toggleGIQCard(el) {
+  const id = el.dataset.giqid;
+  const body = document.getElementById(id);
+  const chev = document.getElementById('chev-' + id);
+  if (!body) return;
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : '';
+  if (chev) chev.style.transform = isOpen ? '' : 'rotate(90deg)';
+}
+
 
 function openGradeIQEbay(encodedCard) {
   const r = JSON.parse(decodeURIComponent(encodedCard));
