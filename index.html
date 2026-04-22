@@ -4494,36 +4494,30 @@ function filterGradeIQ() {
 }
 
 function renderGradeIQ() {
-  const buys = GRADEIQ_FILTERED;
-  const allBuys = GRADEIQ_DATA;
-  const sets = new Set(allBuys.map(r => r.set_name)).size;
-  const avgSCC = allBuys.length ? (allBuys.reduce((s,r)=>s+(r.scc_score||0),0)/allBuys.length).toFixed(1) : '--';
-  const topEV = allBuys.length ? Math.max(...allBuys.map(r=>r.ev_pct||0)) : 0;
-
+  var buys = GRADEIQ_FILTERED;
+  var allBuys = GRADEIQ_DATA;
+  var sets = new Set(allBuys.map(function(r){return r.set_name;})).size;
+  var avgSCC = allBuys.length ? (allBuys.reduce(function(s,r){return s+(r.scc_score||0);},0)/allBuys.length).toFixed(1) : '--';
+  var topEV = allBuys.length ? Math.max.apply(null,allBuys.map(function(r){return r.ev_pct||0;})) : 0;
   if(g('giq-count')) g('giq-count').textContent = buys.length;
   if(g('giq-sets')) g('giq-sets').textContent = sets;
   if(g('giq-avgscc')) g('giq-avgscc').textContent = avgSCC;
   if(g('giq-topev')) g('giq-topev').textContent = (topEV*100).toFixed(0)+'%';
-
-  const list = g('giq-list');
+  var list = g('giq-list');
   if (!list) return;
-
   if (!buys.length) {
     list.innerHTML = '<div class="empty"><div class="empty-icon">&#9889;</div><div class="empty-title">No buy signals yet</div><div style="font-size:12px;">Check back soon — scanner runs nightly</div></div>';
     return;
   }
-
   list.innerHTML = buys.map(function(r, idx) {
-    const setShort = (r.set_name||'').replace(/^(Baseball|Football|Basketball) Cards /i,'');
-    const parallelDisplay = r.parallel ? r.parallel.split(' ').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1);}).join(' ') : null;
-    const sccColor = (r.scc_score||0)>=70?'var(--green)':(r.scc_score||0)>=50?'var(--amber)':'var(--text-muted)';
-    const evColor = (r.ev_pct||0)>=1?'var(--green)':(r.ev_pct||0)>=0.40?'var(--amber)':'var(--text-muted)';
-    const sportBadge = r.sport==='Football'?'🏈':r.sport==='Baseball'?'⚾':r.sport==='Basketball'?'🏀':'';
-    const scannedDate = r.scanned_at ? new Date(r.scanned_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '--';
-    const cardId = 'giq-card-' + idx;
-    const enc = encodeURIComponent(JSON.stringify({player:r.player,parallel:r.parallel,year:r.year,set_name:r.set_name,card_no:r.card_no}));
-    const cardIdx = String(idx);
-
+    var setShort = (r.set_name||'').replace(/^(Baseball|Football|Basketball) Cards /i,'');
+    var parallelDisplay = r.parallel ? r.parallel.split(' ').map(function(w){return w.charAt(0).toUpperCase()+w.slice(1);}).join(' ') : null;
+    var sccColor = (r.scc_score||0)>=70?'var(--green)':(r.scc_score||0)>=50?'var(--amber)':'var(--text-muted)';
+    var evColor = (r.ev_pct||0)>=1?'var(--green)':(r.ev_pct||0)>=0.40?'var(--amber)':'var(--text-muted)';
+    var sportBadge = r.sport==='Football'?'&#127944;':r.sport==='Baseball'?'&#9918;':r.sport==='Basketball'?'&#127936;':'';
+    var scannedDate = r.scanned_at ? new Date(r.scanned_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '--';
+    var cardId = 'giq-card-' + idx;
+    var enc = encodeURIComponent(JSON.stringify({player:r.player,parallel:r.parallel,year:r.year,set_name:r.set_name,card_no:r.card_no}));
     return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--r);margin-bottom:10px;overflow:hidden;">' +
       '<div style="padding:12px 16px;cursor:pointer;display:flex;align-items:center;gap:10px;" onclick="toggleGIQCard(this)" data-giqid="' + cardId + '">' +
         '<i id="chev-' + cardId + '" style="font-style:normal;font-size:10px;color:var(--text-muted);transition:transform .2s;flex-shrink:0;">&#9658;</i>' +
@@ -4544,39 +4538,45 @@ function renderGradeIQ() {
       '</div>' +
       '<div id="' + cardId + '" style="display:none;border-top:1px solid var(--border);padding:14px 16px;">' +
         '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:14px;">' +
-          giqCell('SCC Score', r.scc_score||'--', sccColor, true) +
+          giqCell('SCC Score', r.scc_score!=null?String(r.scc_score):'--', sccColor, true) +
           giqCell('EV%', r.ev_pct ? (r.ev_pct*100).toFixed(1)+'%' : '--', evColor, true) +
-          giqCell('EV$', f$(r.ev_dollar), (r.ev_dollar||0)>=0?'var(--green)':'#F87171', true) +
-          giqCell('Gem Rate', r.actual_gem_rate ? (r.actual_gem_rate*100).toFixed(0)+'%' : '--', 'var(--text)', true) +
-          giqCell('Implied Gem Rate', r.implied_gem_rate ? (r.implied_gem_rate*100).toFixed(0)+'%' : '--', 'var(--text-muted)', false) +
-          giqCell('Raw Price', f$(r.raw_price), 'var(--text)', false) +
-          giqCell('PSA 10 Price', f$(r.psa10_price), 'var(--text)', false) +
-          giqCell('PSA 9 Price', f$(r.psa9_price), 'var(--text-muted)', false) +
-          giqCell('Net PSA 10', f$(r.net_psa10), 'var(--text)', false) +
-          giqCell('Net PSA 9', f$(r.net_psa9), 'var(--text-muted)', false) +
-          giqCell('Max Buy @40%', f$(r.max_buy_40), 'var(--green)', true) +
-          giqCell('Max Buy @35%', f$(r.max_buy_35), 'var(--amber)', false) +
+          giqCell('EV$', r.ev_dollar!=null?f$(r.ev_dollar):'--', (r.ev_dollar||0)>=0?'var(--green)':'#F87171', true) +
+          giqCell('Gem Rate', r.actual_gem_rate!=null?(r.actual_gem_rate*100).toFixed(0)+'%':'--', 'var(--text)', true) +
+          giqCell('Implied Gem Rate', r.implied_gem_rate!=null?(r.implied_gem_rate*100).toFixed(0)+'%':'--', 'var(--text-muted)', false) +
+          giqCell('Raw Price', r.raw_price!=null?f$(r.raw_price):'--', 'var(--text)', false) +
+          giqCell('PSA 10 Price', r.psa10_price!=null?f$(r.psa10_price):'--', 'var(--text)', false) +
+          giqCell('PSA 9 Price', r.psa9_price!=null?f$(r.psa9_price):'--', 'var(--text-muted)', false) +
+          giqCell('Net PSA 10', r.net_psa10!=null?f$(r.net_psa10):'--', 'var(--text)', false) +
+          giqCell('Net PSA 9', r.net_psa9!=null?f$(r.net_psa9):'--', 'var(--text-muted)', false) +
+          giqCell('Max Buy @40%', r.max_buy_40!=null?f$(r.max_buy_40):'--', 'var(--green)', true) +
+          giqCell('Max Buy @35%', r.max_buy_35!=null?f$(r.max_buy_35):'--', 'var(--amber)', false) +
           giqCell('Sales Volume', r.sales_volume!=null?String(r.sales_volume):'--', 'var(--text)', false) +
           giqCell('Updated', scannedDate, 'var(--text-muted)', false) +
         '</div>' +
         '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
-          '<button class="btn-a" style="font-size:11px;padding:5px 12px;background:var(--green);border-color:var(--green);" data-giqadd="' + cardIdx + '">+ Add to Inventory</button>' +
+          '<button class="btn-a" style="font-size:11px;padding:5px 12px;background:var(--green);border-color:var(--green);" data-giqadd="' + idx + '">+ Add to Inventory</button>' +
           '<button class="btn-s" style="font-size:11px;padding:5px 12px;" data-giqebay="' + enc + '">&#128722; Find Raw on eBay</button>' +
         '</div>' +
       '</div>' +
     '</div>';
   }).join('');
 
-  list.querySelectorAll('[data-giqadd]').forEach(btn => btn.addEventListener('click', function(e) {
-    e.stopPropagation();
-    giqAddToInventory(this.dataset.giqadd);
-  }));
-  list.querySelectorAll('[data-giqebay]').forEach(btn => btn.addEventListener('click', function(e) {
-    e.stopPropagation();
-    openGradeIQEbay(this.dataset.giqebay);
-  }));
-}(label, value, color, bold) {
-  if (value === '--' || value === null || value === undefined) return '';
+  list.querySelectorAll('[data-giqadd]').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      giqAddToInventory(parseInt(this.dataset.giqadd));
+    });
+  });
+  list.querySelectorAll('[data-giqebay]').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      openGradeIQEbay(this.dataset.giqebay);
+    });
+  });
+}
+
+function giqCell(label, value, color, bold) {
+  if (!value || value === '--') return '';
   return '<div>' +
     '<div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;">' + label + '</div>' +
     '<div style="font-size:' + (bold?'18':'14') + 'px;font-weight:' + (bold?'800':'600') + ';color:' + (color||'var(--text)') + ';">' + value + '</div>' +
@@ -4584,18 +4584,17 @@ function renderGradeIQ() {
 }
 
 function toggleGIQCard(el) {
-  const id = el.dataset.giqid;
-  const body = document.getElementById(id);
-  const chev = document.getElementById('chev-' + id);
+  var id = el.dataset.giqid;
+  var body = document.getElementById(id);
+  var chev = document.getElementById('chev-' + id);
   if (!body) return;
-  const isOpen = body.style.display !== 'none';
+  var isOpen = body.style.display !== 'none';
   body.style.display = isOpen ? 'none' : '';
   if (chev) chev.style.transform = isOpen ? '' : 'rotate(90deg)';
 }
 
-
 function giqAddToInventory(idx) {
-  const r = GRADEIQ_FILTERED[parseInt(idx)];
+  var r = GRADEIQ_FILTERED[idx];
   if (!r) return toast('Card not found', true);
   openQuickAdd();
   setTimeout(function() {
@@ -4614,11 +4613,12 @@ function giqAddToInventory(idx) {
     if (r.psa9_price && g('qa-p9')) g('qa-p9').value = r.psa9_price;
     if (r.actual_gem_rate && g('qa-gem')) g('qa-gem').value = r.actual_gem_rate;
     if (g('qa-grade')) g('qa-grade').value = 24.99;
-    g('qa-disp').value = 'Grade';
+    if (g('qa-disp')) g('qa-disp').value = 'Grade';
     qaCalcCost(); qaCalcEV(); qaShowStep(1);
     toast('Card pre-filled from GradeIQ — add your purchase price!');
   }, 250);
 }
+
 
 function openGradeIQEbay(encodedCard) {
   const r = JSON.parse(decodeURIComponent(encodedCard));
@@ -5310,77 +5310,68 @@ function openEbaySales(id){
   const url='https://www.ebay.com/sch/i.html?_nkw='+encodeURIComponent(query)+'&LH_Sold=1&LH_Complete=1&_sop=13';
   window.open(url,'_blank');
 }
+
 function openScannerEdit(id) {
-  const r = SCANNER_DATA.find(x => x.id === id);
+  var r = SCANNER_DATA.find(function(x){return x.id===id;});
   if (!r) return;
   g('sce-id').value = id;
-  g('sce-player').textContent = (r.player||'--') + (r.parallel ? ' · ' + r.parallel : '') + ' #' + (r.card_no||'') + ' — ' + (r.set_name||'');
-  g('sce-raw').value = r.raw_price != null ? r.raw_price : '';
-  g('sce-p10').value = r.psa10_price != null ? r.psa10_price : '';
-  g('sce-p9').value = r.psa9_price != null ? r.psa9_price : '';
-  g('sce-gem').value = r.actual_gem_rate != null ? r.actual_gem_rate : '';
-  g('sce-vol').value = r.sales_volume != null ? r.sales_volume : '';
+  g('sce-player').textContent = (r.player||'--') + (r.parallel?' · '+r.parallel:'') + ' #' + (r.card_no||'') + ' - ' + (r.set_name||'');
+  g('sce-raw').value = r.raw_price!=null?r.raw_price:'';
+  g('sce-p10').value = r.psa10_price!=null?r.psa10_price:'';
+  g('sce-p9').value = r.psa9_price!=null?r.psa9_price:'';
+  g('sce-gem').value = r.actual_gem_rate!=null?r.actual_gem_rate:'';
+  g('sce-vol').value = r.sales_volume!=null?r.sales_volume:'';
   g('sce-msg').style.display = 'none';
   g('scanner-edit-modal').classList.add('open');
 }
 
 async function saveScannerEdit() {
-  const id = g('sce-id').value;
-  const updates = {};
-  const raw = parseFloat(g('sce-raw').value); if (!isNaN(raw)) updates.raw_price = raw;
-  const p10 = parseFloat(g('sce-p10').value); if (!isNaN(p10)) updates.psa10_price = p10;
-  const p9 = parseFloat(g('sce-p9').value); if (!isNaN(p9)) updates.psa9_price = p9;
-  const gem = parseFloat(g('sce-gem').value); if (!isNaN(gem)) updates.actual_gem_rate = gem;
-  const vol = parseInt(g('sce-vol').value); if (!isNaN(vol)) updates.sales_volume = vol;
-
-  if (!Object.keys(updates).length) return toast('No changes to save', true);
-
-  // Recalculate EV if we have enough data
-  const r = SCANNER_DATA.find(x => x.id === id);
-  if (r) {
-    const newRaw = updates.raw_price ?? r.raw_price ?? 0;
-    const newP10 = updates.psa10_price ?? r.psa10_price ?? 0;
-    const newP9 = updates.psa9_price ?? r.psa9_price ?? 0;
-    const newGem = updates.actual_gem_rate ?? r.actual_gem_rate ?? 0;
-    if (newRaw && newP10 && newGem) {
-      const GRADING_COST = 24.99, PLATFORM_FEE = 0.135;
-      const n10 = newP10 * (1 - PLATFORM_FEE);
-      const n9 = newP9 ? newP9 * (1 - PLATFORM_FEE) : n10 * 0.30;
-      const totalCost = newRaw + GRADING_COST;
-      const ev = newGem * n10 + (1 - newGem) * n9 - totalCost;
-      const evPct = ev / totalCost;
-      updates.net_psa10 = Math.round(n10 * 100) / 100;
-      updates.net_psa9 = Math.round(n9 * 100) / 100;
-      updates.ev_dollar = Math.round(ev * 100) / 100;
-      updates.ev_pct = Math.round(evPct * 1000) / 1000;
-      updates.max_buy_40 = Math.max(0, Math.round((newGem * n10 + (1 - newGem) * n9 - GRADING_COST) / 1.40 * 100) / 100);
-      updates.max_buy_35 = Math.max(0, Math.round((newGem * n10 + (1 - newGem) * n9 - GRADING_COST) / 1.35 * 100) / 100);
-      updates.decision = evPct >= 0.40 ? 'BUY' : evPct >= 0.35 ? 'CAUTION' : 'PASS';
+  var id = g('sce-id').value;
+  var updates = {};
+  var raw=parseFloat(g('sce-raw').value); if(!isNaN(raw)) updates.raw_price=raw;
+  var p10=parseFloat(g('sce-p10').value); if(!isNaN(p10)) updates.psa10_price=p10;
+  var p9=parseFloat(g('sce-p9').value); if(!isNaN(p9)) updates.psa9_price=p9;
+  var gem=parseFloat(g('sce-gem').value); if(!isNaN(gem)) updates.actual_gem_rate=gem;
+  var vol=parseInt(g('sce-vol').value); if(!isNaN(vol)) updates.sales_volume=vol;
+  if(!Object.keys(updates).length) return toast('No changes to save',true);
+  var r=SCANNER_DATA.find(function(x){return x.id===id;});
+  if(r) {
+    var newRaw=updates.raw_price!=null?updates.raw_price:(r.raw_price||0);
+    var newP10=updates.psa10_price!=null?updates.psa10_price:(r.psa10_price||0);
+    var newP9=updates.psa9_price!=null?updates.psa9_price:(r.psa9_price||0);
+    var newGem=updates.actual_gem_rate!=null?updates.actual_gem_rate:(r.actual_gem_rate||0);
+    if(newRaw&&newP10&&newGem) {
+      var GRADING_COST=24.99,PLATFORM_FEE=0.135;
+      var n10=newP10*(1-PLATFORM_FEE);
+      var n9=newP9?newP9*(1-PLATFORM_FEE):n10*0.30;
+      var totalCost=newRaw+GRADING_COST;
+      var ev=newGem*n10+(1-newGem)*n9-totalCost;
+      var evPct=ev/totalCost;
+      updates.net_psa10=Math.round(n10*100)/100;
+      updates.net_psa9=Math.round(n9*100)/100;
+      updates.ev_dollar=Math.round(ev*100)/100;
+      updates.ev_pct=Math.round(evPct*1000)/1000;
+      updates.max_buy_40=Math.max(0,Math.round((newGem*n10+(1-newGem)*n9-GRADING_COST)/1.40*100)/100);
+      updates.max_buy_35=Math.max(0,Math.round((newGem*n10+(1-newGem)*n9-GRADING_COST)/1.35*100)/100);
+      updates.decision=evPct>=0.40?'BUY':evPct>=0.35?'CAUTION':'PASS';
     }
   }
-
-  const btn = g('sce-save-btn');
-  btn.disabled = true; btn.textContent = 'Saving...';
-  const { error } = await sb.from('ev_scanner').update(updates).eq('id', id);
-  btn.disabled = false; btn.textContent = 'Save Override';
-
-  if (error) { toast('Error: ' + error.message, true); return; }
-
-  // Update local data
-  const idx = SCANNER_DATA.findIndex(x => x.id === id);
-  if (idx !== -1) SCANNER_DATA[idx] = { ...SCANNER_DATA[idx], ...updates };
-
-  closeModal('scanner-edit-modal');
-  filterScanner();
+  var btn=g('sce-save-btn');btn.disabled=true;btn.textContent='Saving...';
+  var res=await sb.from('ev_scanner').update(updates).eq('id',id);
+  btn.disabled=false;btn.textContent='Save Override';
+  if(res.error){toast('Error: '+res.error.message,true);return;}
+  var idx=SCANNER_DATA.findIndex(function(x){return x.id===id;});
+  if(idx!==-1) SCANNER_DATA[idx]=Object.assign({},SCANNER_DATA[idx],updates);
+  closeModal('scanner-edit-modal');filterScanner();
   toast('Override saved! EV recalculated.');
 }
 
 async function deleteScannerEntry(id) {
-  if (!confirm('Delete this entry from the scanner? It will be re-added on the next scan.')) return;
-  const { error } = await sb.from('ev_scanner').delete().eq('id', id);
-  if (error) return toast('Error: ' + error.message, true);
-  SCANNER_DATA = SCANNER_DATA.filter(x => x.id !== id);
-  filterScanner();
+  if(!confirm('Delete this entry? It will return on the next nightly scan.')) return;
+  var res=await sb.from('ev_scanner').delete().eq('id',id);
+  if(res.error){toast('Error: '+res.error.message,true);return;}
+  SCANNER_DATA=SCANNER_DATA.filter(function(x){return x.id!==id;});
+  closeModal('scanner-edit-modal');filterScanner();
   toast('Entry deleted.');
 }
 
@@ -5641,6 +5632,7 @@ function blCalc() {
   </div>
 </div>
 
+
 <!-- SCANNER EDIT OVERRIDE MODAL -->
 <div class="modal-bg" id="scanner-edit-modal">
   <div class="modal" style="max-width:480px;">
@@ -5651,14 +5643,14 @@ function blCalc() {
     <input type="hidden" id="sce-id">
     <div id="sce-player" style="background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-bottom:16px;font-size:12px;color:var(--text-muted);line-height:1.5;"></div>
     <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:6px;padding:10px 12px;margin-bottom:16px;font-size:11px;color:var(--amber);">
-      &#9888; Overriding prices and gem rates will recalculate EV%, Max Buy, and Decision automatically. Leave fields blank to keep existing values.
+      &#9888; Overriding prices and gem rates will recalculate EV%, Max Buy, and Decision automatically.
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-      <div class="ff"><label>Raw Price $</label><input type="number" step="0.01" id="sce-raw" placeholder="Current raw price" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;"></div>
-      <div class="ff"><label>PSA 10 Price $</label><input type="number" step="0.01" id="sce-p10" placeholder="Current PSA 10" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;"></div>
-      <div class="ff"><label>PSA 9 Price $</label><input type="number" step="0.01" id="sce-p9" placeholder="Current PSA 9" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;"></div>
+      <div class="ff"><label>Raw Price $</label><input type="number" step="0.01" id="sce-raw" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;"></div>
+      <div class="ff"><label>PSA 10 Price $</label><input type="number" step="0.01" id="sce-p10" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;"></div>
+      <div class="ff"><label>PSA 9 Price $</label><input type="number" step="0.01" id="sce-p9" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;"></div>
       <div class="ff"><label>Gem Rate (0-1)</label><input type="number" step="0.01" id="sce-gem" placeholder="e.g. 0.62" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;"></div>
-      <div class="ff" style="grid-column:1/-1;"><label>Sales Volume</label><input type="number" id="sce-vol" placeholder="Number of recent sales" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;"></div>
+      <div class="ff" style="grid-column:1/-1;"><label>Sales Volume</label><input type="number" id="sce-vol" style="width:100%;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:5px;font-size:13px;outline:none;"></div>
     </div>
     <div class="amsg" id="sce-msg"></div>
     <div class="factions">
@@ -5668,7 +5660,6 @@ function blCalc() {
     </div>
   </div>
 </div>
-
 </body>
 </html>
 
