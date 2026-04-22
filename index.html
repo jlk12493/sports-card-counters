@@ -1,5 +1,5 @@
 <!DOC
-<!-- v40 -->
+<!-- v41 -->
 YPE html>
 <html lang="en">
 <head>
@@ -4559,7 +4559,10 @@ function renderGradeIQ() {
           giqCell('Sales Volume', r.sales_volume!=null?String(r.sales_volume):'--', 'var(--text)', false) +
           giqCell('Updated', scannedDate, 'var(--text-muted)', false) +
         '</div>' +
-        '<button class="btn-s" style="font-size:11px;padding:5px 12px;" onclick="openGradeIQEbay(\'' + enc + '\')">&#128722; Find Raw on eBay</button>' +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+          '<button class="btn-a" style="font-size:11px;padding:5px 12px;background:var(--green);" onclick="giqAddToInventory(\\\'\' + encodeURIComponent(JSON.stringify({player:r.player,parallel:r.parallel,year:r.year,set_name:r.set_name,card_no:r.card_no,sport:r.sport,psa10:r.psa10_price,psa9:r.psa9_price,gem_rate:r.actual_gem_rate})) + \'\\\')">&plus; Add to Inventory</button>' +
+          '<button class="btn-s" style="font-size:11px;padding:5px 12px;" onclick="openGradeIQEbay(\\\'\' + enc + \'\\\')">F6D2 Find Raw on eBay</button>' +
+        '</div>' +
       '</div>' +
     '</div>';
   }).join('');
@@ -4583,6 +4586,29 @@ function toggleGIQCard(el) {
   if (chev) chev.style.transform = isOpen ? '' : 'rotate(90deg)';
 }
 
+
+function giqAddToInventory(encodedCard) {
+  const r = JSON.parse(decodeURIComponent(encodedCard));
+  openQuickAdd();
+  setTimeout(() => {
+    if (r.player && g('qa-player')) g('qa-player').value = r.player;
+    if (r.year && g('qa-year')) g('qa-year').value = r.year;
+    if (r.sport && g('qa-sport')) g('qa-sport').value = r.sport;
+    if (r.set_name) {
+      const parts = r.set_name.replace(/^(Baseball|Football|Basketball) Cards /i,'').split(' ');
+      if (g('qa-brand')) g('qa-brand').value = parts[0] || '';
+      if (g('qa-set')) g('qa-set').value = parts.slice(1).join(' ') || '';
+    }
+    if (r.parallel && g('qa-parallel')) g('qa-parallel').value = r.parallel;
+    if (r.card_no && g('qa-cno')) g('qa-cno').value = r.card_no;
+    if (r.psa10 && g('qa-p10')) g('qa-p10').value = r.psa10;
+    if (r.psa9 && g('qa-p9')) g('qa-p9').value = r.psa9;
+    if (r.gem_rate && g('qa-gem')) g('qa-gem').value = r.gem_rate;
+    if (g('qa-grade')) g('qa-grade').value = 24.99;
+    qaCalcCost(); qaCalcEV(); qaShowStep(1);
+    toast('Card pre-filled from GradeIQ — add your purchase price!');
+  }, 250);
+}
 
 function openGradeIQEbay(encodedCard) {
   const r = JSON.parse(decodeURIComponent(encodedCard));
