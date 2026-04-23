@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v45 -->
+<!-- v46 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -2802,13 +2802,19 @@ function qaCalcEV() {
   const cost=price+ship+grade;
   if (!gem||!p10||!cost) { g('qa-ev-preview').style.display='none'; return; }
   const n10=p10*0.865, n9=p9*0.865;
-  const ev=gem*n10+(1-gem)*n9-cost;
+  const expectedProceeds=gem*n10+(1-gem)*n9;
+  const ev=expectedProceeds-cost;
   const evp=ev/cost;
+  const mb40=Math.max(0,(expectedProceeds-grade)/1.40);
+  const mb35=Math.max(0,(expectedProceeds-grade)/1.35);
   const dec=evDecision(evp);
   g('qa-ev-preview').style.display='';
   g('qa-ev-dollar').textContent=f$(ev); g('qa-ev-dollar').style.color=ev>=0?'var(--green)':'#F87171';
   g('qa-ev-pct').textContent=(evp*100).toFixed(1)+'%'; g('qa-ev-pct').style.color=evp>=0.40?'var(--green)':'#F87171';
   g('qa-ev-dec').textContent=dec; g('qa-ev-dec').style.color=dec==='BUY'?'var(--green)':dec==='CAUTION'?'var(--amber)':'#F87171';
+  // Show max buy if visible
+  if(g('qa-mb40')) { g('qa-mb40').textContent=f$(mb40); }
+  if(g('qa-mb35')) { g('qa-mb35').textContent=f$(mb35); }
 }
 
 async function qaSave() {
@@ -4366,11 +4372,12 @@ function mobEVCalc(){
   var cost=parseFloat(document.getElementById('mev-cost').value);
   var result=document.getElementById('mev-result');
   if(!gem||!p10||!cost){if(result)result.style.display='none';return;}
-  var n10=p10*0.865,n9=p9*0.865;
-  var ev=gem*n10+(1-gem)*n9-cost;
+  var n10=p10*0.865, n9=p9*0.865;
+  var expectedProceeds=gem*n10+(1-gem)*n9;
+  var ev=expectedProceeds-cost;
   var evp=ev/cost;
-  var mb40=(gem*n10+(1-gem)*n9)/1.40;
-  var mb35=(gem*n10+(1-gem)*n9)/1.35;
+  var mb40=Math.max(0,(expectedProceeds-24.99)/1.40);
+  var mb35=Math.max(0,(expectedProceeds-24.99)/1.35);
   var dec=evDecision(evp);
   var decColor=dec==='BUY'?'var(--green)':dec==='CAUTION'?'var(--amber)':'#F87171';
   result.style.display='block';
