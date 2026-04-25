@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v46 -->
+<!-- v47 -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -2392,6 +2392,15 @@ function renderBatches() {
   const html = BATCHES.map(function(b, idx) {
     const cards = INV.filter(function(r){ return r.batch_id === b.batch_id; });
     const fees = cards.reduce(function(s,r){ return s + (r.grading||0); }, 0);
+
+    // EV summary — only cards with enough data to calculate
+    const evCards = cards.filter(function(r){ return r.gem_rate && r.psa10 && r.total_cost; });
+    const totalEVDollar = evCards.reduce(function(s,r){ return s + calcEV(r); }, 0);
+    const totalCost = evCards.reduce(function(s,r){ return s + (r.total_cost||0); }, 0);
+    const avgEVPct = (evCards.length && totalCost) ? (totalEVDollar / totalCost) : null;
+    const evColor = avgEVPct === null ? 'var(--text-muted)' : avgEVPct >= 0.40 ? 'var(--green)' : avgEVPct >= 0.35 ? 'var(--amber)' : '#F87171';
+    const evDollarStr = evCards.length ? f$(totalEVDollar) : '--';
+    const evPctStr = avgEVPct !== null ? (avgEVPct * 100).toFixed(1) + '%' : '--';
     const isOpen = openBatches.has(b.batch_id) || idx === 0;
     const bid = b.batch_id;
     const chevStyle = isOpen ? 'display:inline-block;transform:rotate(90deg);transition:transform .2s;font-style:normal;font-size:11px;color:#777;margin-right:6px;' : 'display:inline-block;transition:transform .2s;font-style:normal;font-size:11px;color:#777;margin-right:6px;';
@@ -2425,6 +2434,7 @@ function renderBatches() {
             '<div><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;">Cards</div><div style="font-size:12px;font-weight:700;color:var(--text);">' + cards.length + '</div></div>' +
             '<div><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;">Total Fees</div><div style="font-size:12px;font-weight:700;color:var(--text);">' + f$(fees) + '</div></div>' +
             '<div><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;">Date</div><div style="font-size:11px;font-weight:700;color:var(--text);">' + (b.submit_date||'TBD') + '</div></div>' +
+            (evCards.length ? '<div style="border-left:1px solid var(--border);padding-left:14px;margin-left:2px;"><div style="font-size:8px;font-weight:700;color:#777;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;">Expected Return</div><div style="display:flex;gap:10px;align-items:baseline;"><span style="font-size:14px;font-weight:800;color:' + evColor + ';">' + evDollarStr + '</span><span style="font-size:11px;font-weight:700;color:' + evColor + ';">(' + evPctStr + ')</span></div><div style="font-size:9px;color:var(--text-muted);">across ' + evCards.length + ' of ' + cards.length + ' cards</div></div>' : '') +
           '</div>' +
         '</div>' +
         '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0;" onclick="event.stopPropagation()">' +
